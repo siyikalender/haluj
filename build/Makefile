@@ -1,0 +1,195 @@
+#
+# File: Makefile
+#
+# Copyright (c) 2013, 0xc0170
+#
+# This program is free software. It comes without any warranty, to
+# the extent permitted by applicable law. You can redistribute it
+# and/or modify it under the terms of the Do What The Fuck You Want
+# To Public License, Version 2, as published by Sam Hocevar. See
+# http://www.wtfpl.net/ for more details.
+
+# example usage: make DEFS=frdm-k64f.defs NAME=foo
+
+# application specific
+
+ifneq ($(strip $(DEFS)), )
+include $(DEFS)
+else
+$(error 'Error ! Please define DEFS')
+endif
+
+ifeq ($(strip $(NAME)), )
+$(error 'Error ! Please define NAME')
+endif
+
+# toolchain specific
+TOOLCHAIN = $(TOOLCHAIN_DIR)$(TOOLCHAIN_PREFIX)
+CC = $(TOOLCHAIN)gcc
+CXX = $(TOOLCHAIN)g++
+AS = $(TOOLCHAIN)gcc -x assembler-with-cpp
+LD = $(TOOLCHAIN)g++
+OBJCP = $(TOOLCHAIN)objcopy
+AR = $(TOOLCHAIN)ar
+
+TARGET = $(NAME)$(TARGET_POSTFIX)
+TARGET_EXT := elf
+
+#LIBS := ../../lib/arm-linux-bbb/libprussdrv.a
+
+# directories
+INC_DIRS =  ../common 
+INC_DIRS += ../core 
+INC_DIRS += ../core/arch
+INC_DIRS += ../core/arch/extensions
+INC_DIRS += $(SPECIFIC_INC_DIRS)
+INC_DIRS += $(BOOST_INCLUDE_DIR)
+
+SRC_DIRS = ../core 
+SRC_DIRS += $(SPECIFIC_SRC_DIRS)
+
+LIB_DIRS = .$(SPECIFIC_LIB_DIRS)
+
+OUT_DIR := out$(TARGET_POSTFIX)
+
+INC_DIRS_F = -I. $(patsubst %, -I%, $(INC_DIRS))
+# LD_DIR  = ../ld
+# add traling / if not empty
+ifeq ($(strip $(OUT_DIR)), )
+	OBJ_FOLDER =
+else
+	OBJ_FOLDER = $(strip $(OUT_DIR))/
+endif
+
+# Check if INST not empty
+ifneq ($(strip $(INST)), )
+	CPU_OPTIONS += -m$(INST)
+endif
+
+# Check if ARCH not empty
+ifneq ($(strip $(ARCH)), )
+	CPU_OPTIONS += -march=$(ARCH)
+endif
+
+# Check if TUNE not empty
+ifneq ($(strip $(TUNE)), )
+	CPU_OPTIONS += -mtune=$(TUNE)
+endif
+
+ifneq ($(strip $(FLOAT)), )
+	CPU_OPTIONS += -mfloat-abi=$(FLOAT)
+		ifneq ($(strip $(FPU)), )
+			CPU_OPTIONS += -mfpu=$(FPU)
+		endif
+endif
+
+COMPILER_OPTIONS += -Wall 
+COMPILER_OPTIONS += -fno-strict-aliasing
+COMPILER_OPTIONS += -fmessage-length=0
+COMPILER_OPTIONS += -MD -MP
+COMPILER_OPTIONS += -fdata-sections
+COMPILER_OPTIONS += -ffunction-sections
+COMPILER_OPTIONS += -fstack-usage
+COMPILER_OPTIONS += $(SPECIFIC_COMPILER_OPTIONS)
+COMPILER_OPTIONS += $(CPU_OPTIONS)
+
+DEPEND_OPTS = -MF $(OBJ_FOLDER)$(@F:.o=.d)
+
+# Flags
+CFLAGS = $(COMPILER_OPTIONS) $(DEPEND_OPTS) $(INC_DIRS_F) -c
+
+CXXFLAGS = $(COMPILER_OPTIONS) $(DEPEND_OPTS) $(INC_DIRS_F) -c
+CXXFLAGS += --std=c++14 
+CXXFLAGS += -fno-exceptions 
+CXXFLAGS += -fno-rtti
+CXXFLAGS += -fno-use-cxa-atexit
+CXXFLAGS += -fno-threadsafe-statics
+
+ASFLAGS = $(COMPILER_OPTIONS) $(INC_DIRS_F) -c
+OBJCPFLAGS = -O ihex
+ARFLAGS = cr
+
+# Linker options, --build-id=none is required (or should be handled in ld) otherwise it places build-id to address 0x00
+#LD_OPTIONS = -Wl,--build-id=none,-Map=$(OBJ_FOLDER)$(TARGET).map $(COMPILER_OPTIONS) -L ../ -T $(LD_DIR)/$(LD_SCRIPT) $(INC_DIRS_F)
+#LD_OPTIONS += -nostartfiles
+#LD_OPTIONS = -static-libgcc -Wl,-Bstatic
+#LD_OPTIONS = -Wl,--gc-sections -static -pthread $(CPU_OPTIONS)
+
+LD_OPTIONS = -Wl,--build-id=none,-Map=$(OBJ_FOLDER)$(TARGET).map,--gc-sections
+ifneq ($(strip $(LD_FILE)), )
+	LD_OPTIONS += -T $(LD_FILE)
+endif
+LD_OPTIONS += $(INC_DIRS_F)
+LD_OPTIONS += $(CPU_OPTIONS)
+LD_OPTIONS += $(SPECIFIC_LINKER_OPTIONS)
+
+RM := rm -rf
+
+USER_OBJS :=
+C_SRCS :=
+CXX_SRCS :=
+S_SRCS :=
+C_OBJS :=
+CXX_OBJS :=
+S_OBJS :=
+
+# All source/object files inside SRC_DIRS
+C_SRCS := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.c))
+C_OBJS := $(patsubst %.c,$(OBJ_FOLDER)%.o,$(notdir $(C_SRCS)))
+CXX_SRCS := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.cpp))
+CXX_OBJS := $(patsubst %.cpp,$(OBJ_FOLDER)%.o,$(notdir $(CXX_SRCS)))
+S_SRCS := $(foreach dir,$(SRC_DIRS),$(wildcard $(dir)/*.s))
+S_OBJS := $(patsubst %.c,$(OBJ_FOLDER)%.o,$(notdir $(S_SRCS)))
+
+VPATH := $(SRC_DIRS)
+
+$(OBJ_FOLDER)%.o : %.c
+	@echo 'Building file: $(@F)'
+	@echo 'Invoking: MCU C Compiler'
+	$(CC) $(CFLAGS) $< -o $@
+	@echo 'Finished building: $(@F)'
+	@echo ' '
+
+$(OBJ_FOLDER)%.o : %.cpp
+	@echo 'Building file: $(@F)'
+	@echo 'Invoking: MCU C++ Compiler'
+	$(CXX) $(CXXFLAGS) $< -o $@
+	@echo 'Finished building: $(@F)'
+	@echo ' '
+
+$(OBJ_FOLDER)%.o : %.s
+	@echo 'Building file: $(@F)'
+	@echo 'Invoking: MCU Assembler'
+	$(AS) $(ASFLAGS) $< -o $@
+	@echo 'Finished building: $(@F)'
+	@echo ' '
+
+all: create_outputdir $(OBJ_FOLDER)$(TARGET).$(TARGET_EXT) print_size
+
+create_outputdir:
+	$(shell mkdir $(OBJ_FOLDER) 2>/dev/null)
+
+# Tool invocations
+$(OBJ_FOLDER)$(TARGET).$(TARGET_EXT): $(C_OBJS) $(CXX_OBJS) $(S_OBJS)
+	@echo 'Building target: $@'
+	@echo 'Invoking: MCU Linker'
+	$(LD) $(LD_OPTIONS) $(C_OBJS) $(CXX_OBJS) $(S_OBJS) $(USER_OBJS) $(LIBS) -o $(OBJ_FOLDER)$(TARGET).$(TARGET_EXT)
+	@echo 'Finished building target: $@'
+	@echo ' '
+
+# Other Targets
+clean:
+	@echo 'Removing entire out directory'
+	$(RM) $(TARGET).$(TARGET_EXT) $(TARGET).bin $(TARGET).map $(OBJ_FOLDER)*.* $(OBJ_FOLDER)
+	@echo ' '
+
+print_size:
+	@echo 'Printing size'
+	$(TOOLCHAIN)size --totals $(OBJ_FOLDER)$(TARGET).$(TARGET_EXT)
+	@echo 'Generating binary file'
+	$(TOOLCHAIN)objcopy -O binary $(OBJ_FOLDER)$(TARGET).$(TARGET_EXT) $(OBJ_FOLDER)$(TARGET).bin 
+	@echo 'Generating disassemble file'
+	$(TOOLCHAIN)objdump -M force-thumb --disassemble $(OBJ_FOLDER)$(TARGET).$(TARGET_EXT) > $(OBJ_FOLDER)$(TARGET).dump
+	@echo ' '
+
+.PHONY: all clean dependents print_size

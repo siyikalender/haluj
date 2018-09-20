@@ -1,0 +1,37 @@
+# Defs for K60 based processor
+INST  := thumb
+ARCH := armv7e-m
+TUNE := cortex-m4
+FLOAT:= soft
+
+TARGET_POSTFIX := -k60
+
+TOOLCHAIN_DIR    = /home/diode/ARM/gcc-arm-none-eabi-5_4-2016q3/bin/
+TOOLCHAIN_PREFIX = arm-none-eabi-
+
+BOOST_INCLUDE_DIR = 
+
+LD_FILE           = ../base/devices/kinetis/MK60D10/ld/K60DX256xxx10_flash.ld
+
+SPECIFIC_INC_DIRS = .
+SPECIFIC_INC_DIRS += ../base/
+SPECIFIC_INC_DIRS += ../base/devices/arm
+SPECIFIC_INC_DIRS += ../base/devices/kinetis
+SPECIFIC_INC_DIRS += ../base/devices/kinetis/MK60D10
+
+SPECIFIC_SRC_DIRS = .
+SPECIFIC_SRC_DIRS += ../base/devices/kinetis
+SPECIFIC_SRC_DIRS += ../base/devices/kinetis/MK60D10
+SPECIFIC_SRC_DIRS += ../examples
+
+SPECIFIC_COMPILER_OPTIONS =   -O2
+SPECIFIC_COMPILER_OPTIONS +=  -DK60D10 
+SPECIFIC_COMPILER_OPTIONS +=  -DCLOCK_SETUP=4
+SPECIFIC_COMPILER_OPTIONS +=  -mno-sched-prolog 
+SPECIFIC_COMPILER_OPTIONS +=  -mno-unaligned-access 
+
+SPECIFIC_LINKER_OPTIONS =
+# SPECIFIC_LINKER_OPTIONS += -nostartfiles
+SPECIFIC_LINKER_OPTIONS += -static
+SPECIFIC_LINKER_OPTIONS += --specs=nosys.specs 
+
