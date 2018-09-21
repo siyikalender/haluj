@@ -36,6 +36,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include "vendor.h"
 #include "port.hpp"
+#include "uart.hpp"
 
 namespace haluj
 {
@@ -54,6 +55,8 @@ namespace kinetis
 
 namespace mk60d10
 {
+
+// PORTS 
 
 struct A
 {
@@ -101,7 +104,34 @@ port<C>  port_c;
 port<D>  port_d;
 port<E>  port_e;
 
-} // namespace specific
+// UARTS 
+
+struct U0
+{
+  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
+  static constexpr uint32_t       scgc_mask = SIM_SCGC4_UART0_MASK;  
+  static constexpr UART_Type*     uart_addr = UART0;
+};
+
+struct U1
+{
+  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
+  static constexpr uint32_t       scgc_mask = SIM_SCGC4_UART1_MASK;  
+  static constexpr UART_Type*     uart_addr = UART1;
+};
+
+struct U2
+{
+  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
+  static constexpr uint32_t       scgc_mask = SIM_SCGC4_UART2_MASK;  
+  static constexpr UART_Type*     uart_addr = UART2;
+};
+
+uart<U0>  uart_0;
+uart<U1>  uart_1;
+uart<U2>  uart_2;
+
+} // namespace mk60d10
 
 namespace specific = mk60d10;
 

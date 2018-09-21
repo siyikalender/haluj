@@ -9,7 +9,7 @@
 # To Public License, Version 2, as published by Sam Hocevar. See
 # http://www.wtfpl.net/ for more details.
 
-# example usage: make DEFS=frdm-k64f.defs NAME=foo
+# example usage: make DEFS=frdm-k64f.defs NAME=give_any_name MAIN_DIR=directory_where_main_file_is
 
 # application specific
 
@@ -45,12 +45,15 @@ INC_DIRS += ../core/arch/extensions
 INC_DIRS += $(SPECIFIC_INC_DIRS)
 INC_DIRS += $(BOOST_INCLUDE_DIR)
 
-SRC_DIRS = ../core 
 SRC_DIRS += $(SPECIFIC_SRC_DIRS)
+ifneq ($(strip $(MAIN_DIR)), )
+SRC_DIRS += $(MAIN_DIR)
+endif
+
 
 LIB_DIRS = .$(SPECIFIC_LIB_DIRS)
 
-OUT_DIR := out$(TARGET_POSTFIX)
+OUT_DIR := out-$(TARGET)
 
 INC_DIRS_F = -I. $(patsubst %, -I%, $(INC_DIRS))
 # LD_DIR  = ../ld

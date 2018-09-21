@@ -23,7 +23,6 @@ SPECIFIC_INC_DIRS += ../base/devices/arm/kinetis/MK60D10
 SPECIFIC_SRC_DIRS = .
 SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis
 SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis/MK60D10
-SPECIFIC_SRC_DIRS += ../examples
 
 SPECIFIC_COMPILER_OPTIONS =   -O2
 SPECIFIC_COMPILER_OPTIONS +=  -DK60D10 
