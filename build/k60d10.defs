@@ -11,17 +11,18 @@ TOOLCHAIN_PREFIX = arm-none-eabi-
 
 BOOST_INCLUDE_DIR = 
 
-LD_FILE           = ../base/devices/kinetis/MK60D10/ld/K60DX256xxx10_flash.ld
+LD_FILE           = ../base/devices/arm/kinetis/MK60D10/ld/K60DX256xxx10_flash.ld
 
 SPECIFIC_INC_DIRS = .
 SPECIFIC_INC_DIRS += ../base/
 SPECIFIC_INC_DIRS += ../base/devices/arm
-SPECIFIC_INC_DIRS += ../base/devices/kinetis
-SPECIFIC_INC_DIRS += ../base/devices/kinetis/MK60D10
+SPECIFIC_INC_DIRS += ../base/devices/arm/vendor
+SPECIFIC_INC_DIRS += ../base/devices/arm/kinetis
+SPECIFIC_INC_DIRS += ../base/devices/arm/kinetis/MK60D10
 
 SPECIFIC_SRC_DIRS = .
-SPECIFIC_SRC_DIRS += ../base/devices/kinetis
-SPECIFIC_SRC_DIRS += ../base/devices/kinetis/MK60D10
+SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis
+SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis/MK60D10
 SPECIFIC_SRC_DIRS += ../examples
 
 SPECIFIC_COMPILER_OPTIONS =   -O2
@@ -34,4 +35,3 @@ SPECIFIC_LINKER_OPTIONS =
 # SPECIFIC_LINKER_OPTIONS += -nostartfiles
 SPECIFIC_LINKER_OPTIONS += -static
 SPECIFIC_LINKER_OPTIONS += --specs=nosys.specs 
-

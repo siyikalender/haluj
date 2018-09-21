@@ -33,8 +33,8 @@ For more information, please refer to <http://unlicense.org>
 #include "specific.hpp"
 
 using namespace haluj::base;
-using namespace haluj::base::devices::kinetis;
-using namespace haluj::base::devices::kinetis::specific;
+using namespace haluj::base::devices::arm::kinetis;
+using namespace haluj::base::devices::arm::kinetis::specific;
 
 int main()
 {
@@ -49,13 +49,15 @@ int main()
   configure(port_a, 0, options(mux::_1));
 
   // create mask for bits 1, 2, 3 that makes 0xE
-  auto m = mask(1U, 2U, 3U);
+  uint32_t m = mask(1U, 2U, 3U);
 
   // set direction by setting the mask
   set_direction(port_a, m);
   set(port_a,    m);
   clear(port_a,  m);
   toggle(port_a, m);
+  write(port_a, m);
+  uint32_t r = read(port_a);
 
   // close function disables the clock gating
   close(port_a);
