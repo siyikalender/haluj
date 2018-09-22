@@ -42,10 +42,11 @@ int main()
   open(uart_0);
   open(uart_1);
   open(uart_2);
-  
-  configure(uart_0, 9600);
-  configure(uart_1, 115200);
-  configure(uart_2, 500000);
+
+  configure(uart_0); // all  default: 9600, 8 bits, No partiy, 1 stop bits;
+  // bits::_9 and stop_bits::two may not by supported in every device
+  configure(uart_1, 115200, bits::_8, parity::odd,  stop_bits::one);
+  configure(uart_2, 250000, bits::_9, parity::even, stop_bits::one);
 
   // close function disables the clock gating
   close(uart_0);
