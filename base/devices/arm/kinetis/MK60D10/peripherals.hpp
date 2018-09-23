@@ -1,4 +1,4 @@
-/// \file specific.hpp
+/// \file peripherals.hpp
 /// specific peripheral definitions for Kinetis MK60D10 family devices
 /*
 This is free and unencumbered software released into the public domain.
@@ -29,8 +29,8 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef _HALUJ_BASE_DEVICES_ARM_KINETIS_MK60D10_HPP
-#define _HALUJ_BASE_DEVICES_ARM_KINETIS_MK60D10_HPP
+#ifndef HALUJ_BASE_DEVICES_ARM_KINETIS_MK60D10_PERIPHERALS_HPP
+#define HALUJ_BASE_DEVICES_ARM_KINETIS_MK60D10_PERIPHERALS_HPP
 
 #include <cstdint>
 
@@ -148,6 +148,6 @@ namespace specific = mk60d10;
 
 } // namespace haluj
 
-// _HALUJ_BASE_DEVICES_KINETIS_MK60D10_SPECIFIC_HPP
+// HALUJ_BASE_DEVICES_ARM_KINETIS_MK60D10_PERIPHERALS_HPP
 #endif
 

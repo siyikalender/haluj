@@ -36,6 +36,7 @@ For more information, please refer to <http://unlicense.org>
 #include "options.hpp"
 #include "core.hpp"
 #include "bitops.hpp"
+#include "specific.hpp"
 
 namespace haluj
 {
@@ -59,90 +60,6 @@ struct uart : peripheral<Specifier>
   static constexpr bool        uses_core_clock() {return Specifier::uses_core_clock;}
 };
 
-/// \fn set_baud_rate
-/// \brief Sets baud rate registers. Assumed UART BDH register is cleared
-inline uint32_t 
-set_baud_rate(UART_Type&      p_device, 
-              const uint32_t  p_peripheral_clock, 
-              const uint32_t  p_baud_rate) 
-{
-  uint32_t result = (p_peripheral_clock / (p_baud_rate * 16U));;
-  p_device.BDH |= UART_BDH_SBR(result >> 8); 
-  p_device.BDL  = UART_BDL_SBR(result);
-  return result;
-}
-
-/// \fn set_fractional_divider
-/// \brief Sets fractional divider. Assumed UART C4 register is cleared
-inline uint32_t 
-set_fractional_divider(UART_Type&      p_device, 
-                       const uint32_t  p_peripheral_clock, 
-                       const uint32_t  p_baud_rate,
-                       const uint32_t  p_sbr) 
-{
-  uint32_t  result  = ((p_peripheral_clock * 2)/(p_baud_rate)) - (p_sbr * 32);
-  p_device.C4 |= UART_C4_BRFA(result);
-  return result;
-}
-
-/// \fn set_bits
-/// \brief Sets data bits. Assumed UART C1 and C4 register is cleared
-inline void
-set_bits(UART_Type&       p_device, 
-         const uint32_t   p_value)
-{
-  switch(p_value)
-  {
-  default:
-    break;
-  case 9:
-    p_device.C1 = mask_set(p_device.C1, UART_C1_M_MASK);
-    break;
-  case 10:
-    p_device.C4 = mask_set(p_device.C4, UART_C4_M10_MASK);
-    break;
-  }
-}
-
-/// \fn set_parity
-/// \brief Sets parity. Assumed UART C1 is cleared
-inline void
-set_parity(UART_Type&       p_device, 
-           const uint32_t   p_value)
-{
-  // UARTx_C1 register is assumed to be cleared
-  switch(p_value)
-  {
-  default: // 0 none
-    break;
-  case 1:
-    p_device.C1 = mask_set(p_device.C1, UART_C1_PE_MASK);
-    break;
-  case 2:
-    p_device.C1 = mask_set(p_device.C1, UART_C1_PE_MASK | UART_C1_PT_MASK);
-    break;
-  }
-}
-
-/// \fn set_stop_bits
-/// \brief Sets stop bits. Assumed UART BDH SBNS field is cleared
-inline void
-set_stop_bits(UART_Type&       p_device, 
-              const uint32_t   p_value)
-{
-  // UARTx_C1 register is assumed to be cleared
-  switch(p_value)
-  {
-  default:  // one
-    break;
-  case 1:   // two
-    #ifdef UART_BDH_SBNS_MASK
-    p_device.BDH = mask_set(p_device.BDH, UART_BDH_SBNS_MASK);
-    #endif
-    break;
-  }
-}
-
 template<uint32_t Value> 
 struct baud_rate
 {
@@ -156,8 +73,8 @@ struct baud_rate
     {
       peripheral_clock = system_bus_clock();
     }
-    uint32_t sbr = set_baud_rate(*uart<T>::uart_addr(),  peripheral_clock, value);
-    (void) set_fractional_divider(*uart<T>::uart_addr(), peripheral_clock, value, sbr);
+    uint32_t sbr = specific::set_baud_rate(*uart<T>::uart_addr(),  peripheral_clock, value);
+    (void) specific::set_fractional_divider(*uart<T>::uart_addr(), peripheral_clock, value, sbr);
     return  0;
   }
 };
@@ -170,7 +87,7 @@ struct bits_option
   template<typename T>
   uint32_t accept(uart<T>)
   {
-    set_bits(*uart<T>::uart_addr(), value);
+    specific::set_bits(*uart<T>::uart_addr(), value);
     return  0;
   }
 };
@@ -190,7 +107,7 @@ struct parity_option
   template<typename T>
   uint32_t accept(uart<T>)
   {
-    set_parity(*uart<T>::uart_addr(), value);
+    specific::set_parity(*uart<T>::uart_addr(), value);
     return  0;
   }
 };
@@ -210,7 +127,7 @@ struct stop_bits_option
   template<typename T>
   uint32_t accept(uart<T>)
   {
-    set_stop_bits(*uart<T>::uart_addr(), value);
+    specific::set_stop_bits(*uart<T>::uart_addr(), value);
     return  0;
   }
 };
@@ -236,13 +153,6 @@ inline void stop(uart<T>)
     mask_clear(uart<T>::uart_addr()->C2, 
                UART_C2_TE_MASK | UART_C2_RE_MASK);
 }
-
-extern void configure_uart(UART_Type&       p_device_const,
-                           const uint32_t   p_peripheral_clock,
-                           const uint32_t   p_baud_rate,
-                           const uint32_t   p_bit_mode,
-                           const uint32_t   p_parity,
-                           const uint32_t   p_stop_bits);
 
 template<typename T, typename Options>
 inline void configure(uart<T> p_uart, Options p_opts)
