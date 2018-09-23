@@ -33,6 +33,8 @@ For more information, please refer to <http://unlicense.org>
 #define _HALUJ_BASE_DEVICES_KINETIS_PORT_HPP
 
 #include "peripheral.hpp"
+#include "options.hpp"
+#include "bitops.hpp"
 
 namespace haluj
 {
@@ -63,12 +65,13 @@ enum class directions
   bidirectional
 };
 
-template<typename T>
+template<typename T, typename Options>
 inline void configure(port<T>         p_port,
                       const unsigned  p_index,
-                      const uint32_t  p_opt_val)
+                      Options         p_opts)
 {
-  port<T>::port_addr()->PCR[p_index] = p_opt_val;
+  port<T>::port_addr()->PCR[p_index] = 
+    p_opts.template accept<uint32_t>(p_port, or_op());
 }
 
 template<typename T>
@@ -118,73 +121,74 @@ inline void write(port<T>, const uint32_t p_value)
 
 // options for port configuration
 
+template<uint32_t Value> 
+struct port_option
+{
+  static constexpr uint32_t value    = Value;
+  
+  template<typename T>
+  static constexpr uint32_t accept(port<T>)
+  {
+    return value;
+  }
+};
+
 struct pull
 {
-  static constexpr uint32_t none    = 0;
-  static constexpr uint32_t down    = 2;
-  static constexpr uint32_t up      = 3;
+  static port_option<0> none;
+  static port_option<2> down;
+  static port_option<3> up;
 };
 
 // Note: slew_rate may not be supported by all devices
 struct slew_rate
 {
-  static constexpr uint32_t fast    = 0;
-  static constexpr uint32_t slow    = PORT_PCR_SRE_MASK;
+  static port_option<0>                  fast;
+  static port_option<PORT_PCR_SRE_MASK>  slow;
 };
 
 // Note: drive_strength may not be supported by all devices
 struct drive_strength
 {
-  static constexpr uint32_t low     = 0;
-  static constexpr uint32_t high    = PORT_PCR_DSE_MASK;
+  static port_option<0>                  low;
+  static port_option<PORT_PCR_DSE_MASK>  high;
 };
 
 // Note: open_drain may not be supported by all devices
 struct open_drain
 {
-  static constexpr uint32_t disable = 0;
-  static constexpr uint32_t enable  = PORT_PCR_ODE_MASK;
+  static port_option<0>                  disable;
+  static port_option<PORT_PCR_ODE_MASK>  enable;
 };
 
 struct interrupts
 {
-  static constexpr uint32_t none            = PORT_PCR_IRQC(0);
-  static constexpr uint32_t on_logic_0      = PORT_PCR_IRQC(8);
-  static constexpr uint32_t on_rising_edge  = PORT_PCR_IRQC(9);
-  static constexpr uint32_t on_falling_edge = PORT_PCR_IRQC(10);
-  static constexpr uint32_t on_both_edges   = PORT_PCR_IRQC(11);
-  static constexpr uint32_t on_logic_1      = PORT_PCR_IRQC(12);
+  static port_option<PORT_PCR_IRQC(0)>  none;
+  static port_option<PORT_PCR_IRQC(8)>  on_logic_0;
+  static port_option<PORT_PCR_IRQC(9)>  on_rising_edge;
+  static port_option<PORT_PCR_IRQC(10)> on_falling_edge;
+  static port_option<PORT_PCR_IRQC(11)> on_both_edges;
+  static port_option<PORT_PCR_IRQC(12)> on_logic_1;
 };
 
 // Note: passive_filter may not be supported by all devices
 struct passive_filter
 {
-  static constexpr uint32_t disable = 0;
-  static constexpr uint32_t enable  = PORT_PCR_PFE_MASK;  
+  static port_option<0>                   disable;
+  static port_option<PORT_PCR_PFE_MASK>   enable;
 };
 
 struct mux
 {
-  static constexpr uint32_t _0 = PORT_PCR_MUX(0);
-  static constexpr uint32_t _1 = PORT_PCR_MUX(1);  
-  static constexpr uint32_t _2 = PORT_PCR_MUX(2);  
-  static constexpr uint32_t _3 = PORT_PCR_MUX(3);  
-  static constexpr uint32_t _4 = PORT_PCR_MUX(4);  
-  static constexpr uint32_t _5 = PORT_PCR_MUX(5);  
-  static constexpr uint32_t _6 = PORT_PCR_MUX(6);  
-  static constexpr uint32_t _7 = PORT_PCR_MUX(7);  
+  static port_option<PORT_PCR_MUX(0)> _0;
+  static port_option<PORT_PCR_MUX(1)> _1;  
+  static port_option<PORT_PCR_MUX(2)> _2;  
+  static port_option<PORT_PCR_MUX(3)> _3;  
+  static port_option<PORT_PCR_MUX(4)> _4;  
+  static port_option<PORT_PCR_MUX(5)> _5;  
+  static port_option<PORT_PCR_MUX(6)> _6;  
+  static port_option<PORT_PCR_MUX(7)> _7;  
 };
-
-constexpr uint32_t options(const uint32_t p_value)
-{
-  return p_value;
-}
-
-template<typename... Args>
-constexpr uint32_t options(const uint32_t p_value, Args... args)
-{
-  return p_value | options(args...);
-}
 
 } // namespace kinetis
 

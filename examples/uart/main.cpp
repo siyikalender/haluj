@@ -38,20 +38,19 @@ using namespace haluj::base::devices::arm::kinetis::specific;
 
 int main()
 {
-  // open function enables the clock gating of the peripheral
-  open(uart_0);
-  open(uart_1);
-  open(uart_2);
+  // open function enables the clock gating
+  open(uart_0); // depending on the device other uarts may be available
 
-  configure(uart_0); // all  default: 9600, 8 bits, No partiy, 1 stop bits;
-  // bits::_9 and stop_bits::two may not by supported in every device
-  configure(uart_1, 115200, bits::_8, parity::odd,  stop_bits::one);
-  configure(uart_2, 250000, bits::_9, parity::even, stop_bits::one);
+  // configure, disables transmit and receive, then applies options, 
+  // finally enables transmit and receive
+  configure(uart_0, 
+            options(baud_rate<9600>(), 
+                    bits::_8, 
+                    parity::none,  
+                    stop_bits::one)); // all  default: 9600, 8 bits, No partiy, 1 stop bits;
 
   // close function disables the clock gating
   close(uart_0);
-  close(uart_1);
-  close(uart_2);
-
+  
   return 0;
 }

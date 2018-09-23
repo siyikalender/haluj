@@ -111,6 +111,7 @@ struct U0
   static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
   static constexpr uint32_t       scgc_mask = SIM_SCGC4_UART0_MASK;  
   static constexpr UART_Type*     uart_addr = UART0;
+  static constexpr bool           uses_core_clock = true;
 };
 
 struct U1
@@ -118,6 +119,7 @@ struct U1
   static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
   static constexpr uint32_t       scgc_mask = SIM_SCGC4_UART1_MASK;  
   static constexpr UART_Type*     uart_addr = UART1;
+  static constexpr bool           uses_core_clock = true;
 };
 
 struct U2
@@ -125,6 +127,7 @@ struct U2
   static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
   static constexpr uint32_t       scgc_mask = SIM_SCGC4_UART2_MASK;  
   static constexpr UART_Type*     uart_addr = UART2;
+  static constexpr bool           uses_core_clock = false;
 };
 
 uart<U0>  uart_0;
