@@ -30,7 +30,7 @@ For more information, please refer to <http://unlicense.org>
 /// \date   2018
 
 #include "bitops.hpp"
-#include "specific.hpp"
+#include "peripherals.hpp"
 
 using namespace haluj::base;
 using namespace haluj::base::devices::arm::kinetis;
