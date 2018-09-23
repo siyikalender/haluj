@@ -37,6 +37,7 @@ For more information, please refer to <http://unlicense.org>
 #include "vendor.h"
 #include "port.hpp"
 #include "uart.hpp"
+#include "spi.hpp"
 
 namespace haluj
 {
@@ -130,9 +131,52 @@ struct U2
   static constexpr bool           uses_core_clock = false;
 };
 
+struct U3
+{
+  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
+  static constexpr uint32_t       scgc_mask = SIM_SCGC4_UART3_MASK;  
+  static constexpr UART_Type*     uart_addr = UART3;
+  static constexpr bool           uses_core_clock = false;
+};
+
+struct U4
+{
+  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC1);
+  static constexpr uint32_t       scgc_mask = SIM_SCGC1_UART4_MASK;  
+  static constexpr UART_Type*     uart_addr = UART4;
+  static constexpr bool           uses_core_clock = false;
+};
+
 uart<U0>  uart_0;
 uart<U1>  uart_1;
 uart<U2>  uart_2;
+uart<U4>  uart_4;
+
+// SPI 
+struct _SPI0
+{
+  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC6);
+  static constexpr uint32_t       scgc_mask = SIM_SCGC6_SPI0_MASK;  
+  static constexpr SPI_Type*      spi_addr  = SPI0;
+};
+
+struct _SPI1
+{
+  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC6);
+  static constexpr uint32_t       scgc_mask = SIM_SCGC6_SPI1_MASK;  
+  static constexpr SPI_Type*      spi_addr  = SPI1;
+};
+
+struct _SPI2
+{
+  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC3);
+  static constexpr uint32_t       scgc_mask = SIM_SCGC3_SPI2_MASK;  
+  static constexpr SPI_Type*      spi_addr  = SPI2;
+};
+
+spi<_SPI0>  spi_0;
+spi<_SPI1>  spi_1;
+spi<_SPI2>  spi_2;
 
 } // namespace mk60d10
 
