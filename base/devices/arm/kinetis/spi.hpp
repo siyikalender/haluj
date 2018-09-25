@@ -1,5 +1,5 @@
 /// \file spi.hpp
-/// generic port definitions for Kinetis family devices
+/// generic spi definitions for Kinetis family devices
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -180,6 +180,18 @@ struct phase
   static phase_option<false>    tx_on_rising_edge;
   static phase_option<true>     tx_on_falling_edge;
 };
+
+template<typename T>
+inline void start(spi<T>)
+{
+  start(*spi<T>::spi_addr());
+}
+
+template<typename T>
+inline void stop(spi<T>)
+{
+  stop(*spi<T>::spi_addr());
+}
 
 template<typename T, typename Options>
 inline void configure(spi<T> p_spi, Options p_opts)

@@ -38,6 +38,7 @@ For more information, please refer to <http://unlicense.org>
 #include "port.hpp"
 #include "uart.hpp"
 #include "spi.hpp"
+#include "i2c.hpp"
 
 namespace haluj
 {
@@ -177,6 +178,24 @@ struct _SPI2
 spi<_SPI0>  spi_0;
 spi<_SPI1>  spi_1;
 spi<_SPI2>  spi_2;
+
+// SPI 
+struct _I2C0
+{
+  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
+  static constexpr uint32_t       scgc_mask = SIM_SCGC4_I2C0_MASK;  
+  static constexpr I2C_Type*      i2c_addr  = I2C0;
+};
+
+struct _I2C1
+{
+  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
+  static constexpr uint32_t       scgc_mask = SIM_SCGC4_I2C1_MASK;  
+  static constexpr I2C_Type*      i2c_addr  = I2C1;
+};
+
+i2c<_I2C0>  i2c_0;
+i2c<_I2C1>  i2c_1;
 
 } // namespace mk60d10
 

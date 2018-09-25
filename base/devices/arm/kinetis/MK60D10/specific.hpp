@@ -137,6 +137,40 @@ set_stop_bits(UART_Type&       p_device,
   }
 }
 
+/////////////////////////////////////////////////////////////
+
+/// \fn clear
+/// \brief Clears modified SPI registers prior configuration
+inline void
+clear(SPI_Type& p_device)
+{
+  p_device.MCR     = SPI_MCR_MDIS_MASK | SPI_MCR_HALT_MASK;
+  p_device.CTAR[0] = SPI_CTAR_PASC(2)    | 
+                     SPI_CTAR_ASC(1)     | 
+                     SPI_CTAR_PCSSCK(2)  | 
+                     SPI_CTAR_CSSCK(1)   | 
+                     SPI_CTAR_PBR(2)     | 
+                     SPI_CTAR_BR(4);
+}
+
+/// \fn start
+/// \brief Starts SPI transfer
+inline void
+start(SPI_Type& p_device)
+{
+  p_device.MCR |= SPI_MCR_HALT_MASK;
+}
+
+/// \fn stop
+/// \brief Starts SPI transfer
+inline void
+stop(SPI_Type& p_device)
+{
+  p_device.MCR &= ~SPI_MCR_HALT_MASK;
+}
+
+/////////////////////////////////////////////////////////////
+
 } // namespace mk60d10
 
 namespace specific = mk60d10;
