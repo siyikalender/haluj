@@ -21,6 +21,7 @@ SPECIFIC_INC_DIRS += ../base/devices/arm/kinetis
 SPECIFIC_INC_DIRS += ../base/devices/arm/kinetis/MK60D10
 
 SPECIFIC_SRC_DIRS = .
+SPECIFIC_SRC_DIRS += ../base/devices/arm
 SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis
 SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis/MK60D10
 

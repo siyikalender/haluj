@@ -1,5 +1,5 @@
-/// \file core.hpp
-/// Core related functions
+/// \file examples/clock/main.cpp
+/// Example code for clock usage
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -29,76 +29,45 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_DEVICES_ARM_KINETIS_CORE_HPP
-#define HALUJ_BASE_DEVICES_ARM_KINETIS_CORE_HPP
+#include "bitops.hpp"
+#include "peripherals.hpp"
+#include "clock.hpp"
+#include "timer.hpp"
 
-#include "vendor.h"
+using namespace std::chrono;
+using namespace haluj::base;
+using namespace haluj::base::devices::arm;
+using namespace haluj::base::devices::arm::kinetis;
+using namespace haluj::base::devices::arm::kinetis::specific;
 
-namespace haluj
+constexpr uint32_t c_test_pin = 15;
+
+int main()
 {
-
-namespace base
-{
-
-namespace devices
-{
-
-namespace arm
-{
+  open(port_a);
   
-namespace kinetis
-{
+  configure(port_a, c_test_pin, options(mux::_1));
+  
+  set_direction(port_a, mask(c_test_pin));
+  
+  periodic_timer<precision_clock::time_point, milliseconds>    
+    tmr(milliseconds(1000)); // software timers are clock agnostic
 
-inline uint32_t mcg_out_clock()
-{
-  auto temp = SIM->CLKDIV1;
-  temp &=  SIM_CLKDIV1_OUTDIV1_MASK;
-  temp >>= SIM_CLKDIV1_OUTDIV1_SHIFT;
-  temp++;
-  return SystemCoreClock * temp;
+  auto now = precision_clock::initialize();
+  
+  tmr.start(now);
+  
+  for (;;)
+  {
+    now = precision_clock::now(); // clock interface is based on chrono
+    
+    tmr(
+      now, 
+      [&]() {
+        toggle(port_a, mask(c_test_pin));
+      }
+    );
+  }
+  
+  return 0;
 }
-
-inline uint32_t system_core_clock()
-{
-  return SystemCoreClock;
-}
-
-inline uint32_t system_bus_clock()
-{
-  auto temp = SIM->CLKDIV1;
-  temp &=  SIM_CLKDIV1_OUTDIV2_MASK;
-  temp >>= SIM_CLKDIV1_OUTDIV2_SHIFT;
-  temp++;
-  return mcg_out_clock() / temp;
-}
-
-inline uint32_t system_flexbus_clock()
-{
-  auto temp = SIM->CLKDIV1;
-  temp &=  SIM_CLKDIV1_OUTDIV3_MASK;
-  temp >>= SIM_CLKDIV1_OUTDIV3_SHIFT;
-  temp++;
-  return mcg_out_clock() / temp;
-}
-
-inline uint32_t system_flash_clock()
-{
-  auto temp = SIM->CLKDIV1;
-  temp &=  SIM_CLKDIV1_OUTDIV4_MASK;
-  temp >>= SIM_CLKDIV1_OUTDIV4_SHIFT;
-  temp++;
-  return mcg_out_clock() / temp;
-}
-
-} // namespace kinetis
-
-} // namespace arm
-
-} // namespace devices
-
-} // namespace base
-
-} // namespace haluj
-
-
-#endif // HALUJ_BASE_DEVICE_KINETIS_

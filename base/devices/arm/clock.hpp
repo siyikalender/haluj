@@ -1,5 +1,5 @@
-/// \file core.hpp
-/// Core related functions
+/// \file clock.hpp
+/// clock 
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -29,10 +29,14 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_DEVICES_ARM_KINETIS_CORE_HPP
-#define HALUJ_BASE_DEVICES_ARM_KINETIS_CORE_HPP
+#ifndef HALUJ_BASE_DEVICES_ARM_CLOCK_HPP
+#define HALUJ_BASE_DEVICES_ARM_CLOCK_HPP
 
-#include "vendor.h"
+#include <chrono>
+
+#include "options.hpp"
+#include "core.hpp"
+#include "bitops.hpp"
 
 namespace haluj
 {
@@ -45,52 +49,19 @@ namespace devices
 
 namespace arm
 {
+ 
+struct precision_clock
+{
+  typedef std::chrono::microseconds   duration;
+  typedef duration::rep               rep;
+  typedef duration::period            period;
+  typedef std::chrono::time_point<precision_clock>  time_point;
+  static const bool                   is_steady = true;
   
-namespace kinetis
-{
-
-inline uint32_t mcg_out_clock()
-{
-  auto temp = SIM->CLKDIV1;
-  temp &=  SIM_CLKDIV1_OUTDIV1_MASK;
-  temp >>= SIM_CLKDIV1_OUTDIV1_SHIFT;
-  temp++;
-  return SystemCoreClock * temp;
-}
-
-inline uint32_t system_core_clock()
-{
-  return SystemCoreClock;
-}
-
-inline uint32_t system_bus_clock()
-{
-  auto temp = SIM->CLKDIV1;
-  temp &=  SIM_CLKDIV1_OUTDIV2_MASK;
-  temp >>= SIM_CLKDIV1_OUTDIV2_SHIFT;
-  temp++;
-  return mcg_out_clock() / temp;
-}
-
-inline uint32_t system_flexbus_clock()
-{
-  auto temp = SIM->CLKDIV1;
-  temp &=  SIM_CLKDIV1_OUTDIV3_MASK;
-  temp >>= SIM_CLKDIV1_OUTDIV3_SHIFT;
-  temp++;
-  return mcg_out_clock() / temp;
-}
-
-inline uint32_t system_flash_clock()
-{
-  auto temp = SIM->CLKDIV1;
-  temp &=  SIM_CLKDIV1_OUTDIV4_MASK;
-  temp >>= SIM_CLKDIV1_OUTDIV4_SHIFT;
-  temp++;
-  return mcg_out_clock() / temp;
-}
-
-} // namespace kinetis
+  static time_point initialize();
+  
+  static time_point now();
+};
 
 } // namespace arm
 
@@ -101,4 +72,6 @@ inline uint32_t system_flash_clock()
 } // namespace haluj
 
 
-#endif // HALUJ_BASE_DEVICE_KINETIS_
+// HALUJ_BASE_DEVICES_ARM_CLOCK_HPP
+#endif
+
