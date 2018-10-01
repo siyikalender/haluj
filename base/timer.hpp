@@ -1,5 +1,5 @@
 /// \file timer.hpp
-/// abstract software timers
+/// abstract std chrono compliant timer implementation
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -30,8 +30,14 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef TIMER_HPP
-#define TIMER_HPP
+#ifndef HALUJ_BASE_TIMER_HPP
+#define HALUJ_BASE_TIMER_HPP
+
+namespace haluj
+{
+
+namespace base
+{
 
 struct default_timer_function
 {
@@ -151,7 +157,9 @@ struct periodic_timer
   duration      period;
 };
 
+} // namespace base
 
+} // namespace haluj
 
-// TIMER_HPP
+// HALUJ_BASE_TIMER_HPP
 #endif

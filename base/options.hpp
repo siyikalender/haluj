@@ -1,4 +1,4 @@
-/// \file port.hpp
+/// \file options.hpp
 /// a generic options mechanism used for peripheral configuration
 /*
 This is free and unencumbered software released into the public domain.
