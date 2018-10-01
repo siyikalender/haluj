@@ -1,5 +1,5 @@
-/// \file peripheral.hpp
-/// generic peripheral definitions for Kinetis family devices
+/// \file null_lock.hpp
+/// An empty scoped lock can be used as indication of critical sections
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -29,12 +29,8 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-
-#ifndef _HALUJ_BASE_DEVICES_ARM_KINETIS_PERIPHERAL_HPP
-#define _HALUJ_BASE_DEVICES_ARM_KINETIS_PERIPHERAL_HPP
-
-#include "vendor.h"
-#include <cstdint>
+#ifndef HALUJ_BASE_NULL_LOCK_HPP
+#define HALUJ_BASE_NULL_LOCK_HPP
 
 namespace haluj
 {
@@ -42,46 +38,15 @@ namespace haluj
 namespace base
 {
 
-namespace devices
+struct null_lock
 {
+  null_lock() {}
 
-namespace arm
-{
-  
-namespace kinetis
-{
-
-typedef volatile uint32_t* reg_addr_type;
-
-template <typename Specifier>
-struct peripheral
-{
-  static constexpr reg_addr_type  scgc_addr() {return Specifier::scgc_addr;}
-  static constexpr uint32_t       scgc_mask() {return Specifier::scgc_mask;}
+  ~null_lock() {}
 };
-
-template<typename T>
-inline void open(T = T()) 
-{
-  *T::scgc_addr() |= T::scgc_mask();
-}
-
-template<typename T>
-inline void close(T = T()) 
-{
-  *T::scgc_addr() &= ~T::scgc_mask();
-}
-
-} // namespace kinetis
-
-} // namespace arm
-
-} // namespace devices
 
 } // namespace base
 
 } // namespace haluj
 
-// _HALUJ_BASE_DEVICES_ARM_KINETIS_PERIPHERAL_HPP
-#endif
-
+#endif // HALUJ_BASE_NULL_LOCK_HPP

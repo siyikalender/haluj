@@ -194,8 +194,8 @@ struct _I2C1
   static constexpr I2C_Type*      i2c_addr  = I2C1;
 };
 
-i2c<_I2C0>  i2c_0;
-i2c<_I2C1>  i2c_1;
+typedef i2c<_I2C0>  i2c_0;
+typedef i2c<_I2C1>  i2c_1;
 
 } // namespace mk60d10
 

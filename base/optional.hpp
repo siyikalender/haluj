@@ -1,5 +1,5 @@
-/// \file peripheral.hpp
-/// generic peripheral definitions for Kinetis family devices
+/// \file optional.hpp
+/// A lightweight std optional implementation
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -29,12 +29,10 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
+#ifndef HALUJ_BASE_OPTIONAL_HPP
+#define HALUJ_BASE_OPTIONAL_HPP
 
-#ifndef _HALUJ_BASE_DEVICES_ARM_KINETIS_PERIPHERAL_HPP
-#define _HALUJ_BASE_DEVICES_ARM_KINETIS_PERIPHERAL_HPP
-
-#include "vendor.h"
-#include <cstdint>
+#include <utility>
 
 namespace haluj
 {
@@ -42,46 +40,83 @@ namespace haluj
 namespace base
 {
 
-namespace devices
+struct nullopt_t
 {
-
-namespace arm
-{
-  
-namespace kinetis
-{
-
-typedef volatile uint32_t* reg_addr_type;
-
-template <typename Specifier>
-struct peripheral
-{
-  static constexpr reg_addr_type  scgc_addr() {return Specifier::scgc_addr;}
-  static constexpr uint32_t       scgc_mask() {return Specifier::scgc_mask;}
+  explicit constexpr nullopt_t(int) {}
 };
 
-template<typename T>
-inline void open(T = T()) 
-{
-  *T::scgc_addr() |= T::scgc_mask();
-}
+constexpr nullopt_t nullopt = nullopt_t(0);
 
 template<typename T>
-inline void close(T = T()) 
+struct optional
 {
-  *T::scgc_addr() &= ~T::scgc_mask();
-}
+  optional()
+  : m_initialized(false), 
+    m_value()
+  {}
+  
+  optional(const optional& p_other)
+  : m_initialized(p_other.m_initialized), 
+    m_value(p_other.m_value)
+  {}
+  
+  optional(const T& p_value)
+  : m_initialized(true), 
+    m_value(p_value)
+  {}
+  
+  explicit operator bool() const
+  {
+    return has_value();
+  }
+  
+  bool has_value() const
+  {
+    return m_initialized;
+  }
 
-} // namespace kinetis
+  void reset() 
+  {
+    m_initialized = false;
+  }
+  
+  T& operator *() &
+  {
+    return m_value;
+  }
 
-} // namespace arm
+  const T& operator *() const&
+  {
+    return m_value;
+  }
 
-} // namespace devices
+  template<typename U>
+  optional& operator=(U&& p_value)
+  {
+    m_initialized = true;
+    m_value       = std::forward<U>(p_value);
+    return *this;
+  }
+  
+  optional& operator=(const optional& p_other)
+  {
+    m_initialized = p_other.m_initialized;
+    m_value       = p_other.m_value;
+    return *this;
+  }
+  
+  optional& operator=(nullopt_t)
+  {
+    reset();
+    return *this;
+  }
+
+  bool  m_initialized;
+  T     m_value;
+};
 
 } // namespace base
 
 } // namespace haluj
 
-// _HALUJ_BASE_DEVICES_ARM_KINETIS_PERIPHERAL_HPP
-#endif
-
+#endif // HALUJ_BASE_OPTIONAL_HPP
