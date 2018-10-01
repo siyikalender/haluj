@@ -39,18 +39,31 @@ using namespace haluj::base::devices::arm::kinetis::specific;
 int main()
 {
   // open function enables the clock gating
-  open(uart_0); // depending on the device other uarts may be available
+  open<uart_0>(); // depending on the device other uarts may be available
+  open<uart_1>(); // depending on the device other uarts may be available
 
   // configure, disables transmit and receive, then applies options, 
   // finally enables transmit and receive
-  configure(uart_0, 
-            options(baud_rate<9600>(), 
-                    bits::_8, 
-                    parity::none,  
-                    stop_bits::one)); // all  default: 9600, 8 bits, No partiy, 1 stop bits;
+  uart_0::configure( 
+    options(uart_0::baud_rate<9600>(), 
+            uart_0::bits::_8, 
+            uart_0::parity::none,  
+            uart_0::stop_bits::one)); // all  default: 9600, 8 bits, No partiy, 1 stop bits;
+
+  uart_1::configure( 
+    options(uart_1::baud_rate<9600>(), 
+            uart_1::bits::_8, 
+            uart_1::parity::none,  
+            uart_1::stop_bits::one)); // all  default: 9600, 8 bits, No partiy, 1 stop bits;
+
+  while(!uart_0::is_tx_ready());
+  uart_0::write(0x55);
+  while(!uart_1::is_rx_available());
+  if (uart_1::read() == 0x55)
 
   // close function disables the clock gating
-  close(uart_0);
+  close<uart_0>();
+  close<uart_1>();
   
   return 0;
 }

@@ -161,6 +161,8 @@ struct i2c : peripheral<Specifier>
     }
   };
   
+  // Static Methods
+  
   static constexpr  uint32_t status()
   {
     #if defined(K64F12) || defined(K60D10)
@@ -204,140 +206,6 @@ struct i2c : peripheral<Specifier>
   }
   
 };
-/*
-  // Control Options
-
-  template<bool Value> 
-  struct i2c_ack_option
-  {
-    static constexpr bool value    = Value;
-    
-    template<typename T>
-    uint32_t accept(i2c<T>)
-    {
-      *static*if (value)
-        i2c<T>::i2c_addr()->C1 &= ~I2C_C1_TXAK_MASK;
-      else
-        i2c<T>::i2c_addr()->C1 |= I2C_C1_TXAK_MASK;
-      return  0;
-    }
-  };
-
-  template<bool Value> 
-  struct i2c_tx_option
-  {
-    static constexpr bool value    = Value;
-    
-    template<typename T>
-    uint32_t accept(i2c<T>)
-    {
-      *static*if (value)
-        i2c<T>::i2c_addr()->C1 |= I2C_C1_TX_MASK;
-      else
-        i2c<T>::i2c_addr()->C1 &= ~I2C_C1_TX_MASK;
-      return  0;
-    }
-  };
-
-  struct i2c_idle_option
-  {
-    template<typename T>
-    uint32_t accept(i2c<T>)
-    {
-      i2c<T>::i2c_addr()->C1 = I2C_C1_IICEN_MASK;
-      return  0;
-    }
-  };
-
-  struct i2c_repeated_start_option
-  {
-    template<typename T>
-    uint32_t accept(i2c<T>)
-    {
-      // repeated_start(*i2c<T>::i2c_addr());
-      i2c<T>::i2c_addr()->C1 |= I2C_C1_RSTA_MASK;
-      return  0;
-    }
-  };
-
-  struct i2c_clear_iicif_option
-  {
-    template<typename T>
-    uint32_t accept(i2c<T>)
-    {
-      #if defined(K64F12) || defined(K60D10)
-      i2c<T>::i2c_addr()->S |= I2C_S_IICIF_MASK;
-      #else
-      i2c<T>::i2c_addr()->S1 |= I2C_S_IICIF_MASK;
-      #endif
-      return  0;
-    }
-  };
-
-  struct i2c_clear_arbl_option
-  {
-    template<typename T>
-    uint32_t accept(i2c<T>)
-    {
-      #if defined(K64F12) || defined(K60D10)
-      i2c<T>::i2c_addr()->S  |= I2C_S_ARBL_MASK;
-      #else
-      i2c<T>::i2c_addr()->S1 |= I2C_S_ARBL_MASK;
-      #endif
-      return  0;
-    }
-  };
- 
-struct i2c_control_options
-{
-  static i2c_ack_option<false>       disable_ack;
-  static i2c_ack_option<true>        enable_ack;
-  static i2c_tx_option<false>        disable_tx;
-  static i2c_tx_option<true>         enable_tx;
-  static i2c_idle_option             idle;
-  static i2c_repeated_start_option   repeated_start;
-  static i2c_clear_iicif_option      clear_iicf;
-  static i2c_clear_arbl_option       clear_arbl;
-};
-*/
-////////////////////////////////////////
-/*
-template<typename T, typename Options>
-inline void control(i2c<T> p_i2c, Options p_opts)
-{
-  (void) p_opts.template accept<uint32_t>(p_i2c, null_op());  
-}
-
-template<typename T, typename Options>
-inline uint32_t status(i2c<T> p_i2c, Options p_opts)
-{
-  #if defined(K64F12) || defined(K60D10)
-  return i2c<T>::i2c_addr()->S;
-  #else
-  return i2c<T>::i2c_addr()->S1;
-  #endif
-}
-
-template<typename T>
-inline void start(i2c<T>)
-{
-  i2c<T>::i2c_addr()->C1 |= I2C_C1_MST_MASK;
-}
-
-template<typename T>
-inline void stop(i2c<T>)
-{
-  i2c<T>::i2c_addr()->C1 &= ~I2C_C1_MST_MASK;
-}
-
-template<typename T>
-inline void clear(i2c<T>)
-{
-  i2c<T>::i2c_addr()->C1 = 0U;
-  i2c<T>::i2c_addr()->A1 = 0U;    
-}
-*/
-
 
 } // namespace kinetis
 

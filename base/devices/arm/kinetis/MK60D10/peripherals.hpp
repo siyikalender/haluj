@@ -100,11 +100,11 @@ struct E
   static constexpr GPIO_Type* gpio_addr   = GPIOE;
 };
 
-port<A>  port_a;
-port<B>  port_b;
-port<C>  port_c;
-port<D>  port_d;
-port<E>  port_e;
+typedef port<A>  port_a;
+typedef port<B>  port_b;
+typedef port<C>  port_c;
+typedef port<D>  port_d;
+typedef port<E>  port_e;
 
 // UARTS 
 
@@ -148,10 +148,10 @@ struct U4
   static constexpr bool           uses_core_clock = false;
 };
 
-uart<U0>  uart_0;
-uart<U1>  uart_1;
-uart<U2>  uart_2;
-uart<U4>  uart_4;
+typedef uart<U0>  uart_0;
+typedef uart<U1>  uart_1;
+typedef uart<U2>  uart_2;
+typedef uart<U4>  uart_4;
 
 // SPI 
 struct _SPI0

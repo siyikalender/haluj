@@ -39,31 +39,33 @@ using namespace haluj::base::devices::arm::kinetis::specific;
 int main()
 {
   // open function enables the clock gating of the peripheral
-  open(port_a);
-  // open(port_b);
-  // open(port_c);
-  // open(port_d);
-  // open(port_e);
+  open<port_a>();
+  // open<port_b>();
+  // open<port_c>();
+  // open<port_d>();
+  // open<port_e>();
   
   // configure port zero to appropriate function
-  configure(port_a, 2, options(mux::_1, pull::down, slew_rate::slow));
+  port_a::configure(2, options(port_a::mux::_1, 
+                               port_a::pull::down, 
+                               port_a::slew_rate::slow));
 
   // create mask for bits 1, 2, 3 that makes 0xE
   uint32_t m = mask(1U, 2U, 3U);
   // set direction by setting the mask
-  set_direction(port_a, m);
-  set(port_a,    m);
-  clear(port_a,  m);
-  toggle(port_a, m);
-  write(port_a, m);
-  uint32_t r = read(port_a);
+  port_a::set_direction(m);
+  port_a::set(m);
+  port_a::clear(m);
+  port_a::toggle(m);
+  port_a::write(m);
+  uint32_t r = port_a::read();
 
   // close function disables the clock gating
-  close(port_a);
-  // close(port_b);
-  // close(port_c);
-  // close(port_d);
-  // close(port_e);
+  close<port_a>();
+  // close<port_b>();
+  // close<port_c>();
+  // close<port_d>();
+  // close<port_e>();
 
   return 0;
 }

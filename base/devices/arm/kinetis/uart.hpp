@@ -58,112 +58,133 @@ struct uart : peripheral<Specifier>
 {
   static constexpr UART_Type*  uart_addr()       {return Specifier::uart_addr;}
   static constexpr bool        uses_core_clock() {return Specifier::uses_core_clock;}
-};
 
-template<uint32_t Value> 
-struct baud_rate
-{
-  static constexpr uint32_t value    = Value;
-  
-  template<typename T>
-  uint32_t accept(uart<T>)
+  template<uint32_t Value> 
+  struct baud_rate
   {
-    uint32_t peripheral_clock = system_core_clock();
-    /*static*/ if (!uart<T>::uses_core_clock())
+    static constexpr uint32_t value    = Value;
+    
+    template<typename T>
+    uint32_t accept(uart<T>)
     {
-      peripheral_clock = system_bus_clock();
+      uint32_t peripheral_clock = system_core_clock();
+      /*static*/ if (!uart<T>::uses_core_clock())
+      {
+        peripheral_clock = system_bus_clock();
+      }
+      uint32_t sbr = specific::set_baud_rate(*uart<T>::uart_addr(),  peripheral_clock, value);
+      (void) specific::set_fractional_divider(*uart<T>::uart_addr(), peripheral_clock, value, sbr);
+      return  0;
     }
-    uint32_t sbr = specific::set_baud_rate(*uart<T>::uart_addr(),  peripheral_clock, value);
-    (void) specific::set_fractional_divider(*uart<T>::uart_addr(), peripheral_clock, value, sbr);
-    return  0;
-  }
-};
+  };
 
-template<uint32_t Value> 
-struct bits_option
-{
-  static constexpr uint32_t value    = Value;
-  
-  template<typename T>
-  uint32_t accept(uart<T>)
+  template<uint32_t Value> 
+  struct bits_option
   {
-    specific::set_bits(*uart<T>::uart_addr(), value);
-    return  0;
-  }
-};
+    static constexpr uint32_t value    = Value;
+    
+    template<typename T>
+    uint32_t accept(uart<T>)
+    {
+      specific::set_bits(*uart<T>::uart_addr(), value);
+      return  0;
+    }
+  };
 
-struct bits
-{
-  static bits_option<8>   _8;
-  static bits_option<9>   _9;
-  static bits_option<10>  _10;
-};
-
-template<uint32_t Value> 
-struct parity_option
-{
-  static constexpr uint32_t value    = Value;
-  
-  template<typename T>
-  uint32_t accept(uart<T>)
+  struct bits
   {
-    specific::set_parity(*uart<T>::uart_addr(), value);
-    return  0;
-  }
-};
+    static bits_option<8>   _8;
+    static bits_option<9>   _9;
+    static bits_option<10>  _10;
+  };
 
-struct parity
-{
-  static parity_option<0>   none;
-  static parity_option<1>   even;
-  static parity_option<2>   odd ;
-};
-
-template<uint32_t Value> 
-struct stop_bits_option
-{
-  static constexpr uint32_t value    = Value;
-  
-  template<typename T>
-  uint32_t accept(uart<T>)
+  template<uint32_t Value> 
+  struct parity_option
   {
-    specific::set_stop_bits(*uart<T>::uart_addr(), value);
-    return  0;
+    static constexpr uint32_t value    = Value;
+    
+    template<typename T>
+    uint32_t accept(uart<T>)
+    {
+      specific::set_parity(*uart<T>::uart_addr(), value);
+      return  0;
+    }
+  };
+
+  struct parity
+  {
+    static parity_option<0>   none;
+    static parity_option<1>   even;
+    static parity_option<2>   odd ;
+  };
+
+  template<uint32_t Value> 
+  struct stop_bits_option
+  {
+    static constexpr uint32_t value    = Value;
+    
+    template<typename T>
+    uint32_t accept(uart<T>)
+    {
+      specific::set_stop_bits(*uart<T>::uart_addr(), value);
+      return  0;
+    }
+  };
+
+  struct stop_bits
+  {
+    static stop_bits_option<0>    one;
+    static stop_bits_option<1>    two;
+  };
+  
+  // Static Methods  
+  
+  static constexpr uint32_t read() 
+  {
+    return uart_addr()->D;
   }
-};
+  
+  static constexpr bool is_rx_available() 
+  {
+    return mask_test(uart_addr()->S1, UART_S1_RDRF_MASK);
+  }
+  
+  static constexpr void write(const uint8_t p_data) 
+  {
+    uart_addr()->D = p_data;
+  }
 
-struct stop_bits
-{
-  static stop_bits_option<0>    one;
-  static stop_bits_option<1>    two;
-};
+  static constexpr bool is_tx_ready() 
+  {
+    return mask_test(uart_addr()->S1, UART_S1_TDRE_MASK);
+  }  
 
-template<typename T>
-inline void start(uart<T>)
-{
-  uart<T>::uart_addr()->C2 = 
-    mask_set(uart<T>::uart_addr()->C2, 
-             UART_C2_TE_MASK | UART_C2_RE_MASK);
-}
-
-template<typename T>
-inline void stop(uart<T>)
-{
-  uart<T>::uart_addr()->C2 = 
-    mask_clear(uart<T>::uart_addr()->C2, 
+  static constexpr void start()
+  {
+    uart_addr()->C2 = 
+      mask_set(uart_addr()->C2, 
                UART_C2_TE_MASK | UART_C2_RE_MASK);
-}
+  }
 
-template<typename T, typename Options>
-inline void configure(uart<T> p_uart, Options p_opts)
-{
-  stop(p_uart);
-  uart<T>::uart_addr()->C1  = 0;
-  uart<T>::uart_addr()->C4  = 0;
-  uart<T>::uart_addr()->BDH = 0;
-  p_opts.template accept<uint32_t>(p_uart, null_op());
-  start(p_uart);
-}
+  static constexpr void stop()
+  {
+    uart_addr()->C2 = 
+      mask_clear(uart_addr()->C2, 
+                 UART_C2_TE_MASK | UART_C2_RE_MASK);
+  }
+
+  template<typename Options>
+  static constexpr void configure(Options p_opts)
+  {
+    stop();
+    uart_addr()->C1  = 0;
+    uart_addr()->C4  = 0;
+    uart_addr()->BDH = 0;
+    p_opts.template accept<uint32_t>(uart<Specifier>(), null_op());
+    start();
+  }
+
+};
 
 } // namespace kinetis
 
