@@ -1,5 +1,6 @@
 /// \file uart.cpp
-/// Example code for uart usage
+/// Example code for uart usage. This example demonstrates an 
+/// implementation of a echo terminal
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -40,9 +41,18 @@ int main()
 {
   // open function enables the clock gating
   open<uart_0>(); // depending on the device other uarts may be available
-  open<uart_1>(); // depending on the device other uarts may be available
+  open<port_d>(); // pin 6 and 7 of port d is used for uart
+  
+  // configure port zero to uart function. 
+  // Configuration is MK60D100 100 pin devices specific
+  // Please modify for the intended device
+  port_d::configure(6, options(port_d::mux::_3,     // uart 0 rx
+                               port_d::pull::up));
 
-  // configure, disables transmit and receive, then applies options, 
+  port_d::configure(7, options(port_d::mux::_3));   // uart 0 tx
+
+  // configure function, disables transmit and receive, 
+  // then applies options, 
   // finally enables transmit and receive
   uart_0::configure( 
     options(uart_0::baud_rate<9600>(), 
@@ -50,20 +60,18 @@ int main()
             uart_0::parity::none,  
             uart_0::stop_bits::one)); // all  default: 9600, 8 bits, No partiy, 1 stop bits;
 
-  uart_1::configure( 
-    options(uart_1::baud_rate<9600>(), 
-            uart_1::bits::_8, 
-            uart_1::parity::none,  
-            uart_1::stop_bits::one)); // all  default: 9600, 8 bits, No partiy, 1 stop bits;
+  uint8_t d = 0;
 
-  while(!uart_0::is_tx_ready());
-  uart_0::write(0x55);
-  while(!uart_1::is_rx_available());
-  if (uart_1::read() == 0x55)
-
+  while (char(d) != 'q')
+  {
+    while(!uart_0::is_rx_available());  // wait for byte available
+    d = uart_0::read();                 // read byte
+    while(!uart_0::is_tx_ready());      // wait for transmitter is ready
+    uart_0::write(d);                   // send byte
+  }
   // close function disables the clock gating
   close<uart_0>();
-  close<uart_1>();
+  close<port_d>();
   
   return 0;
 }
