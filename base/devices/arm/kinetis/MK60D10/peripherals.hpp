@@ -175,9 +175,9 @@ struct _SPI2
   static constexpr SPI_Type*      spi_addr  = SPI2;
 };
 
-spi<_SPI0>  spi_0;
-spi<_SPI1>  spi_1;
-spi<_SPI2>  spi_2;
+typedef spi<_SPI0>  spi_0;
+typedef spi<_SPI1>  spi_1;
+typedef spi<_SPI2>  spi_2;
 
 // SPI 
 struct _I2C0
