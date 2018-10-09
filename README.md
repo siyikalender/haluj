@@ -16,17 +16,29 @@ Prior to build, the parameters listed below in k60d10.defs (under build folder) 
 
 Framework usage examples are provided and can be found under appropriate folder. 
 
-To build the gpio example, change the current directory to build
+To build the gpio example, change the current directory to **build**
 ```
 ..>cd build
 ```
-and then execute
+and then execute either the long way
 ```
-..>make DEFS=k60d10.defs NAME=gpio-example MAIN_DIR=examples/gpio
+..>make -f Makefile.module DEFS=k60d10.defs NAME=gpio-example MAIN_DIR=examples/gpio
 ```
-Other examples can be build similarly.
-
+or the short way
+```
+..>make gpio DEFS=k60d10.defs 
+```
+Other examples can be build similarly. It is possible to build all examples by executing only
+```
+..>make DEFS=k60d10.defs 
+```
 The outputs (.bin and .elf) are produced in a folder with "out" prefix. 
+
+For cleaning the build execute
+```
+..>make clean DEFS=k60d10.defs 
+```
+There is limitation for **clean** that it removes all of the example build output directories. It cannot be done for specific example. However, **clean** can be performed by using the long way described above.
 
 ## Supported Devices
 
