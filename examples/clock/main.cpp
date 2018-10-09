@@ -44,11 +44,11 @@ constexpr uint32_t c_test_pin = 15;
 
 int main()
 {
-  open(port_a);
+  open<port_a>();
   
-  configure(port_a, c_test_pin, options(mux::_1));
+  port_a::configure(c_test_pin, options(port_a::mux::_1));
   
-  set_direction(port_a, mask(c_test_pin));
+  port_a::set_direction(mask(c_test_pin));
   
   periodic_timer<precision_clock::time_point, milliseconds>    
     tmr(milliseconds(1000)); // software timers are clock agnostic
@@ -64,7 +64,7 @@ int main()
     tmr(
       now, 
       [&]() {
-        toggle(port_a, mask(c_test_pin));
+        port_a::toggle(mask(c_test_pin));
       }
     );
   }
