@@ -141,45 +141,39 @@ struct uart : peripheral<Specifier>
   
   static constexpr uint32_t read() 
   {
-    return uart_addr()->D;
+    return specific::read(*uart_addr());
   }
   
   static constexpr bool is_rx_available() 
   {
-    return mask_test(uart_addr()->S1, UART_S1_RDRF_MASK);
+    return specific::is_rx_available(*uart_addr());
   }
   
   static constexpr void write(const uint8_t p_data) 
   {
-    uart_addr()->D = p_data;
+    specific::write(*uart_addr(), p_data);
   }
 
-  static constexpr bool is_tx_ready() 
+  static constexpr bool is_tx_ready()
   {
-    return mask_test(uart_addr()->S1, UART_S1_TDRE_MASK);
+    return specific::is_tx_ready(*uart_addr());
   }  
 
   static constexpr void start()
   {
-    uart_addr()->C2 = 
-      mask_set(uart_addr()->C2, 
-               UART_C2_TE_MASK | UART_C2_RE_MASK);
+    specific::start(*uart_addr());
   }
 
   static constexpr void stop()
   {
-    uart_addr()->C2 = 
-      mask_clear(uart_addr()->C2, 
-                 UART_C2_TE_MASK | UART_C2_RE_MASK);
+    specific::stop(*uart_addr());
   }
 
   template<typename Options>
   static constexpr void configure(Options p_opts)
   {
     stop();
-    uart_addr()->C1  = 0;
-    uart_addr()->C4  = 0;
-    uart_addr()->BDH = 0;
+    specific::clear(*uart_addr());
     p_opts.template accept<uint32_t>(uart<Specifier>(), null_op());
     start();
   }

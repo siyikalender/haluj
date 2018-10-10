@@ -1,5 +1,5 @@
-/// \file core.hpp
-/// Core related functions
+/// \file peripherals.hpp
+/// specific peripheral definitions for Kinetis MKL03 family devices
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -29,11 +29,16 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_DEVICES_ARM_KINETIS_CORE_HPP
-#define HALUJ_BASE_DEVICES_ARM_KINETIS_CORE_HPP
+#ifndef HALUJ_BASE_DEVICES_ARM_KINETIS_MKL03_PERIPHERALS_HPP
+#define HALUJ_BASE_DEVICES_ARM_KINETIS_MKL03_PERIPHERALS_HPP
+
+#include <cstdint>
 
 #include "vendor.h"
-#include "bitops.hpp"
+#include "port.hpp"
+#include "uart.hpp"
+// #include "spi.hpp"
+#include "i2c.hpp"
 
 namespace haluj
 {
@@ -46,49 +51,50 @@ namespace devices
 
 namespace arm
 {
-  
+
 namespace kinetis
 {
 
-inline uint32_t get_clkdiv_scalar(const uint32_t p_shift)
+namespace mkl03
 {
-  auto temp = SIM->CLKDIV1;
-  temp &=  mask(p_shift);
-  temp >>= p_shift;
-  temp++;
-  return temp;
-}
 
-inline uint32_t mcg_out_clock()
-{
-  return SystemCoreClock * get_clkdiv_scalar(SIM_CLKDIV1_OUTDIV1_SHIFT);
-}
+// PORTS 
 
-inline uint32_t system_core_clock()
+struct A
 {
-  return SystemCoreClock;
-}
+  static constexpr reg_addr_type  scgc_addr   = &(SIM->SCGC5);
+  static constexpr uint32_t   scgc_mask   = SIM_SCGC5_PORTA_MASK;
+  static constexpr PORT_Type* port_addr   = PORTA;
+  static constexpr GPIO_Type* gpio_addr   = GPIOA;
+};
 
-inline uint32_t system_bus_clock()
+struct B
 {
-#ifdef SIM_CLKDIV1_OUTDIV2_SHIFT
-  return mcg_out_clock() / get_clkdiv_scalar(SIM_CLKDIV1_OUTDIV2_SHIFT);
-#else
-  return system_core_clock();
-#endif // SIM_CLKDIV1_OUTDIV2_SHIFT
-}
+  static constexpr reg_addr_type  scgc_addr   = &(SIM->SCGC5);
+  static constexpr uint32_t   scgc_mask   = SIM_SCGC5_PORTB_MASK;
+  static constexpr PORT_Type* port_addr   = PORTB;
+  static constexpr GPIO_Type* gpio_addr   = GPIOB;
+};
 
-#ifdef SIM_CLKDIV1_OUTDIV3_SHIFT
-inline uint32_t system_flexbus_clock()
-{
-  return mcg_out_clock() / get_clkdiv_scalar(SIM_CLKDIV1_OUTDIV3_SHIFT);
-}
-#endif // SIM_CLKDIV1_OUTDIV3_SHIFT
+typedef port<A>  port_a;
+typedef port<B>  port_b;
 
-inline uint32_t system_flash_clock()
+// UARTS 
+// SPI 
+// I2C
+
+struct _I2C0
 {
-  return mcg_out_clock() / get_clkdiv_scalar(SIM_CLKDIV1_OUTDIV4_SHIFT);
-}
+  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
+  static constexpr uint32_t       scgc_mask = SIM_SCGC4_I2C0_MASK;  
+  static constexpr I2C_Type*      i2c_addr  = I2C0;
+};
+
+typedef i2c<_I2C0>  i2c_0;
+
+} // namespace mkl03
+
+namespace specific = mkl03;
 
 } // namespace kinetis
 
@@ -100,5 +106,6 @@ inline uint32_t system_flash_clock()
 
 } // namespace haluj
 
+// HALUJ_BASE_DEVICES_ARM_KINETIS_MKL03_PERIPHERALS_HPP
+#endif
 
-#endif // HALUJ_BASE_DEVICE_KINETIS_

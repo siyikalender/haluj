@@ -1,5 +1,5 @@
 /// \file specific.hpp
-/// specific definitions for Kinetis MK60D10 family devices
+/// specific definitions for Kinetis MKL03 family devices
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -29,8 +29,8 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_DEVICES_ARM_KINETIS_MK60D10_SPECIFIC_HPP
-#define HALUJ_BASE_DEVICES_ARM_KINETIS_MK60D10_SPECIFIC_HPP
+#ifndef HALUJ_BASE_DEVICES_ARM_KINETIS_MKL03_SPECIFIC_HPP
+#define HALUJ_BASE_DEVICES_ARM_KINETIS_MKL03_SPECIFIC_HPP
 
 #include <cstdint>
 #include "vendor.h"
@@ -50,20 +50,17 @@ namespace arm
 namespace kinetis
 {
 
-namespace mk60d10
+namespace mkl03
 {
 
 /// \fn set_baud_rate
 /// \brief Sets baud rate registers. Assumed UART BDH register is cleared
 inline uint32_t 
-set_baud_rate(UART_Type&      p_device, 
+set_baud_rate(LPUART_Type&      p_device, 
               const uint32_t  p_peripheral_clock, 
               const uint32_t  p_baud_rate) 
 {
-  uint32_t result = (p_peripheral_clock / (p_baud_rate * 16U));;
-  p_device.BDH |= UART_BDH_SBR(result >> 8); 
-  p_device.BDL  = UART_BDL_SBR(result);
-  return result;
+  return 0;
 }
 
 /// \fn set_fractional_divider
@@ -74,9 +71,7 @@ set_fractional_divider(UART_Type&      p_device,
                        const uint32_t  p_baud_rate,
                        const uint32_t  p_sbr) 
 {
-  uint32_t  result  = ((p_peripheral_clock * 2)/(p_baud_rate)) - (p_sbr * 32);
-  p_device.C4 |= UART_C4_BRFA(result);
-  return result;
+  return 0;
 }
 
 /// \fn set_bits
@@ -90,10 +85,8 @@ set_bits(UART_Type&       p_device,
   default:
     break;
   case 9:
-    p_device.C1 = mask_set(p_device.C1, UART_C1_M_MASK);
     break;
   case 10:
-    p_device.C4 = mask_set(p_device.C4, UART_C4_M10_MASK);
     break;
   }
 }
@@ -104,16 +97,13 @@ inline void
 set_parity(UART_Type&       p_device, 
            const uint32_t   p_value)
 {
-  // UARTx_C1 register is assumed to be cleared
   switch(p_value)
   {
   default: // 0 none
     break;
   case 1:
-    p_device.C1 = mask_set(p_device.C1, UART_C1_PE_MASK);
     break;
   case 2:
-    p_device.C1 = mask_set(p_device.C1, UART_C1_PE_MASK | UART_C1_PT_MASK);
     break;
   }
 }
@@ -124,65 +114,44 @@ inline void
 set_stop_bits(UART_Type&       p_device, 
               const uint32_t   p_value)
 {
-  // UARTx_C1 register is assumed to be cleared
   switch(p_value)
   {
   default:  // one
     break;
   case 1:   // two
-    #ifdef UART_BDH_SBNS_MASK
-    p_device.BDH = mask_set(p_device.BDH, UART_BDH_SBNS_MASK);
-    #endif
     break;
   }
 }
 
-inline uint32_t 
-read(UART_Type& p_device) 
+inline uint32_t read() 
 {
-  return p_device.D;
+  return 0;
 }
 
-inline bool 
-is_rx_available(UART_Type& p_device) 
+inline bool is_rx_available(UART_Type&       p_device) 
 {
-  return mask_test(p_device.S1, UART_S1_RDRF_MASK);
+  return false;
 }
 
-inline void 
-write(UART_Type&       p_device, const uint8_t p_data) 
+inline  void write(UART_Type&       p_device, const uint8_t p_data) 
 {
-  p_device.D = p_data;
 }
 
-inline bool
-is_tx_ready(UART_Type& p_device) 
+inline bool is_tx_ready(UART_Type&       p_device) 
 {
-  return mask_test(p_device.S1, UART_S1_TDRE_MASK);
+  return false;
 }  
 
-inline void 
-start(UART_Type& p_device)
+inline void start(UART_Type&       p_device)
 {
-  p_device.C2 = 
-    mask_set(p_device.C2, 
-             UART_C2_TE_MASK | UART_C2_RE_MASK);
 }
 
-inline void 
-stop(UART_Type& p_device)
+inline void stop(UART_Type&       p_device)
 {
-  p_device.C2 = 
-    mask_clear(p_device.C2, 
-               UART_C2_TE_MASK | UART_C2_RE_MASK);
 }
 
-inline void 
-clear(UART_Type& p_device)
+inline void clear(UART_Type&       p_device)
 {
-  p_device.C1  = 0;
-  p_device.C4  = 0;
-  p_device.BDH = 0;
 }
 
 /////////////////////////////////////////////////////////////
@@ -192,13 +161,13 @@ clear(UART_Type& p_device)
 inline void
 clear(SPI_Type& p_device)
 {
-  p_device.MCR     = SPI_MCR_MDIS_MASK | SPI_MCR_HALT_MASK;
-  p_device.CTAR[0] = SPI_CTAR_PASC(2)    | 
-                     SPI_CTAR_ASC(1)     | 
-                     SPI_CTAR_PCSSCK(2)  | 
-                     SPI_CTAR_CSSCK(1)   | 
-                     SPI_CTAR_PBR(2)     | 
-                     SPI_CTAR_BR(4);
+// p_device.MCR     = SPI_MCR_MDIS_MASK | SPI_MCR_HALT_MASK;
+// p_device.CTAR[0] = SPI_CTAR_PASC(2)    | 
+//                    SPI_CTAR_ASC(1)     | 
+//                    SPI_CTAR_PCSSCK(2)  | 
+//                    SPI_CTAR_CSSCK(1)   | 
+//                    SPI_CTAR_PBR(2)     | 
+//                    SPI_CTAR_BR(4);
 }
 
 /// \fn start
@@ -206,7 +175,7 @@ clear(SPI_Type& p_device)
 inline void
 start(SPI_Type& p_device)
 {
-  p_device.MCR |= SPI_MCR_HALT_MASK;
+//  p_device.MCR |= SPI_MCR_HALT_MASK;
 }
 
 /// \fn stop
@@ -214,14 +183,14 @@ start(SPI_Type& p_device)
 inline void
 stop(SPI_Type& p_device)
 {
-  p_device.MCR &= ~SPI_MCR_HALT_MASK;
+//  p_device.MCR &= ~SPI_MCR_HALT_MASK;
 }
 
 /////////////////////////////////////////////////////////////
 
-} // namespace mk60d10
+} // namespace mkl03
 
-namespace specific = mk60d10;
+namespace specific = mkl03;
 
 } // namespace kinetis
 
@@ -233,6 +202,6 @@ namespace specific = mk60d10;
 
 } // namespace haluj
 
-// HALUJ_BASE_DEVICES_ARM_KINETIS_MK60D10_SPECIFIC_HPP
+// HALUJ_BASE_DEVICES_ARM_KINETIS_MKL03_SPECIFIC_HPP
 #endif
 

@@ -1,7 +1,36 @@
-/**
- ** This file is released under Creative Commons Zero - CC0
- **/
+/** \file startup_k60d.c */
+/** specific peripheral definitions for Kinetis MKL03 family devices */
+/*
+This is free and unencumbered software released into the public domain.
 
+Anyone is free to copy, modify, publish, use, compile, sell, or
+distribute this software, either in source code form or as a compiled
+binary, for any purpose, commercial or non-commercial, and by any
+means.
+
+In jurisdictions that recognize copyright laws, the author or authors
+of this software dedicate any and all copyright interest in the
+software to the public domain. We make this dedication for the benefit
+of the public at large and to the detriment of our heirs and
+successors. We intend this dedication to be an overt act of
+relinquishment in perpetuity of all present and future rights to this
+software under copyright law.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+
+For more information, please refer to <http://unlicense.org>
+*/
+/**
+ * \author Martin Kojtal - 0xc0170 (Author of orijinal)
+ * \author Selcuk Iyikalender - siyikalender 
+ * \date   2018
+*/
 /*
 Based on 0xc0170's startup_k60.c, WTFPL 2
 
@@ -120,24 +149,27 @@ void Software_irq_isr(void) __attribute__ ((weak, alias ("default_isr")));
 }
 #endif
 
+/** 
+ * \brief  Interrupt service routines located in flash
+ */
 __attribute__ ((section(".isr_vector")))
 void (* const g_pfnVectors[])(void) = {
-  &__StackTop,                             // The initial stack pointer
-  reset_isr,                           // The reset _isr
-  NMI_isr,                             // The NMI _isr
-  HardFault_isr,                       // The hard fault _isr
-  MemManage_isr,                       // The MPU fault _isr
-  BusFault_isr,                        // The bus fault _isr
-  UsageFault_isr,                      // The usage fault _isr
-  0,                                       // Reserved
-  0,                                       // Reserved
-  0,                                       // Reserved
-  0,                                       // Reserved
-  SVC_isr,                             // SVCall _isr
-  DebugMonitor_isr,                    // Debug monitor _isr
-  0,                                       // Reserved
-  PendSV_isr,                          // The PendSV _isr
-  SysTick_isr,                         // The SysTick _isr
+  &__StackTop,                          // The initial stack pointer
+  reset_isr,                            // The reset _isr
+  NMI_isr,                              // The NMI _isr
+  HardFault_isr,                        // The hard fault _isr
+  MemManage_isr,                        // The MPU fault _isr
+  BusFault_isr,                         // The bus fault _isr
+  UsageFault_isr,                       // The usage fault _isr
+  0,                                    // Reserved
+  0,                                    // Reserved
+  0,                                    // Reserved
+  0,                                    // Reserved
+  SVC_isr,                              // SVCall _isr
+  DebugMonitor_isr,                     // Debug monitor _isr
+  0,                                    // Reserved
+  PendSV_isr,                           // The PendSV _isr
+  SysTick_isr,                          // The SysTick _isr
   DMA0_irq_isr,                         // DMA Channel 0 Transfer Complete
   DMA1_irq_isr,                         // DMA Channel 1 Transfer Complete
   DMA2_irq_isr,                         // DMA Channel 2 Transfer Complete
@@ -154,11 +186,11 @@ void (* const g_pfnVectors[])(void) = {
   DMA13_irq_isr,                        // DMA Channel 13 Transfer Complete
   DMA14_irq_isr,                        // DMA Channel 14 Transfer Complete
   DMA15_irq_isr,                        // DMA Channel 15 Transfer Complete
-  DMAError_irq_isr,                    // DMA Error Interrupt
+  DMAError_irq_isr,                     // DMA Error Interrupt
   MCM_irq_isr,                          // Normal Interrupt
   FTFL_irq_isr,                         // FTFL Interrupt
-  ReadCollision_irq_isr,               // Read Collision Interrupt
-  LVDLVW_irq_isr,                      // Low Voltage Detect, Low Voltage Warning
+  ReadCollision_irq_isr,                // Read Collision Interrupt
+  LVDLVW_irq_isr,                       // Low Voltage Detect, Low Voltage Warning
   LLW_irq_isr,                          // Low Leakage Wakeup
   Watchdog_irq_isr,                     // WDOG Interrupt
   RNG_irq_isr,                          // RNGB Interrupt
@@ -167,35 +199,35 @@ void (* const g_pfnVectors[])(void) = {
   SPI0_irq_isr,                         // SPI0 Interrupt
   SPI1_irq_isr,                         // SPI1 Interrupt
   SPI2_irq_isr,                         // SPI2 Interrupt
-  CAN0ORedMessageBuffer_irq_isr,     // CAN0 OR'd Message Buffers Interrupt
-  CAN0BusOff_irq_isr,                 // CAN0 Bus Off Interrupt
-  CAN0Error_irq_isr,                   // CAN0 Error Interrupt
-  CAN0TxWarning_irq_isr,              // CAN0 Tx Warning Interrupt
-  CAN0RxWarning_irq_isr,              // CAN0 Rx Warning Interrupt
-  CAN0WakeUp_irq_isr,                 // CAN0 Wake Up Interrupt
-  default_isr,                         // Reserved interrupt 51
-  default_isr,                         // Reserved interrupt 52
-  CAN1ORedMessageBuffer_irq_isr,     // CAN1 OR'd Message Buffers Interrupt
-  CAN1BusOff_irq_isr,                 // CAN1 Bus Off Interrupt
-  CAN1Error_irq_isr,                   // CAN1 Error Interrupt
-  CAN1TxWarning_irq_isr,              // CAN1 Tx Warning Interrupt
-  CAN1RxWarning_irq_isr,              // CAN1 Rx Warning Interrupt
-  CAN1WakeUp_irq_isr,                 // CAN1 Wake Up Interrupt
-  default_isr,                         // Reserved interrupt 59
-  default_isr,                         // Reserved interrupt 60
-  uart0_tx_rx_isr,                  // UART0 Receive/Transmit interrupt
-  UART0ERR_irq_isr,                    // UART0 Error interrupt
-  UART1RXTX_irq_isr,                  // UART1 Receive/Transmit interrupt
-  UART1ERR_irq_isr,                    // UART1 Error interrupt
-  uart2_tx_rx_isr,                  // UART2 Receive/Transmit interrupt
-  UART2ERR_irq_isr,                    // UART2 Error interrupt
-  UART3RXTX_irq_isr,                  // UART3 Receive/Transmit interrupt
-  UART3ERR_irq_isr,                    // UART3 Error interrupt
-  UART4RXTX_irq_isr,                  // UART4 Receive/Transmit interrupt
-  UART4ERR_irq_isr,                    // UART4 Error interrupt
-  UART5RXTX_irq_isr,                  // UART5 Receive/Transmit interrupt
-  UART5ERR_irq_isr,                    // UART5 Error interrupt
-  adc0_isr,                           // ADC0 interrupt
+  CAN0ORedMessageBuffer_irq_isr,        // CAN0 OR'd Message Buffers Interrupt
+  CAN0BusOff_irq_isr,                   // CAN0 Bus Off Interrupt
+  CAN0Error_irq_isr,                    // CAN0 Error Interrupt
+  CAN0TxWarning_irq_isr,                // CAN0 Tx Warning Interrupt
+  CAN0RxWarning_irq_isr,                // CAN0 Rx Warning Interrupt
+  CAN0WakeUp_irq_isr,                   // CAN0 Wake Up Interrupt
+  default_isr,                          // Reserved interrupt 51
+  default_isr,                          // Reserved interrupt 52
+  CAN1ORedMessageBuffer_irq_isr,        // CAN1 OR'd Message Buffers Interrupt
+  CAN1BusOff_irq_isr,                   // CAN1 Bus Off Interrupt
+  CAN1Error_irq_isr,                    // CAN1 Error Interrupt
+  CAN1TxWarning_irq_isr,                // CAN1 Tx Warning Interrupt
+  CAN1RxWarning_irq_isr,                // CAN1 Rx Warning Interrupt
+  CAN1WakeUp_irq_isr,                   // CAN1 Wake Up Interrupt
+  default_isr,                          // Reserved interrupt 59
+  default_isr,                          // Reserved interrupt 60
+  uart0_tx_rx_isr,                      // UART0 Receive/Transmit interrupt
+  UART0ERR_irq_isr,                     // UART0 Error interrupt
+  UART1RXTX_irq_isr,                    // UART1 Receive/Transmit interrupt
+  UART1ERR_irq_isr,                     // UART1 Error interrupt
+  uart2_tx_rx_isr,                      // UART2 Receive/Transmit interrupt
+  UART2ERR_irq_isr,                     // UART2 Error interrupt
+  UART3RXTX_irq_isr,                    // UART3 Receive/Transmit interrupt
+  UART3ERR_irq_isr,                     // UART3 Error interrupt
+  UART4RXTX_irq_isr,                    // UART4 Receive/Transmit interrupt
+  UART4ERR_irq_isr,                     // UART4 Error interrupt
+  UART5RXTX_irq_isr,                    // UART5 Receive/Transmit interrupt
+  UART5ERR_irq_isr,                     // UART5 Error interrupt
+  adc0_isr,                             // ADC0 interrupt
   ADC1_irq_isr,                         // ADC1 interrupt
   CMP0_irq_isr,                         // CMP0 interrupt
   CMP1_irq_isr,                         // CMP1 interrupt
@@ -224,17 +256,20 @@ void (* const g_pfnVectors[])(void) = {
   TSI0_irq_isr,                         // TSI0 Interrupt
   MCG_irq_isr,                          // MCG Interrupt
   LPTimer_irq_isr,                      // LPTimer interrupt
-  default_isr,                         // Reserved interrupt 102
+  default_isr,                          // Reserved interrupt 102
   PORTA_irq_isr,                        // Port A interrupt
   PORTB_irq_isr,                        // Port B interrupt
   PORTC_irq_isr,                        // Port C interrupt
   PORTD_irq_isr,                        // Port D interrupt
   PORTE_irq_isr,                        // Port E interrupt
-  default_isr,                         // Reserved interrupt 108
-  default_isr,                         // Reserved interrupt 109
+  default_isr,                          // Reserved interrupt 108
+  default_isr,                          // Reserved interrupt 109
   Software_irq_isr,                     // Software Interrupt
 };
 
+/** 
+ * \brief   Flash configuration settings required for Kinetis family
+ */
 __attribute__ ((section(".flash_config")))
 unsigned long g_flash_config_field_values[]={
   0xFFFFFFFF,                      // 0x400-0x407 Backdoor Comp Key
@@ -244,135 +279,20 @@ unsigned long g_flash_config_field_values[]={
                                    // Device is Unsecure, Ez-Port Enabled, Fast Clock Mode On
 };
 
+/** 
+ * \brief   section for RAM interrupt service table copied from flash section
+ */
 __attribute__ ((section(".isr_vector_ram")))
 void (* const g_isr_vectors[256])(void) = {};
 
-/**
- * \brief  default _isr
- *
- * \param  void
- *
- * \return void
+/** 
+ * \fn      default_isr
+ * \brief   default interrupt service handler for unused interrupts
+ * \param   void
+ * \return  void
  */
 void default_isr(void)
 {
-  while (1);
+  while (1); /* This infinite loop should be reconsidered */
 }
 
-
-/**
- * \brief  Sets system dividers
- *
- * \param  void
- *
- * \return void
- */
-
-__attribute((section(".ramcode")))
-void  set_sys_dividers(uint32_t outdiv1, uint32_t outdiv2, uint32_t outdiv3, uint32_t outdiv4)
-{
-	uint32_t temp_reg;
-	uint8_t  i;
-
-	temp_reg = FMC_PFAPR;		// store present value of FMC_PFAPR
-
-	// set M0PFD through M7PFD to 1 to disable prefetch */
-	FMC_PFAPR |= FMC_PFAPR_M3PFD_MASK | FMC_PFAPR_M2PFD_MASK |
-				 FMC_PFAPR_M1PFD_MASK | FMC_PFAPR_M0PFD_MASK;
-
-	// set clock dividers to desired value */
-	SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(outdiv1) |
-				        SIM_CLKDIV1_OUTDIV2(outdiv2) |
-				        SIM_CLKDIV1_OUTDIV3(outdiv3) |
-				        SIM_CLKDIV1_OUTDIV4(outdiv4);
-
-	// wait for dividers to change
-	for (i = 0; i < outdiv4; i++) {
-	}
-
-	FMC_PFAPR = temp_reg;		// re-store original value of FMC_PFAPR
-
-	return;
-}		// set_sys_dividers
-
-/**
- * \brief  Reset ISR
- *
- * \param  void
- *
- * \return void
- */
-/*
-extern unsigned long __ramcode_load__;
-extern unsigned long __ramcode_start__;
-extern unsigned long __ramcode_end__;
-extern unsigned long __VECTOR_TABLE;
-extern unsigned long __interrupts_ram_start__;
-extern unsigned long __interrupts_ram_end__;
-extern unsigned long __DATA_ROM;
-extern unsigned long __data_start__;
-extern unsigned long __data_end__;
-extern unsigned long __bss_start__;
-extern unsigned long __bss_end__;
-
-extern void (*__init_array_start)();
-extern void (*__init_array_end)();
-
-//extern int main(void);
-void _start(void);
-//extern void __StackTop(void);
-
-void reset_isr(void)
-{
-  unsigned char *source;
-  unsigned char *destination;
-  
-  __disable_irq();
-
-  #if defined(K64F12)
-  // Co-processor access register
-  // Set CP10,CP11 Full Access (Related with FPU)
-  SCB->CPACR |= (3UL << 10*2) | (3UL << 11 * 2);
-  #endif
-
-  // watchdog disable
-  *((volatile unsigned short *)0x4005200E) = 0xC520;
-  *((volatile unsigned short *)0x4005200E) = 0xD928;
-  *((volatile unsigned short *)0x40052000) = 0x01D2;
-  // Copy the vector table from ROM to RAM
-  source = (unsigned char *) &__VECTOR_TABLE;
-  destination = (unsigned char *)&__interrupts_ram_start__;
-  while (destination < (unsigned char*)&__interrupts_ram_end__)
-  {
-      *(destination++) = *(source++);
-  }
-  // Point the VTOR to the position of vector table
-  SCB->VTOR = (uint32_t) &__interrupts_ram_start__;
-
-  // copy ram code
-  source = (unsigned char *)&__ramcode_load__;
-  destination = (unsigned char *)&__ramcode_start__;
-  while (destination < (unsigned char*)&__ramcode_end__) {
-    *(destination++) = *(source++);
-  }
-
-  // copy data values from ROM to RAM
-  source = (unsigned char *)&__DATA_ROM;
-  destination = (unsigned char *)&__data_start__;
-  while (destination < (unsigned char*)&__data_end__) {
-    *(destination++) = *(source++);
-  }
-  // clear bss section
-  source = (unsigned char *)&__bss_start__;
-  destination = (unsigned char *)&__bss_end__;
-  while (source < destination ) {
-    *source++ = 0;
-  }
-  __enable_irq();
-
-//  _start();
-
-  while(1);
-}
-
-*/
