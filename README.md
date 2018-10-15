@@ -38,10 +38,10 @@ For cleaning the build execute
 ```
 ..>make clean DEFS=k60d10.defs 
 ```
-There is limitation for **clean** that it removes all of the example build output directories. It cannot be done for specific example. However, **clean** can be performed by using the long way described above.
+There is limitation for **clean** that it removes all of the example build output directories. It cannot be done for specific example. However, individual **clean** can be performed by using the long way described above.
 
 ## Supported Devices
 
-Currently only NXP's Kinetis MK60D10 family devices are supported. 
+Currently only NXP's Kinetis MK60D10, MKL03Z family devices are supported. 
 
 It is better consumed with yoghurt :)
