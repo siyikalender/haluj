@@ -92,6 +92,25 @@ struct _I2C0
 
 typedef i2c<_I2C0>  i2c_0;
 
+// TPM
+
+struct _TPM0
+{
+  static constexpr reg_addr_type  scgc_addr   = &(SIM->SCGC6);
+  static constexpr uint32_t       scgc_mask   = SIM_SCGC6_TPM0_MASK;
+  static constexpr TPM_Type*      tpm_addr    = TPM0;  
+};
+
+struct _TPM1
+{
+  static constexpr reg_addr_type  scgc_addr   = &(SIM->SCGC6);
+  static constexpr uint32_t       scgc_mask   = SIM_SCGC6_TPM1_MASK;
+  static constexpr TPM_Type*      tpm_addr    = TPM1;  
+};
+
+typedef tpm<_TPM0>  tpm_0; 
+typedef tpm<_TPM1>  tpm_1;
+
 } // namespace mkl03
 
 namespace specific = mkl03;
