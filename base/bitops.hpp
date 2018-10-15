@@ -32,6 +32,12 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_BASE_BITOPS_HPP
 #define HALUJ_BASE_BITOPS_HPP
 
+namespace haluj
+{
+
+namespace base
+{
+
 template<typename T>
 constexpr inline T 
 mask(const T p_bit_offset)
@@ -163,6 +169,10 @@ wait_mask(T&      p_ref,
 {
   for (unsigned u = 0; (u < Count) && !mask_test(p_ref, p_mask); u++);
 }
+
+} // namespace base
+
+} // namespace haluj
 
 // HALUJ_BASE_BITOPS_HPP
 #endif
