@@ -135,49 +135,62 @@ struct port : peripheral<Specifier>
   };
 
   template<typename Options>
-  static constexpr void configure(const unsigned  p_index,
+  static void configure(const unsigned  p_index,
                                   Options         p_opts)
   {
     port_addr()->PCR[p_index] = 
       p_opts.template accept<uint32_t>(port<Specifier>(), or_op());
   }
 
-  static constexpr void set_direction(const unsigned    p_index, 
-                                      const directions  p_dir)
+  static void set_direction(const uint32_t p_value)
   {
-    gpio_addr()->PDDR = 
-      bit_assign(gpio_addr()->PDDR, p_index, 
-                 (p_dir == directions::output));
+    gpio_addr()->PDDR = mask_set(gpio_addr()->PDDR, p_value);
   }
 
-  static constexpr void set_direction(const uint32_t p_value)
+  static void clear_direction(const uint32_t p_value)
   {
-    gpio_addr()->PDDR = p_value;
+    gpio_addr()->PDDR = mask_clear(gpio_addr()->PDDR, p_value);
   }
-
+  
   static constexpr void set(const uint32_t p_value)
   {
     gpio_addr()->PSOR = p_value;
   }
 
-  static constexpr void clear(const uint32_t p_value)
+  static void clear(const uint32_t p_value)
   {
     gpio_addr()->PCOR = p_value;
   }
 
-  static constexpr void toggle(const uint32_t p_value)
+  static void toggle(const uint32_t p_value)
   {
     gpio_addr()->PTOR = p_value;
   }
 
-  static constexpr uint32_t read()
+  static uint32_t read()
   {
     return gpio_addr()->PDIR;
   }
 
-  static constexpr void write(const uint32_t p_value)
+  static uint32_t read_out()
+  {
+    return gpio_addr()->PDOR;
+  }
+  
+  static void write(const uint32_t p_value)
   {
     gpio_addr()->PDOR = p_value;
+  }
+
+  static bool test_interrupt_clear(const uint32_t p_index)
+  {
+    bool result     =  false;
+    uint32_t value  = port_addr()->PCR[p_index];
+    if ((result = bit_test(value, PORT_PCR_ISF_SHIFT)))
+    {
+      port_addr()->PCR[p_index] = value | PORT_PCR_ISF_SHIFT;
+    }
+    return result;
   }
 
 };
