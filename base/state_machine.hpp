@@ -363,6 +363,11 @@ struct machine_t
     current_ = null_state_;
   }
   
+  state_type current()
+  {
+    return current_;
+  }
+  
   state_type              current_;
   graph_type              graph_;
   map_type                map_;
