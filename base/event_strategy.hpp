@@ -32,7 +32,10 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_BASE_EVENT_STRATEGY_HPP
 #define HALUJ_BASE_EVENT_STRATEGY_HPP
 
-namespace event
+namespace haluj
+{
+  
+namespace base
 {
 
 template <typename EventType, 
@@ -110,6 +113,8 @@ struct blackboard_strategy
   EventType pending_event;
 };
 
-} // namespace event
+} // namespace base
+
+} // namespace haluj
 
 #endif // HALUJ_BASE_EVENT_STRATEGY_HPP
