@@ -47,7 +47,7 @@ struct digital_input_filter
     std::fill_n(&m_input[0], c_buffer_size, 0U);
   }
 
-  void operator()(const uint32_t      p_input)
+  uint32_t operator()(const uint32_t      p_input)
   {
     for (unsigned i = (c_buffer_size - 1U); i > 0U; i--)
     {
@@ -67,6 +67,8 @@ struct digital_input_filter
     {
       m_value             = result;
     }
+    
+    return m_value;
   }
 
   uint32_t      value() const
