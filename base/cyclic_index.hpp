@@ -35,8 +35,13 @@ For more information, please refer to <http://unlicense.org>
 template<typename T>
 inline T cyclic_increment(const T v, const T N)
 {
-  T result = v + 1;
-  return (result < N) ? result : T(0);
+  return (v == (N - 1)) ? T(0) : (v + 1);
+}
+
+template<typename T>
+inline T cyclic_decrement(const T v, const T N)
+{
+  return (v == 0) ? (N - 1) : (v - 1);
 }
 
 template<typename T, T N>
@@ -59,17 +64,25 @@ struct cyclic_index
     return *this;
   }
 
-  cyclic_index& operator++(int)
+  cyclic_index operator++(int)
   {
     cyclic_index result = *this;
     value = cyclic_increment(value, N);
     return result;
   }
   
-//  explicit operator T () const
-//  {
-//    return value;
-//  }
+  cyclic_index& operator--()
+  {
+    value = cyclic_decrement(value, N);
+    return *this;
+  }
+
+  cyclic_index operator--(int)
+  {
+    cyclic_index result = *this;
+    value = cyclic_decrement(value, N);
+    return result;
+  }  
 
   T operator*() const
   {
