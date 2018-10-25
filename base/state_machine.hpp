@@ -39,7 +39,7 @@ namespace haluj
 namespace base
 {
 
-struct default_action
+struct null_action_t
 {
 
   template<typename... Args>
@@ -48,9 +48,11 @@ struct default_action
 
 };
 
-template <typename    EnterActionType = default_action,
-          typename    DoActionType    = default_action,
-          typename    ExitActionType  = default_action>
+null_action_t  a_null;
+
+template <typename    EnterActionType = null_action_t,
+          typename    DoActionType    = null_action_t,
+          typename    ExitActionType  = null_action_t>
 struct state_actions_t
 {
   typedef EnterActionType   enter_action_type;
@@ -70,9 +72,9 @@ struct state_actions_t
   const exit_action_type    exit_action;
 };
 
-template <typename    EnterActionType = default_action,
-          typename    DoActionType    = default_action,
-          typename    ExitActionType  = default_action>
+template <typename    EnterActionType = null_action_t,
+          typename    DoActionType    = null_action_t,
+          typename    ExitActionType  = null_action_t>
 constexpr state_actions_t<EnterActionType,
                           DoActionType,
                           ExitActionType> 
@@ -133,7 +135,7 @@ struct transition_t
 
 template <typename    TriggerType,
           typename    StateType,
-          typename    ActionType  = default_action>
+          typename    ActionType  = null_action_t>
 constexpr transition_t<TriggerType, StateType, ActionType>
 transition(TriggerType  trigger, 
            StateType    from, 
