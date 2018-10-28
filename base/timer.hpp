@@ -59,6 +59,11 @@ struct base_timer
     timeout_ = p_timeout;
   }
   
+  time_point timeout() const
+  {
+    return timeout_;
+  }
+  
   template<typename DurationType>
   time_point advance(const DurationType& p_interval)
   {
