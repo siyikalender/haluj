@@ -275,8 +275,8 @@ unsigned long g_flash_config_field_values[]={
   0xFFFFFFFF,                      // 0x400-0x407 Backdoor Comp Key
   0xFFFFFFFF,                      //
   0xFFFFFFFF,                      // 0x408-0x40B Program Flash Protection
-  0xFFFFFFFE                       // 0x40C(FSEC)=0xFE, 0x40D(FOPT=0xFD)
-                                   // Device is Unsecure, Ez-Port Enabled, Fast Clock Mode On
+  0xFFFFF9FE                       // 0x40C(FSEC)=0xFE, 0x40D(FOPT=0xFD)
+                                   // Device is Unsecure, Ez-Port Diabled, NMI disabled, Normal Boot Mode
 };
 
 /** 
@@ -295,4 +295,38 @@ void default_isr(void)
 {
   while (1); /* This infinite loop should be reconsidered */
 }
+
+/** 
+ * \fn     set_sys_dividers
+ * \brief  Sets system dividers
+ * \param  outdiv1, outdiv2, outdiv3, outdiv4
+ * \return void
+ */
+
+__attribute((section(".ramcode")))
+void  set_sys_dividers(uint32_t outdiv1, uint32_t outdiv2, uint32_t outdiv3, uint32_t outdiv4)
+{
+	uint32_t temp_reg;
+	uint8_t  i;
+
+	temp_reg = FMC_PFAPR;		// store present value of FMC_PFAPR
+
+	// set M0PFD through M7PFD to 1 to disable prefetch */
+	FMC_PFAPR |= FMC_PFAPR_M3PFD_MASK | FMC_PFAPR_M2PFD_MASK |
+				 FMC_PFAPR_M1PFD_MASK | FMC_PFAPR_M0PFD_MASK;
+
+	// set clock dividers to desired value */
+	SIM_CLKDIV1 = SIM_CLKDIV1_OUTDIV1(outdiv1) |
+				        SIM_CLKDIV1_OUTDIV2(outdiv2) |
+				        SIM_CLKDIV1_OUTDIV3(outdiv3) |
+				        SIM_CLKDIV1_OUTDIV4(outdiv4);
+
+	// wait for dividers to change
+	for (i = 0; i < outdiv4; i++) {
+	}
+
+	FMC_PFAPR = temp_reg;		// re-store original value of FMC_PFAPR
+
+	return;
+}		// set_sys_dividers
 

@@ -53,8 +53,8 @@ void reset_isr(void)
 
   __disable_irq();
 
-  SystemInit();
-  
+  disable_watchdog();
+
   #ifndef DONT_USE_RAM_VECTOR
   /* Copy the vector table from ROM to RAM */
   source = (unsigned char *) &__VECTOR_TABLE;
@@ -90,10 +90,7 @@ void reset_isr(void)
     *source++ = 0;
   }
 
-  #if defined(K64F12) || defined(K60D10)
-  /* get rid off that mpu b*tch */
-  MPU_CESR &= ~MPU_CESR_VLD_MASK;
-  #endif
+  system_init();
 
   __enable_irq();
 
