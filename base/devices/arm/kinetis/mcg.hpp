@@ -1,5 +1,5 @@
-/// \file event_strategy.hpp
-/// Primitive event mechanism implementation.
+/// \file mcg.hpp
+/// Multipurpose Clock Generator peripheral implementation
 /*
 This is free and unencumbered software released into the public domain.
 
