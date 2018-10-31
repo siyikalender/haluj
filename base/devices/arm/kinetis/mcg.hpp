@@ -110,8 +110,8 @@ inline constexpr void check_pll_parameters()
                   ((CrystalOscFreqHz / Prescaler) <= 4000000) ,
                   "STATIC_ASSERT ! Prescaled frequency is not in valid range" );
   // Check PLL output frequency is within spec.
-  static_assert ( (((CrystalOscFreqHz / Prescaler) * Multiplier) >= 48000000) &&
-                  (((CrystalOscFreqHz / Prescaler) * Multiplier) <= 100000000),
+  static_assert ( (((CrystalOscFreqHz / Prescaler) * Multiplier) >= PLL_MINIMUM_FREQ_HZ) &&
+                  (((CrystalOscFreqHz / Prescaler) * Multiplier) <= PLL_MAXIMUM_FREQ_HZ),
                  "STATIC_ASSERT ! PLL frequency is not in valid range" );
 }
 

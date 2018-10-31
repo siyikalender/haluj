@@ -34,5 +34,8 @@ For more information, please refer to <http://unlicense.org>
 
 #include "MK60D10.h"
 
+#define PLL_MAXIMUM_FREQ_HZ    100000000U
+#define PLL_MINIMUM_FREQ_HZ    48000000U
+
 // HALUJ_BASE_DEVICES_KINETIS_MK60D10_VENDOR_H
 #endif 
