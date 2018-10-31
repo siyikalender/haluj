@@ -241,7 +241,7 @@ struct i2c_slave
   }
 
   one_shot_timer<time_point>              m_timer;
-  event::blackboard_strategy<events>      m_event;
+  blackboard_strategy<events>             m_event;
   bool                                    m_read_mode;
   ring_buffer<uint8_t, c_tx_buffer_size>  m_tx_buffer;
   ring_buffer<uint8_t, c_rx_buffer_size>  m_rx_buffer;
