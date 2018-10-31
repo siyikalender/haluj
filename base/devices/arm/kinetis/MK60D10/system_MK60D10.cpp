@@ -50,8 +50,6 @@ extern "C" void disable_watchdog()
 
 extern "C" void set_sys_dividers(uint32_t outdiv1, uint32_t outdiv2, uint32_t outdiv3, uint32_t outdiv4);
 
-uint32_t SystemCoreClock = 20971520U;
-
 constexpr uint32_t 
 pll_frequency(const uint32_t p_frequency,
               const uint32_t p_divisor,
@@ -67,6 +65,7 @@ constexpr uint32_t clkdiv()
   return Value - 1U;
 }
 
+constexpr uint32_t  c_device_clock    = 20971520U;
 constexpr uint32_t  c_crystal_freq    = 16000000U;
 constexpr bool      c_high_gain       = true;
 constexpr bool      c_external_ref    = true;
@@ -77,6 +76,8 @@ constexpr uint32_t  c_core_divisor    = 1U;
 constexpr uint32_t  c_bus_divisor     = 2U;
 constexpr uint32_t  c_flexbus_divisor = 2U;
 constexpr uint32_t  c_flash_divisor   = 4U;
+
+uint32_t SystemCoreClock = c_device_clock;
 
 using namespace haluj::base::devices::arm::kinetis;
 
@@ -97,6 +98,10 @@ extern "C" void system_init()
                     c_multiplier>())
   {  
     SystemCoreClock = c_mcg_out_freq / c_core_divisor;
+  }
+  else
+  {
+    SystemCoreClock = c_device_clock / c_core_divisor;
   }
 }
 
