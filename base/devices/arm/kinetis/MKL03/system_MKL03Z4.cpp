@@ -44,7 +44,7 @@ constexpr uint32_t clkdiv()
   return Value - 1U;
 }
 
-extern "C" void set_sys_dividers(uint32_t outdiv1, uint32_t outdiv2, uint32_t outdiv3, uint32_t outdiv4);
+// extern "C" void set_sys_dividers(uint32_t outdiv1, uint32_t outdiv2, uint32_t outdiv3, uint32_t outdiv4);
 
 constexpr uint32_t  c_device_clock    = 48000000U;
 constexpr uint32_t  c_divisor         = 1U;
@@ -53,13 +53,11 @@ constexpr uint32_t  c_flash_divisor   = 4U;
 
 uint32_t SystemCoreClock = c_device_clock;
 
-using namespace haluj::base::devices::arm::kinetis;
-
 extern "C" void system_init()
 {
   // Set system prescalars
-  SIM->CLKDIV1 = SIM_CLKDIV1_OUTDIV1(clkdiv(c_core_divisor)) |
-                 SIM_CLKDIV1_OUTDIV4(clkdiv(c_flash_divisor));
+  SIM->CLKDIV1 = SIM_CLKDIV1_OUTDIV1(clkdiv<c_core_divisor>()) |
+                 SIM_CLKDIV1_OUTDIV4(clkdiv<c_flash_divisor>());
   // Set FCR Divisor
   MCG->SC = MCG_SC_FCRDIV(c_divisor);   
   // Enable HIRC clock source
