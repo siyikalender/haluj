@@ -39,6 +39,7 @@ For more information, please refer to <http://unlicense.org>
 #include "uart.hpp"
 // #include "spi.hpp"
 #include "i2c.hpp"
+#include "tpm.hpp"
 
 namespace haluj
 {
