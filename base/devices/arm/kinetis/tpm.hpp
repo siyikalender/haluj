@@ -108,7 +108,7 @@ struct tpm : peripheral<Specifier>
     static void configure(Options p_opts)
     {
       channel_addr()->CnSC = 
-        p_opts.template accept<uint32_t>(channel<Channel>(), null_op());
+        p_opts.template accept<uint32_t>(channel<Channel>(), or_op());
     }
 
     static void set(unsigned p_value)
