@@ -109,19 +109,23 @@ struct transition_t
     action(p_action)
   {}
   
-  bool test(const state_type p_current) const
+  template<typename... Args>
+  bool test(const state_type p_current,
+            Args...          args) const
   {
-    return (p_current == from) && trigger();
+    return (p_current == from) && trigger(args...);
   }
   
-  template<typename StateActionMap>
-  state_type do_transition(const StateActionMap& p_map) const
+  template<typename StateActionMap, 
+           typename... Args>
+  state_type do_transition(const StateActionMap&  p_map, 
+                           Args&&...              args) const
   {
-    p_map.exit_(from);
+    p_map.exit_(from, std::forward<Args>(args)...);
 
-    action();
+    action(args...);
 
-    p_map.enter_(to);
+    p_map.enter_(to, std::forward<Args>(args)...);
     
     return to;
   }
@@ -151,10 +155,13 @@ transition(TriggerType  trigger,
 template <typename... Entries>
 struct graph_t
 {
+
   template <typename StateType, 
-            typename StateActionMap>
+            typename StateActionMap,
+            typename... Args>
   StateType operator()(const StateType          p_current, 
-                       const StateActionMap&    p_map) const
+                       const StateActionMap&    p_map,
+                       Args...                  args) const
   {
     return p_current;
   }
@@ -171,18 +178,19 @@ struct graph_t<EdgeType, Entries...>
   : edge_(p_edge), next_(args...)
   {}
 
-  // Transition Operator
   template <typename StateType, 
-            typename StateActionMap>
+            typename StateActionMap,
+            typename... Args>
   StateType operator()(const StateType          p_current, 
-                       const StateActionMap&    p_map) const
+                       const StateActionMap&    p_map,
+                       Args&&...                args) const
   {
-    if (edge_.test(p_current))
+    if (edge_.test(p_current, std::forward<Args>(args)...))
     {
-      return edge_.do_transition(p_map);
+      return edge_.do_transition(p_map, std::forward<Args>(args)...);
     }
 
-    return next_(p_current, p_map);
+    return next_(p_current, p_map, std::forward<Args>(args)...);
   }
 
   edge_type     edge_;
@@ -233,19 +241,17 @@ entry(const KeyType& p_key, const ValueType& p_value)
 template <typename... Entries>
 struct map_t
 {
-  
-  template <typename    KeyType>  
-  void enter_(const KeyType&) const
+  template <typename    KeyType, typename... Args>  
+  void enter_(const KeyType&, Args...) const
   {}
 
-  template <typename    KeyType>  
-  void do_(const KeyType&) const
+  template <typename    KeyType, typename... Args>  
+  void do_(const KeyType&, Args...) const
   {}
 
-  template <typename    KeyType>  
-  void exit_(const KeyType&) const
+  template <typename    KeyType, typename... Args>  
+  void exit_(const KeyType&, Args...) const
   {}
-
 };
 
 /// generic map template for variadic template packing
@@ -261,42 +267,42 @@ struct map_t<EntryType, Entries...>
   {}
 
   // Transition Operator
-  template <typename KeyType>  
-  void enter_(const KeyType& p_key) const
+  template <typename KeyType, typename... Args>  
+  void enter_(const KeyType& p_key, Args&&... args) const
   {
     if (p_key == pair_.key)
     {
-      pair_.value.enter_action();
+      pair_.value.enter_action(std::forward<Args>(args)...);
     }
     else
     {
-      next_.enter_(p_key);
+      next_.enter_(p_key, std::forward<Args>(args)...);
     }
   }
 
-  template <typename KeyType>  
-  void do_(const KeyType& p_key) const
+  template <typename KeyType, typename... Args>  
+  void do_(const KeyType& p_key, Args&&... args) const
   {
     if (p_key == pair_.key)
     {
-      pair_.value.do_action();
+      pair_.value.do_action(std::forward<Args>(args)...);
     }
     else
     {
-      next_.do_(p_key);
+      next_.do_(p_key, std::forward<Args>(args)...);
     }
   }
 
-  template <typename KeyType>  
-  void exit_(const KeyType& p_key) const
+  template <typename KeyType, typename... Args>  
+  void exit_(const KeyType& p_key, Args&&... args) const
   {
     if (p_key == pair_.key)
     {
-      pair_.value.exit_action();
+      pair_.value.exit_action(std::forward<Args>(args)...);
     }
     else
     {
-      next_.exit_(p_key);
+      next_.exit_(p_key, std::forward<Args>(args)...);
     }
   }
   
@@ -337,34 +343,28 @@ struct machine_t
     null_state_(p_null)
   {}
 
-//  machine_t(const machine_t&  p_other)
-//  : current_(p_other.current_),
-//    graph_(p_other.graph_),
-//    map_(p_other.map_),
-//    null_state_(p_other.null_state_)
-//  {}
-
-  void initiate(const state_type  p_initial_state)
+  template<typename... Args>
+  void initiate(const state_type  p_initial_state,
+                Args&&... args)
   {
     current_ = p_initial_state;
-    map_.enter_(current_);
+    map_.enter_(current_, std::forward<Args>(args)...);
+  }
+
+  template<typename... Args>
+  void proceed(Args&&... args) 
+  {
+    map_.do_(current_, args...);
+    current_ = graph_(current_, map_, std::forward<Args>(args)...); // test and do the transition 
   }
   
-  void proceed() 
+  template<typename... Args>
+  void terminate(Args&&... args)
   {
-    map_.do_(current_);
-    current_ = graph_(current_, map_); // test and do the transition 
-    // Event life time should be only one tick long.
-    // clear event if not processed.
-    // event_strategy.clear(); // TO-DO clear() -> remove() or pop()
-  }
-  
-  void terminate()
-  {
-    map_.exit_(current_);
+    map_.exit_(current_, std::forward<Args>(args)...);
     current_ = null_state_;
   }
-  
+
   state_type current()
   {
     return current_;
