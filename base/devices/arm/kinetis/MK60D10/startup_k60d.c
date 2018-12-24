@@ -1,5 +1,5 @@
 /** \file startup_k60d.c */
-/** specific peripheral definitions for Kinetis MKL03 family devices */
+/** specific peripheral definitions for Kinetis MK60D10 family devices */
 /*
 This is free and unencumbered software released into the public domain.
 
