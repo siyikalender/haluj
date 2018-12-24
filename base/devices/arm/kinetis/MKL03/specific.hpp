@@ -56,11 +56,16 @@ namespace mkl03
 /// \fn set_baud_rate
 /// \brief Sets baud rate registers. Assumed UART BDH register is cleared
 inline uint32_t 
-set_baud_rate(LPUART_Type&      p_device, 
+set_baud_rate(LPUART_Type&    p_device, 
               const uint32_t  p_peripheral_clock, 
               const uint32_t  p_baud_rate) 
 {
-  return 0;
+  uint32_t value  = p_device.BAUD;
+  uint32_t osr    = ((value & LPUART_BAUD_OSR_MASK) >> LPUART_BAUD_OSR_SHIFT) + 1;
+  uint32_t sbr    = (p_peripheral_clock / (p_baud_rate * osr));
+  value &= ~LPUART_BAUD_SBR_MASK;
+  value |= sbr;
+  return sbr;
 }
 
 /// \fn set_fractional_divider
@@ -97,15 +102,23 @@ inline void
 set_parity(UART_Type&       p_device, 
            const uint32_t   p_value)
 {
+  uint32_t value = p_device.CTRL;
+  
+  value &= ~(LPUART_CTRL_PE_MASK | LPUART_CTRL_PT_MASK);
+
   switch(p_value)
   {
   default: // 0 none
     break;
   case 1:
+    value |= LPUART_CTRL_PE_MASK | LPUART_CTRL_PT_MASK;
     break;
   case 2:
+    value |= LPUART_CTRL_PE_MASK ;
     break;
   }
+
+  p_device.CTRL = value;
 }
 
 /// \fn set_stop_bits
@@ -114,45 +127,50 @@ inline void
 set_stop_bits(UART_Type&       p_device, 
               const uint32_t   p_value)
 {
+  uint32_t value  = p_device.BAUD;
+  
+  value &= ~LPUART_BAUD_SBR_MASK;  
+  
   switch(p_value)
   {
   default:  // one
     break;
   case 1:   // two
+    value |= LPUART_BAUD_SBNS_MASK;
     break;
   }
+  
+  p_device.BAUD = value;
 }
 
-inline uint32_t read() 
+inline uint32_t read(UART_Type&       p_device) 
 {
-  return 0;
+  return p_device.DATA;
 }
 
 inline bool is_rx_available(UART_Type&       p_device) 
 {
-  return false;
+  return mask_test(p_device.STAT, LPUART_STAT_RDRF_MASK);
 }
 
-inline  void write(UART_Type&       p_device, const uint8_t p_data) 
+inline  void write(UART_Type& p_device, const uint8_t p_data) 
 {
+  p_device.DATA = p_data;
 }
 
 inline bool is_tx_ready(UART_Type&       p_device) 
 {
-  return false;
+  return mask_test(p_device.STAT, LPUART_STAT_TDRE_MASK);
 }  
 
 inline void start(UART_Type&       p_device)
-{
-}
+{}
 
 inline void stop(UART_Type&       p_device)
-{
-}
+{}
 
 inline void clear(UART_Type&       p_device)
-{
-}
+{}
 
 /////////////////////////////////////////////////////////////
 

@@ -149,7 +149,7 @@ struct uart : peripheral<Specifier>
     return specific::is_rx_available(*uart_addr());
   }
   
-  static constexpr void write(const uint8_t p_data) 
+  static constexpr void write(const uint32_t p_data) 
   {
     specific::write(*uart_addr(), p_data);
   }

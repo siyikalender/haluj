@@ -81,6 +81,17 @@ typedef port<A>  port_a;
 typedef port<B>  port_b;
 
 // UARTS 
+
+struct U0
+{
+  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC5);
+  static constexpr uint32_t       scgc_mask = SIM_SCGC5_LPUART0_MASK;  
+  static constexpr UART_Type*     uart_addr = LPUART0;
+  static constexpr bool           uses_core_clock = true;
+};
+
+typedef uart<U0>    lpuart_0;
+
 // SPI 
 // I2C
 
