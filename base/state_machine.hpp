@@ -33,6 +33,8 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_BASE_STATE_MACHINE_HPP
 #define HALUJ_BASE_STATE_MACHINE_HPP
 
+#include <utility>
+
 namespace haluj
 {
 
@@ -204,8 +206,8 @@ struct graph_t<EdgeType, Entries...>
     return next_(p_current, p_map, std::forward<Args>(args)...);
   }
 
-  edge_type     edge_;
-  next          next_;
+  const edge_type     edge_;
+  const next          next_;
 };
 
 
@@ -236,8 +238,8 @@ struct entry_t
     value (p_value)
   {}
 
-  key_type    key;
-  value_type  value;
+  const key_type    key;
+  const value_type  value;
 };
 
 template <typename    KeyType,
@@ -263,6 +265,7 @@ struct map_t
   template <typename    KeyType, typename... Args>  
   void exit_(const KeyType&, Args...) const
   {}
+
 };
 
 /// generic map template for variadic template packing
@@ -319,7 +322,7 @@ struct map_t<EntryType, Entries...>
   }
   
   const entry_type  pair_;
-  next              next_;
+  const next        next_;
 };
 
 template<typename EntryType>
@@ -337,69 +340,40 @@ map(const EntryType& p_a, Entries... args)
 }
 
 /// core state machine
-template <typename StateType,
-          typename GraphType,
+template <typename GraphType,
           typename MapType>
 struct machine_t
 {
-  typedef     StateType     state_type;
   typedef     GraphType     graph_type;
   typedef     MapType       map_type;
   
-  machine_t(const StateType   p_null,
-            const GraphType&  p_graph, 
+  machine_t(const GraphType&  p_graph, 
             const MapType&    p_map)
-  : current_(p_null),
-    graph_(p_graph),
-    map_(p_map),
-    null_state_(p_null)
+  : graph_(p_graph),
+    map_(p_map)
   {}
 
-  template<typename... Args>
-  void initiate(const state_type  p_initial_state,
-                Args&&... args)
+  template<typename StateType, typename... Args>
+  StateType operator()(const StateType p_current, Args&&... args) 
   {
-    current_ = p_initial_state;
-    map_.enter_(current_, std::forward<Args>(args)...);
-  }
-
-  template<typename... Args>
-  void proceed(Args&&... args) 
-  {
-    map_.do_(current_, args...);
-    current_ = graph_(current_, map_, std::forward<Args>(args)...); // test and do the transition 
+    map_.do_(p_current, args...);
+    return graph_(p_current, map_, std::forward<Args>(args)...);
   }
   
-  template<typename... Args>
-  void terminate(Args&&... args)
-  {
-    map_.exit_(current_, std::forward<Args>(args)...);
-    current_ = null_state_;
-  }
-
-  state_type current()
-  {
-    return current_;
-  }
-  
-  state_type              current_;
-  graph_type              graph_;
-  map_type                map_;
-  const state_type        null_state_;
+  const graph_type        graph_;
+  const map_type          map_;
 };
 
 
-template <typename StateType,
-          typename GraphType,
+template <typename GraphType,
           typename MapType>
-machine_t<StateType, GraphType, MapType>
-machine(const StateType   p_null_state,
-        const GraphType   &p_graph, 
+machine_t<GraphType, MapType>
+machine(const GraphType   &p_graph, 
         const MapType     &p_map)
 {
   return 
-    machine_t<StateType, GraphType, MapType>
-      (p_null_state, p_graph, p_map);
+    machine_t<GraphType, MapType>
+      (p_graph, p_map);
     
 }
 
