@@ -1,0 +1,39 @@
+# Defs for K64 based processor
+INST  := thumb
+ARCH  := armv7e-m
+TUNE  := cortex-m4
+FLOAT := hard
+FPU   := fpv4-sp-d16
+TARGET_POSTFIX := -k64
+
+TOOLCHAIN_DIR    = /home/diode/ARM/gcc-arm-none-eabi-8-2018-q4-major/bin/
+TOOLCHAIN_PREFIX = arm-none-eabi-
+
+BOOST_INCLUDE_DIR = 
+
+HALUJ_DIR    = ../../haluj
+
+LD_FILE           = $(HALUJ_DIR)/base/devices/arm/kinetis/MK64F12/ld/K64FN1Mxxx12_flash.ld
+
+SPECIFIC_INC_DIRS = .
+SPECIFIC_INC_DIRS += ../base/
+SPECIFIC_INC_DIRS += ../base/devices/arm
+SPECIFIC_INC_DIRS += ../base/devices/arm/vendor
+SPECIFIC_INC_DIRS += ../base/devices/arm/kinetis
+SPECIFIC_INC_DIRS += ../base/devices/arm/kinetis/MK64F12
+
+SPECIFIC_SRC_DIRS = .
+SPECIFIC_SRC_DIRS += ../base/devices/arm
+SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis
+SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis/MK64F12
+
+SPECIFIC_COMPILER_OPTIONS =   -O2
+SPECIFIC_COMPILER_OPTIONS +=  -DK64F12 
+SPECIFIC_COMPILER_OPTIONS +=  -mno-sched-prolog 
+SPECIFIC_COMPILER_OPTIONS +=  -mno-unaligned-access 
+
+SPECIFIC_LINKER_OPTIONS =
+# SPECIFIC_LINKER_OPTIONS += -nostartfiles
+SPECIFIC_LINKER_OPTIONS += -static
+SPECIFIC_LINKER_OPTIONS += --specs=nosys.specs 
+
