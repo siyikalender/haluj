@@ -206,6 +206,54 @@ stop(SPI_Type& p_device)
 
 /////////////////////////////////////////////////////////////
 
+inline void clear_iicif(I2C_Type& p_device)
+{
+  p_device.S1 |= I2C_S_IICIF_MASK;
+}
+
+inline void clear_arbl(I2C_Type& p_device)
+{
+  p_device.S1 |= I2C_S_ARBL_MASK;
+}
+
+inline uint32_t status(I2C_Type& p_device)
+{
+  return p_device.S1;
+}
+
+/////////////////////////////////////////////////////////////
+
+inline void start(ADC_Type&       p_device, 
+                  const unsigned  p_channel, 
+                  const bool      p_is_differential)
+{}
+
+/// \fn configure
+/// \brief Configures ADC
+inline void
+configure(ADC_Type& p_device)
+{}
+
+/// \fn calibrate
+/// \brief Calibrates ADC
+inline void 
+calibrate(ADC_Type& p_device)
+{} 
+
+/// \fn is_data_available
+/// \brief Checks Conversdion is completed
+inline bool is_data_available(ADC_Type& p_device, const unsigned p_channel)
+{
+  return true;
+}
+
+/// \fn read
+/// \brief Reads the conversion result
+inline uint32_t read(ADC_Type& p_device, const unsigned p_channel)
+{
+  return 0;
+}
+
 } // namespace mkl03
 
 namespace specific = mkl03;
