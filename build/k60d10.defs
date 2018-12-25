@@ -6,7 +6,7 @@ FLOAT:= soft
 
 TARGET_POSTFIX := -k60
 
-TOOLCHAIN_DIR    = /home/diode/ARM/gcc-arm-none-eabi-5_4-2016q3/bin/
+TOOLCHAIN_DIR    = /home/diode/ARM/gcc-arm-none-eabi-8-2018-q4-major/bin/
 TOOLCHAIN_PREFIX = arm-none-eabi-
 
 BOOST_INCLUDE_DIR = 
@@ -27,7 +27,6 @@ SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis/MK60D10
 
 SPECIFIC_COMPILER_OPTIONS =   -O2
 SPECIFIC_COMPILER_OPTIONS +=  -DK60D10 
-SPECIFIC_COMPILER_OPTIONS +=  -DCLOCK_SETUP=4
 SPECIFIC_COMPILER_OPTIONS +=  -mno-sched-prolog 
 SPECIFIC_COMPILER_OPTIONS +=  -mno-unaligned-access 
 
