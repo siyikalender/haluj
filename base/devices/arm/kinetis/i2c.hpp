@@ -109,18 +109,18 @@ struct i2c : peripheral<Specifier>
 
   static constexpr void clear_iicif()
   {
-    #if defined(K64F12) || defined(K60D10)
+    #if defined(I2C_S_REG)
     i2c_addr()->S |= I2C_S_IICIF_MASK;
-    #else
+    #elif defined(I2C_S1_REG)
     i2c_addr()->S1 |= I2C_S_IICIF_MASK;
     #endif    
   }
 
   static constexpr void clear_arbl()
   {
-    #if defined(K64F12) || defined(K60D10)
+    #if defined(I2C_S_REG)
     i2c_addr()->S  |= I2C_S_ARBL_MASK;
-    #else
+    #elif defined(I2C_S1_REG)
     i2c_addr()->S1 |= I2C_S_ARBL_MASK;
     #endif
   }
@@ -165,9 +165,9 @@ struct i2c : peripheral<Specifier>
   
   static constexpr  uint32_t status()
   {
-    #if defined(K64F12) || defined(K60D10)
+    #if defined(I2C_S_REG)
     return i2c_addr()->S;
-    #else
+    #elif defined(I2C_S1_REG)
     return i2c_addr()->S1;
     #endif
   }
