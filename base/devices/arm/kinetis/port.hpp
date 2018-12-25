@@ -196,6 +196,42 @@ struct port : peripheral<Specifier>
 
 };
 
+// ugly and cumbersome instantiation of static members.
+// A compiler with good optimizer is expected to get rid off them
+// So it may not complain even if they are missing.
+// However it is defined to conform the standart
+template<typename T> typename port<T>::template port_option<0>                  port<T>::pull::none;
+template<typename T> typename port<T>::template port_option<2>                  port<T>::pull::down;
+template<typename T> typename port<T>::template port_option<3>                  port<T>::pull::up;
+
+template<typename T> typename port<T>::template port_option<0>                  port<T>::slew_rate::fast;
+template<typename T> typename port<T>::template port_option<PORT_PCR_SRE_MASK>  port<T>::slew_rate::slow;
+
+template<typename T> typename port<T>::template port_option<0>                  port<T>::drive_strength::low;
+template<typename T> typename port<T>::template port_option<PORT_PCR_DSE_MASK>  port<T>::drive_strength::high;
+
+template<typename T> typename port<T>::template port_option<0>                  port<T>::open_drain::disable;
+template<typename T> typename port<T>::template port_option<PORT_PCR_ODE_MASK>  port<T>::open_drain::enable;
+
+template<typename T> typename port<T>::template port_option<PORT_PCR_IRQC(0)>   port<T>::interrupts::none;
+template<typename T> typename port<T>::template port_option<PORT_PCR_IRQC(8)>   port<T>::interrupts::on_logic_0;
+template<typename T> typename port<T>::template port_option<PORT_PCR_IRQC(9)>   port<T>::interrupts::on_rising_edge;
+template<typename T> typename port<T>::template port_option<PORT_PCR_IRQC(10)>  port<T>::interrupts::on_falling_edge;
+template<typename T> typename port<T>::template port_option<PORT_PCR_IRQC(11)>  port<T>::interrupts::on_both_edges;
+template<typename T> typename port<T>::template port_option<PORT_PCR_IRQC(12)>  port<T>::interrupts::on_logic_1;
+
+template<typename T> typename port<T>::template port_option<0>                  port<T>::passive_filter::disable;
+template<typename T> typename port<T>::template port_option<PORT_PCR_PFE_MASK>  port<T>::passive_filter::enable;
+
+template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(0)>    port<T>::mux::_0;
+template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(1)>    port<T>::mux::_1;
+template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(2)>    port<T>::mux::_2;
+template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(3)>    port<T>::mux::_3;
+template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(4)>    port<T>::mux::_4;
+template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(5)>    port<T>::mux::_5;
+template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(6)>    port<T>::mux::_6;
+template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(7)>    port<T>::mux::_7;
+
 } // namespace kinetis
 
 } // namespace arm
