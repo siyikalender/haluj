@@ -202,6 +202,31 @@ struct spi : peripheral<Specifier>
 
 };
 
+
+// ugly and cumbersome instantiation of static members.
+// A compiler with good optimizer is expected to get rid off them
+// So it may not complain even if they are missing.
+// However it is defined to conform the standart
+template<typename T> typename spi<T>::template  mode_option<false>      spi<T>::mode::slave;
+template<typename T> typename spi<T>::template  mode_option<true>       spi<T>::mode::master;
+
+template<typename T> typename spi<T>::template  frame_size_option<3>    spi<T>::frame_size::_4;
+template<typename T> typename spi<T>::template  frame_size_option<4>    spi<T>::frame_size::_5;
+template<typename T> typename spi<T>::template  frame_size_option<5>    spi<T>::frame_size::_6;
+template<typename T> typename spi<T>::template  frame_size_option<6>    spi<T>::frame_size::_7;
+template<typename T> typename spi<T>::template  frame_size_option<7>    spi<T>::frame_size::_8;
+template<typename T> typename spi<T>::template  frame_size_option<8>    spi<T>::frame_size::_9;
+template<typename T> typename spi<T>::template  frame_size_option<9>    spi<T>::frame_size::_10;
+template<typename T> typename spi<T>::template  frame_size_option<10>   spi<T>::frame_size::_11;
+template<typename T> typename spi<T>::template  frame_size_option<11>   spi<T>::frame_size::_12;
+template<typename T> typename spi<T>::template  frame_size_option<12>   spi<T>::frame_size::_13;
+template<typename T> typename spi<T>::template  frame_size_option<13>   spi<T>::frame_size::_14;
+template<typename T> typename spi<T>::template  frame_size_option<14>   spi<T>::frame_size::_15;
+template<typename T> typename spi<T>::template  frame_size_option<15>   spi<T>::frame_size::_16;
+
+template<typename T> typename spi<T>::template  phase_option<false>     spi<T>::phase::tx_on_rising_edge;
+template<typename T> typename spi<T>::template  phase_option<true>      spi<T>::phase::tx_on_falling_edge;
+
 } // namespace kinetis
 
 } // namespace arm

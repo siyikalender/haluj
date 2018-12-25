@@ -181,6 +181,21 @@ struct uart : peripheral<Specifier>
 
 };
 
+// ugly and cumbersome instantiation of static members.
+// A compiler with good optimizer is expected to get rid off them
+// So it may not complain even if they are missing.
+// However it is defined to conform the standart
+template<typename T> typename uart<T>::template bits_option<8>      uart<T>::bits::_8;
+template<typename T> typename uart<T>::template bits_option<9>      uart<T>::bits::_9;
+template<typename T> typename uart<T>::template bits_option<10>     uart<T>::bits::_10;
+
+template<typename T> typename uart<T>::template parity_option<0>    uart<T>::parity::none;
+template<typename T> typename uart<T>::template parity_option<1>    uart<T>::parity::even;
+template<typename T> typename uart<T>::template parity_option<2>    uart<T>::parity::odd;
+
+template<typename T> typename uart<T>::template stop_bits_option<0> uart<T>::stop_bits::one;
+template<typename T> typename uart<T>::template stop_bits_option<1> uart<T>::stop_bits::two;
+
 } // namespace kinetis
 
 } // namespace arm

@@ -107,6 +107,23 @@ struct vref : peripheral<Specifier>
   }
 };
 
+// ugly and cumbersome instantiation of static members.
+// A compiler with good optimizer is expected to get rid off them
+// So it may not complain even if they are missing.
+// However it is defined to conform the standart
+template<typename T> typename vref<T>::template configuration_option<0>                    vref<T>::regulator::disable;
+template<typename T> typename vref<T>::template configuration_option<VREF_SC_REGEN_MASK>   vref<T>::regulator::enable;
+
+template<typename T> typename vref<T>::template configuration_option<0>                    vref<T>::internal_voltage_reference::disable;
+template<typename T> typename vref<T>::template configuration_option<VREF_SC_VREFEN_MASK>  vref<T>::internal_voltage_reference::enable;
+
+template<typename T> typename vref<T>::template configuration_option<0>                    vref<T>::compensation::disable;
+template<typename T> typename vref<T>::template configuration_option<VREF_SC_ICOMPEN_MASK> vref<T>::compensation::enable;
+  
+template<typename T> typename vref<T>::template configuration_option<VREF_SC_MODE_LV(0)>   vref<T>::modes::stand_by;
+template<typename T> typename vref<T>::template configuration_option<VREF_SC_MODE_LV(1)>   vref<T>::modes::high_power_out;
+template<typename T> typename vref<T>::template configuration_option<VREF_SC_MODE_LV(2)>   vref<T>::modes::low_power_out;
+
 } // namespace kinetis
 
 } // namespace arm

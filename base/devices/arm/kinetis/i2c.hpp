@@ -109,20 +109,12 @@ struct i2c : peripheral<Specifier>
 
   static constexpr void clear_iicif()
   {
-    #if defined(I2C_S_REG)
-    i2c_addr()->S |= I2C_S_IICIF_MASK;
-    #elif defined(I2C_S1_REG)
-    i2c_addr()->S1 |= I2C_S_IICIF_MASK;
-    #endif    
+    specific::clear_iicif(*i2c_addr());
   }
 
   static constexpr void clear_arbl()
   {
-    #if defined(I2C_S_REG)
-    i2c_addr()->S  |= I2C_S_ARBL_MASK;
-    #elif defined(I2C_S1_REG)
-    i2c_addr()->S1 |= I2C_S_ARBL_MASK;
-    #endif
+    specific::clear_arbl(*i2c_addr());
   }
   
   static constexpr bool test(const status_flags p_flags)
@@ -165,11 +157,7 @@ struct i2c : peripheral<Specifier>
   
   static constexpr  uint32_t status()
   {
-    #if defined(I2C_S_REG)
-    return i2c_addr()->S;
-    #elif defined(I2C_S1_REG)
-    return i2c_addr()->S1;
-    #endif
+    return specific::status(*i2c_addr());
   }
 
   static constexpr void start()

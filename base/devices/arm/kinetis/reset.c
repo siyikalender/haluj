@@ -107,13 +107,13 @@ extern int main(void);
 void __libc_init_array(void);
 void __libc_fini_array(void);
 
-void _init()
+void _init(void)
 {}
 
-void _fini()
+void _fini(void)
 {}
 
-void _start()
+void _start(void)
 {
   __libc_init_array();
 

@@ -1,5 +1,5 @@
-/// \file adc.hpp
-/// ADC peripheral for kinetis devices
+/// \file port.cpp
+/// generic port definitions for Kinetis family devices
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -28,14 +28,7 @@ For more information, please refer to <http://unlicense.org>
 */
 /// \author Selcuk Iyikalender
 /// \date   2018
-
-#ifndef HALUJ_BASE_DEVICES_KINETIS_ADC_HPP
-#define HALUJ_BASE_DEVICES_KINETIS_ADC_HPP
-
-#include "peripheral.hpp"
-#include "options.hpp"
-#include "bitops.hpp"
-#include "specific.hpp"
+#include "port.hpp"
 
 namespace haluj
 {
@@ -52,55 +45,6 @@ namespace arm
 namespace kinetis
 {
 
-template <typename Specifier>
-struct adc : peripheral<Specifier>
-{
-  static constexpr ADC_Type* adc_addr()  {return reinterpret_cast<ADC_Type*>(Specifier::adc_base);}
-
-  template<std::size_t Channel>
-  struct channel
-  {};
-  
-  static void start(const unsigned  p_channel, 
-                    const bool      p_is_differential = false)
-  {
-    specific::start(*adc_addr(), p_channel, p_is_differential);
-  }
-
-  static void stop()
-  {}
-  
-  static void clear()
-  {}
-
-  static void configure(); // <-- This function is temprorary
-  
-  static void calibrate();  
-  
-  static bool is_data_available(const unsigned p_channel)
-  {
-    return specific::is_data_available(*adc_addr(), p_channel);
-  }
-
-  static uint32_t read(const unsigned p_channel)
-  {
-    return specific::read(*adc_addr(), p_channel);
-  }
-  
-};
-
-template<typename T>
-void adc<T>::configure()
-{
-  specific::configure(*adc_addr());
-}  
-
-template<typename T>
-void adc<T>::calibrate()
-{
-  specific::calibrate(*adc_addr());  
-}
-
 } // namespace kinetis
 
 } // namespace arm
@@ -110,6 +54,3 @@ void adc<T>::calibrate()
 } // namespace base
 
 } // namespace haluj
-
-// HALUJ_BASE_DEVICES_KINETIS_ADC_HPP
-#endif

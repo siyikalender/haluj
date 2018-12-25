@@ -46,8 +46,6 @@ namespace arm
 namespace kinetis
 {
 
-// 
-
 } // namespace kinetis
 
 } // namespace arm
