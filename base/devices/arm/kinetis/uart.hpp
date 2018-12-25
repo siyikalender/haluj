@@ -1,5 +1,5 @@
-/// \file port.hpp
-/// generic port definitions for Kinetis family devices
+/// \file uart.hpp
+/// generic uart implementation for Kinetis family devices
 /*
 This is free and unencumbered software released into the public domain.
 
