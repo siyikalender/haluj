@@ -60,44 +60,71 @@ namespace mk60d10
 
 // PORTS 
 
+// PORTS 
+
 struct A
 {
-  static constexpr reg_addr_type  scgc_addr   = &(SIM->SCGC5);
+  static constexpr intptr_t   sim_base    = SIM_BASE;
+  static constexpr intptr_t   port_base   = PORTA_BASE;
+  static constexpr intptr_t   gpio_base   = PTA_BASE;
   static constexpr uint32_t   scgc_mask   = SIM_SCGC5_PORTA_MASK;
-  static constexpr PORT_Type* port_addr   = PORTA;
-  static constexpr GPIO_Type* gpio_addr   = GPIOA;
+  
+  static reg_addr_type  scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC5); 
+  }
 };
 
 struct B
 {
-  static constexpr reg_addr_type  scgc_addr   = &(SIM->SCGC5);
+  static constexpr intptr_t   sim_base    = SIM_BASE;
+  static constexpr intptr_t   port_base   = PORTB_BASE;
+  static constexpr intptr_t   gpio_base   = PTB_BASE;
   static constexpr uint32_t   scgc_mask   = SIM_SCGC5_PORTB_MASK;
-  static constexpr PORT_Type* port_addr   = PORTB;
-  static constexpr GPIO_Type* gpio_addr   = GPIOB;
+
+  static reg_addr_type  scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC5); 
+  }
 };
 
 struct C
 {
-  static constexpr reg_addr_type  scgc_addr   = &(SIM->SCGC5);
+  static constexpr intptr_t   sim_base    = SIM_BASE;
+  static constexpr intptr_t   port_base   = PORTC_BASE;
+  static constexpr intptr_t   gpio_base   = PTC_BASE;
   static constexpr uint32_t   scgc_mask   = SIM_SCGC5_PORTC_MASK;
-  static constexpr PORT_Type* port_addr   = PORTC;
-  static constexpr GPIO_Type* gpio_addr   = GPIOC;
+
+  static reg_addr_type  scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC5); 
+  }
 };
 
 struct D
 {
-  static constexpr reg_addr_type  scgc_addr   = &(SIM->SCGC5);
+  static constexpr intptr_t   sim_base    = SIM_BASE;
+  static constexpr intptr_t   port_base   = PORTD_BASE;
+  static constexpr intptr_t   gpio_base   = PTD_BASE;
   static constexpr uint32_t   scgc_mask   = SIM_SCGC5_PORTD_MASK;
-  static constexpr PORT_Type* port_addr   = PORTD;
-  static constexpr GPIO_Type* gpio_addr   = GPIOD;
+
+  static reg_addr_type  scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC5); 
+  }
 };
 
 struct E
 {
-  static constexpr reg_addr_type  scgc_addr   = &(SIM->SCGC5);
+  static constexpr intptr_t   sim_base    = SIM_BASE;
+  static constexpr intptr_t   port_base   = PORTE_BASE;
+  static constexpr intptr_t   gpio_base   = PTE_BASE;
   static constexpr uint32_t   scgc_mask   = SIM_SCGC5_PORTE_MASK;
-  static constexpr PORT_Type* port_addr   = PORTE;
-  static constexpr GPIO_Type* gpio_addr   = GPIOE;
+
+  static reg_addr_type  scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC5); 
+  }
 };
 
 typedef port<A>  port_a;
@@ -110,69 +137,111 @@ typedef port<E>  port_e;
 
 struct U0
 {
-  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
-  static constexpr uint32_t       scgc_mask = SIM_SCGC4_UART0_MASK;  
-  static constexpr UART_Type*     uart_addr = UART0;
-  static constexpr bool           uses_core_clock = true;
+  static constexpr intptr_t   sim_base        = SIM_BASE;
+  static constexpr intptr_t   uart_base       = UART0_BASE;
+  static constexpr uint32_t   scgc_mask       = SIM_SCGC4_UART0_MASK;  
+  static constexpr bool       uses_core_clock = true;
+
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC4); 
+  }
 };
 
 struct U1
 {
-  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
-  static constexpr uint32_t       scgc_mask = SIM_SCGC4_UART1_MASK;  
-  static constexpr UART_Type*     uart_addr = UART1;
-  static constexpr bool           uses_core_clock = true;
+  static constexpr intptr_t   sim_base        = SIM_BASE;
+  static constexpr intptr_t   uart_base       = UART1_BASE;
+  static constexpr uint32_t   scgc_mask       = SIM_SCGC4_UART1_MASK;  
+  static constexpr bool       uses_core_clock = true;
+
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC4); 
+  }
 };
 
 struct U2
 {
-  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
-  static constexpr uint32_t       scgc_mask = SIM_SCGC4_UART2_MASK;  
-  static constexpr UART_Type*     uart_addr = UART2;
-  static constexpr bool           uses_core_clock = false;
+  static constexpr intptr_t   sim_base        = SIM_BASE;
+  static constexpr intptr_t   uart_base       = UART2_BASE;
+  static constexpr uint32_t   scgc_mask       = SIM_SCGC4_UART2_MASK;  
+  static constexpr bool       uses_core_clock = true;
+
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC4); 
+  }
 };
 
 struct U3
 {
-  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
-  static constexpr uint32_t       scgc_mask = SIM_SCGC4_UART3_MASK;  
-  static constexpr UART_Type*     uart_addr = UART3;
-  static constexpr bool           uses_core_clock = false;
+  static constexpr intptr_t   sim_base        = SIM_BASE;
+  static constexpr intptr_t   uart_base       = UART3_BASE;
+  static constexpr uint32_t   scgc_mask       = SIM_SCGC4_UART3_MASK;  
+  static constexpr bool       uses_core_clock = true;
+
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC4); 
+  }
 };
 
 struct U4
 {
-  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC1);
-  static constexpr uint32_t       scgc_mask = SIM_SCGC1_UART4_MASK;  
-  static constexpr UART_Type*     uart_addr = UART4;
-  static constexpr bool           uses_core_clock = false;
+  static constexpr intptr_t   sim_base        = SIM_BASE;
+  static constexpr intptr_t   uart_base       = UART4_BASE;
+  static constexpr uint32_t   scgc_mask       = SIM_SCGC1_UART4_MASK;  
+  static constexpr bool       uses_core_clock = true;
+
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC1); 
+  }
 };
 
 typedef uart<U0>  uart_0;
 typedef uart<U1>  uart_1;
 typedef uart<U2>  uart_2;
+typedef uart<U3>  uart_3;
 typedef uart<U4>  uart_4;
 
-// SPI 
+// SPI
+
 struct _SPI0
 {
-  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC6);
-  static constexpr uint32_t       scgc_mask = SIM_SCGC6_SPI0_MASK;  
-  static constexpr SPI_Type*      spi_addr  = SPI0;
+  static constexpr intptr_t       sim_base        = SIM_BASE;
+  static constexpr intptr_t       spi_base        = SPI0_BASE;
+  static constexpr uint32_t       scgc_mask       = SIM_SCGC6_SPI0_MASK;  
+
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC6); 
+  }
 };
 
 struct _SPI1
 {
-  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC6);
-  static constexpr uint32_t       scgc_mask = SIM_SCGC6_SPI1_MASK;  
-  static constexpr SPI_Type*      spi_addr  = SPI1;
+  static constexpr intptr_t       sim_base        = SIM_BASE;
+  static constexpr intptr_t       spi_base        = SPI1_BASE;
+  static constexpr uint32_t       scgc_mask       = SIM_SCGC6_SPI1_MASK;  
+
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC6); 
+  }
 };
 
 struct _SPI2
 {
-  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC3);
-  static constexpr uint32_t       scgc_mask = SIM_SCGC3_SPI2_MASK;  
-  static constexpr SPI_Type*      spi_addr  = SPI2;
+  static constexpr intptr_t       sim_base        = SIM_BASE;
+  static constexpr intptr_t       spi_base        = SPI2_BASE;
+  static constexpr uint32_t       scgc_mask       = SIM_SCGC3_SPI2_MASK;  
+
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC3); 
+  }
 };
 
 typedef spi<_SPI0>  spi_0;
@@ -182,16 +251,26 @@ typedef spi<_SPI2>  spi_2;
 // SPI 
 struct _I2C0
 {
-  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
-  static constexpr uint32_t       scgc_mask = SIM_SCGC4_I2C0_MASK;  
-  static constexpr I2C_Type*      i2c_addr  = I2C0;
+  static constexpr intptr_t sim_base  = SIM_BASE;
+  static constexpr intptr_t i2c_base  = I2C0_BASE;
+  static constexpr uint32_t scgc_mask = SIM_SCGC4_I2C0_MASK;    
+  
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC4); 
+  }  
 };
 
 struct _I2C1
 {
-  static constexpr reg_addr_type  scgc_addr = &(SIM->SCGC4);
-  static constexpr uint32_t       scgc_mask = SIM_SCGC4_I2C1_MASK;  
-  static constexpr I2C_Type*      i2c_addr  = I2C1;
+  static constexpr intptr_t sim_base  = SIM_BASE;
+  static constexpr intptr_t i2c_base  = I2C1_BASE;
+  static constexpr uint32_t scgc_mask = SIM_SCGC4_I2C1_MASK;    
+  
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC4); 
+  }  
 };
 
 typedef i2c<_I2C0>  i2c_0;

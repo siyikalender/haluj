@@ -54,9 +54,10 @@ namespace kinetis
 template <typename Specifier>
 struct port : peripheral<Specifier>
 {
-  static constexpr PORT_Type* port_addr() {return Specifier::port_addr;}
-  static constexpr GPIO_Type* gpio_addr() {return Specifier::gpio_addr;}
-
+  static PORT_Type* port_addr() { return reinterpret_cast<PORT_Type*>(Specifier::port_base); }
+  
+  static GPIO_Type* gpio_addr() { return reinterpret_cast<GPIO_Type*>(Specifier::gpio_base); }  
+  
   // options for port configuration
   template<uint32_t Value> 
   struct port_option

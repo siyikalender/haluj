@@ -55,7 +55,7 @@ namespace kinetis
 template <typename Specifier>
 struct vref : peripheral<Specifier>
 {
-  static constexpr VREF_Type* vref_addr()  {return Specifier::vref_addr;}
+  static constexpr VREF_Type* vref_addr()  {return reinterpret_cast<VREF_Type*>(Specifier::vref_base);}
   
   template<uint32_t Value> 
   struct configuration_option

@@ -69,7 +69,7 @@ struct i2c : peripheral<Specifier>
   };  
   
   
-  static constexpr I2C_Type*  i2c_addr()        {return Specifier::i2c_addr;}
+  static I2C_Type*  i2c_addr()        {return reinterpret_cast<I2C_Type*>(Specifier::i2c_base);}
   static constexpr bool       uses_core_clock() {return Specifier::uses_core_clock;}
   
   static constexpr void enable_ack()

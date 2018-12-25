@@ -56,8 +56,9 @@ namespace kinetis
 template <typename Specifier>
 struct uart : peripheral<Specifier>
 {
-  static constexpr UART_Type*  uart_addr()       {return Specifier::uart_addr;}
-  static constexpr bool        uses_core_clock() {return Specifier::uses_core_clock;}
+  static UART_Type*     uart_addr() {return reinterpret_cast<UART_Type*>(Specifier::uart_base);}
+  
+  static constexpr bool uses_core_clock() {return Specifier::uses_core_clock;}
 
   template<uint32_t Value> 
   struct baud_rate

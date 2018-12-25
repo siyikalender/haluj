@@ -56,8 +56,9 @@ typedef volatile uint32_t* reg_addr_type;
 template <typename Specifier>
 struct peripheral
 {
-  static constexpr reg_addr_type  scgc_addr() {return Specifier::scgc_addr;}
   static constexpr uint32_t       scgc_mask() {return Specifier::scgc_mask;}
+
+  static reg_addr_type  scgc_addr() {return Specifier::scgc_addr();}
 };
 
 template<typename T>

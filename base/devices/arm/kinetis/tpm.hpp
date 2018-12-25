@@ -66,7 +66,7 @@ inline bool wait_if(Predicate p, Idle idle)
 template <typename Specifier>
 struct tpm : peripheral<Specifier>
 {
-  static constexpr TPM_Type* tpm_addr()  {return Specifier::tpm_addr;}
+  static constexpr TPM_Type* tpm_addr()  {return reinterpret_cast<TPM_Type*>(Specifier::tpm_base);}
 
   template<std::size_t Channel>
   struct channel

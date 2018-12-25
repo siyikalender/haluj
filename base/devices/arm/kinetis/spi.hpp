@@ -56,7 +56,7 @@ namespace kinetis
 template <typename Specifier>
 struct spi : peripheral<Specifier>
 {
-  static constexpr SPI_Type*  spi_addr()        {return Specifier::spi_addr;}
+  static constexpr SPI_Type*  spi_addr()        {return reinterpret_cast<SPI_Type*>(Specifier::spi_base);}
   static constexpr bool       uses_core_clock() {return Specifier::uses_core_clock;}
 
   static constexpr void
@@ -178,12 +178,12 @@ struct spi : peripheral<Specifier>
 
   static constexpr void start()
   {
-    start(*spi_addr());
+    specific::start(*spi_addr());
   }
 
   static constexpr void stop()
   {
-    stop(*spi_addr());
+    specific::stop(*spi_addr());
   }
 
   template<typename Options>
