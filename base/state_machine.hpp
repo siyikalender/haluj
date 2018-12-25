@@ -50,6 +50,17 @@ struct null_action_t
 
 null_action_t  a_null;
 
+struct g_always_t
+{
+  template<typename... Args>
+  bool operator()(Args...) const
+  {
+    return true;
+  }
+};
+
+g_always_t g_always;
+
 template <typename    EnterActionType = null_action_t,
           typename    DoActionType    = null_action_t,
           typename    ExitActionType  = null_action_t>
@@ -220,7 +231,7 @@ struct entry_t
   typedef ValueType   value_type;
 
   entry_t(const key_type&    p_key,
-              const value_type&  p_value)
+          const value_type&  p_value)
   : key (p_key),
     value (p_value)
   {}
@@ -266,7 +277,8 @@ struct map_t<EntryType, Entries...>
   : pair_(p_pair), next_(args...)
   {}
 
-  // Transition Operator
+  // enter_ and exit_ functions are used in transition_t::do_transition 
+  // method
   template <typename KeyType, typename... Args>  
   void enter_(const KeyType& p_key, Args&&... args) const
   {
