@@ -166,7 +166,7 @@ struct U2
   static constexpr intptr_t   sim_base        = SIM_BASE;
   static constexpr intptr_t   uart_base       = UART2_BASE;
   static constexpr uint32_t   scgc_mask       = SIM_SCGC4_UART2_MASK;  
-  static constexpr bool       uses_core_clock = true;
+  static constexpr bool       uses_core_clock = false;
 
   static reg_addr_type scgc_addr() 
   { 

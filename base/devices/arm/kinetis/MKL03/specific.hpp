@@ -65,6 +65,7 @@ set_baud_rate(LPUART_Type&    p_device,
   uint32_t sbr    = (p_peripheral_clock / (p_baud_rate * osr));
   value &= ~LPUART_BAUD_SBR_MASK;
   value |= sbr;
+  p_device.BAUD = value;
   return sbr;
 }
 
@@ -129,7 +130,7 @@ set_stop_bits(UART_Type&       p_device,
 {
   uint32_t value  = p_device.BAUD;
   
-  value &= ~LPUART_BAUD_SBR_MASK;  
+  value &= ~LPUART_BAUD_SBNS_MASK;  
   
   switch(p_value)
   {
@@ -164,13 +165,28 @@ inline bool is_tx_ready(UART_Type&       p_device)
 }  
 
 inline void start(UART_Type&       p_device)
-{}
+{
+  p_device.CTRL = 
+    mask_set(p_device.CTRL, 
+             LPUART_CTRL_TE_MASK | LPUART_CTRL_RE_MASK);
+}
 
 inline void stop(UART_Type&       p_device)
-{}
+{
+  p_device.CTRL = 
+    mask_clear(p_device.CTRL, 
+               LPUART_CTRL_TE_MASK | LPUART_CTRL_RE_MASK);
+}
 
 inline void clear(UART_Type&       p_device)
-{}
+{
+  // p_device.STAT = LPUART_STAT_LBKDIF_MASK | LPUART_STAT_RXEDGIF_MASK  | 
+  //                 LPUART_STAT_IDLE_MASK   | LPUART_STAT_OR_MASK       | 
+  //                 LPUART_STAT_NF_MASK     | LPUART_STAT_FE_MASK       | 
+  //                 LPUART_STAT_PF_MASK     | LPUART_STAT_MA1F_MASK     |
+  //                 LPUART_STAT_MA2F_MASK;
+  // p_device.CTRL = 0;
+}
 
 /////////////////////////////////////////////////////////////
 

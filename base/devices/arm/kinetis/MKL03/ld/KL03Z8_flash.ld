@@ -2,8 +2,8 @@
 /* Entry Point */
 ENTRY(reset_isr)
 
-HEAP_SIZE  = DEFINED(__heap_size__)  ? __heap_size__  : 0x200;
-STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x200;
+HEAP_SIZE  = DEFINED(__heap_size__)  ? __heap_size__  : 0;
+STACK_SIZE = DEFINED(__stack_size__) ? __stack_size__ : 0x100;
 FLASH_SECTOR_SIZE = 1024;
 
 /* Specify the memory areas */
