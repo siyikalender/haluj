@@ -68,6 +68,11 @@ struct pin
     return bit_test(port::read(), index);
   }
   
+  static bool test_out()
+  {
+    return bit_test(port::read_out(), index);
+  }
+
   static void set_direction()
   {
     port::set_direction(mask(index));
