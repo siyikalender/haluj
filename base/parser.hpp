@@ -41,6 +41,9 @@ namespace base
 struct rule
 {};
 
+/// Specific character parser rule
+/// parses a single alphabethic character defined in C locale
+
 struct ch_p : rule
 {
   ch_p(char c)
@@ -65,6 +68,9 @@ inline ch_p ch(const char c)
   return ch_p(c);
 }
 
+/// Alphabetic parser rule
+/// parses a single alphabethic character defined in C locale
+
 struct alpha_p : rule
 {
   alpha_p()
@@ -84,6 +90,31 @@ inline alpha_p alpha()
 {
   return alpha_p();
 }
+
+/// Alphabetic parser rule
+/// parses a single alphabethic character defined in C locale
+
+struct alnum_p : rule
+{
+  alnum_p()
+  {}
+
+  template<typename Iterator>
+  bool accept(Iterator &first, Iterator last) const
+  {
+    bool result = (first != last && (isalnum(*first) != 0));
+    if (result) first++;
+    return result;
+  }
+
+};
+
+inline alnum_p alnum()
+{
+  return alnum_p();
+}
+
+/// Whitespace parser rule (including eol)
 
 struct space_p : rule
 {
@@ -108,6 +139,9 @@ inline space_p space()
   return space_p();
 }
 
+/// Single digit parser rule
+/// parses a single digit
+
 struct digit_p : rule
 {
   digit_p()
@@ -130,6 +164,79 @@ inline digit_p digit()
 {
   return digit_p();
 }
+
+/// Single hex digit parser rule
+/// parses a single digit
+
+struct hex_digit_p : rule
+{
+  hex_digit_p()
+  {}
+
+  template<typename Iterator>
+  bool accept(Iterator &first, Iterator last) const
+  {
+    bool result = (first != last && (isxdigit(*first) != 0));
+    if (result)
+    {
+      first++;
+    }
+    return result;
+  }
+
+};
+
+inline hex_digit_p hex_digit()
+{
+  return hex_digit_p();
+}
+
+/// Upper case parser rule
+/// parses a single upper case alpha character defined in C locale
+
+struct upper_p : rule
+{
+  upper_p()
+  {}
+
+  template<typename Iterator>
+  bool accept(Iterator &first, Iterator last) const
+  {
+    bool result = (first != last && (isupper(*first) != 0));
+    if (result) first++;
+    return result;
+  }
+
+};
+
+inline upper_p upper()
+{
+  return upper_p();
+}
+
+/// rest parser
+/// consumes all remaining characters to end of the buffer
+/// typical this rule is useful for parsing line comments
+
+struct rest_p : rule
+{
+  rest_p()
+  {}
+
+  template<typename Iterator>
+  bool accept(Iterator &first, Iterator last) const
+  {
+    while(first != last) first++;
+    return true;
+  }
+
+};
+
+inline rest_p rest()
+{
+  return rest_p();
+}
+
 
 template<typename ExprType>
 struct opt_p : rule
