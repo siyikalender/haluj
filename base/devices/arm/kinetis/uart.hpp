@@ -149,6 +149,11 @@ struct uart : peripheral<Specifier>
   {
     return specific::is_rx_available(*uart_addr());
   }
+
+  static constexpr bool is_error() 
+  {
+    return specific::is_error(*uart_addr());
+  }
   
   static constexpr void write(const uint32_t p_data) 
   {
