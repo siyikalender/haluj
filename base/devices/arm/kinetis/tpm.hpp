@@ -88,6 +88,12 @@ struct tpm : peripheral<Specifier>
       }
     };
     
+    struct interrupt
+    {
+      static configuration_option<0>                    disabled;
+      static configuration_option<TPM_CnSC_CHIE_MASK>   enable;
+    };
+    
     struct modes
     {
       static configuration_option<0b00000000> disable;
@@ -111,11 +117,6 @@ struct tpm : peripheral<Specifier>
         p_opts.template accept<uint32_t>(channel<Channel>(), or_op());
     }
 
-    static void set(unsigned p_value)
-    {
-      channel_addr()->CnV = p_value;
-    }
-    
     static void stop()
     {
       wait_if<1000>(
@@ -130,6 +131,33 @@ struct tpm : peripheral<Specifier>
           }
       );
     }
+
+    static void set(unsigned p_value)
+    {
+      channel_addr()->CnV = p_value;
+    }
+    
+    static bool is_active()
+    {
+      uint32_t m = 
+        mask(TPM_CnSC_ELSA_MASK | 
+             TPM_CnSC_ELSB_MASK | 
+             // TPM_CnSC_MSA_MASK |  do not care
+             TPM_CnSC_MSB_MASK);
+
+      return (channel_addr()->CnSC & m) == 0;
+    }
+      
+    static bool test_interrupt()
+    {
+      return mask_test(channel_addr()->CnSC, TPM_CnSC_CHF_MASK);
+    }
+
+    static void clear_interrupt()
+    {
+      channel_addr()->CnSC |= TPM_CnSC_CHF_MASK;
+    }    
+    
   };
   
   typedef channel<0>    channel_0;
@@ -145,6 +173,12 @@ struct tpm : peripheral<Specifier>
     {
       return  value;
     }
+  };
+
+  struct interrupt
+  {
+    static configuration_option<0>                  disabled;
+    static configuration_option<TPM_SC_TOIE_MASK>   enable;
   };
 
   struct counter_modes
@@ -173,7 +207,10 @@ struct tpm : peripheral<Specifier>
   };  
   
   static void start()
-  {}
+  {
+    // start is performed by setting one of the 
+    // clock_modes except the disable option
+  }
   
   static void stop()
   {
@@ -190,8 +227,25 @@ struct tpm : peripheral<Specifier>
   
   static void clear()
   {
-    tpm_addr()->SC = TPM_SC_TOF_MASK;
+    clear_interrupt();
     tpm_addr()->SC = 0;    
+  }
+
+  static bool test_interrupt()
+  {
+    return mask_test(tpm_addr()->SC, TPM_SC_TOF_MASK);
+  }
+
+  static void clear_interrupt()
+  {
+    tpm_addr()->SC |= TPM_SC_TOF_MASK;
+  }
+
+  static void clear_all_interrupts()
+  {
+    tpm_addr()->STATUS = TPM_STATUS_CH0F_MASK |   
+                         TPM_STATUS_CH1F_MASK | 
+                         TPM_STATUS_TOF_MASK;
   }
   
   template<typename Options>
@@ -203,9 +257,9 @@ struct tpm : peripheral<Specifier>
     start();
   }  
   
-  static bool is_open()
+  static bool is_running()
   {
-    return (tpm_addr()->SC != 0); 
+    return (tpm_addr()->SC & TPM_SC_CMOD_MASK) != 0; 
   }
   
   static void set_count(const unsigned p_value)
