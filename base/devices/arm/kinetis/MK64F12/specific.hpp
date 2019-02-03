@@ -109,10 +109,10 @@ set_parity(UART_Type&       p_device,
   {
   default: // 0 none
     break;
-  case 1:
+  case 1:  // 1 even
     p_device.C1 = mask_set(p_device.C1, UART_C1_PE_MASK);
     break;
-  case 2:
+  case 2:  // 2 odd
     p_device.C1 = mask_set(p_device.C1, UART_C1_PE_MASK | UART_C1_PT_MASK);
     break;
   }
@@ -159,7 +159,13 @@ inline bool
 is_tx_ready(UART_Type& p_device) 
 {
   return mask_test(p_device.S1, UART_S1_TDRE_MASK);
-}  
+}
+
+inline bool 
+is_error(UART_Type& p_device) 
+{
+  return mask_test(p_device.S1, UART_S1_NF_MASK | UART_S1_FE_MASK | UART_S1_PF_MASK);
+}
 
 inline void 
 start(UART_Type& p_device)
