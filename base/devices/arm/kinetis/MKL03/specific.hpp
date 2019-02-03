@@ -60,12 +60,35 @@ set_baud_rate(LPUART_Type&    p_device,
               const uint32_t  p_peripheral_clock, 
               const uint32_t  p_baud_rate) 
 {
+
+  uint32_t div_   = p_peripheral_clock / p_baud_rate;
+
+  bool quit = false;
+
+  uint32_t  u     = 32U,
+            min_r = 32U, 
+            min_u = 32U;
+
+  for (; u>=4U && !quit; u--)
+  {
+    auto r = div_ % u;
+    
+    if (r < min_r)
+    {
+      min_r = r;
+      min_u = u;
+    }
+    
+    quit = (r == 0);
+  }
+  uint32_t sbr    = (p_peripheral_clock / (p_baud_rate * min_u));
+  uint32_t osr    = min_u - 1;
+
   uint32_t value  = p_device.BAUD;
-  uint32_t osr    = ((value & LPUART_BAUD_OSR_MASK) >> LPUART_BAUD_OSR_SHIFT) + 1;
-  uint32_t sbr    = (p_peripheral_clock / (p_baud_rate * osr));
-  value &= ~LPUART_BAUD_SBR_MASK;
-  value |= sbr;
+  value &= ~LPUART_BAUD_SBR_MASK & ~LPUART_BAUD_OSR_MASK;
+  value |= LPUART_BAUD_OSR(osr) | LPUART_BAUD_SBR(sbr);
   p_device.BAUD = value;
+
   return sbr;
 }
 
@@ -86,15 +109,22 @@ inline void
 set_bits(UART_Type&       p_device, 
          const uint32_t   p_value)
 {
+  uint32_t value = p_device.CTRL;
+  
   switch(p_value)
   {
   default:
+    value = mask_clear(value, LPUART_CTRL_M_MASK);
     break;
   case 9:
+    value = mask_set(value, LPUART_CTRL_M_MASK);
     break;
   case 10:
+    // Not supported yet
     break;
   }
+  
+  p_device.CTRL = value;  
 }
 
 /// \fn set_parity
@@ -105,17 +135,17 @@ set_parity(UART_Type&       p_device,
 {
   uint32_t value = p_device.CTRL;
   
-  value &= ~(LPUART_CTRL_PE_MASK | LPUART_CTRL_PT_MASK);
+  value = mask_clear(value, LPUART_CTRL_PE_MASK | LPUART_CTRL_PT_MASK);
 
   switch(p_value)
   {
   default: // 0 none
     break;
-  case 1:
-    value |= LPUART_CTRL_PE_MASK | LPUART_CTRL_PT_MASK;
+  case 1:  // 1 even
+    value = mask_set(value, LPUART_CTRL_PE_MASK);
     break;
-  case 2:
-    value |= LPUART_CTRL_PE_MASK ;
+  case 2:  // 2 odd
+    value = mask_set(value, LPUART_CTRL_PE_MASK | LPUART_CTRL_PT_MASK);
     break;
   }
 
@@ -163,6 +193,18 @@ inline bool is_tx_ready(UART_Type&       p_device)
 {
   return mask_test(p_device.STAT, LPUART_STAT_TDRE_MASK);
 }  
+
+inline bool 
+is_error(UART_Type& p_device) 
+{
+  return mask_test(p_device.STAT, LPUART_STAT_NF_MASK | LPUART_STAT_FE_MASK | LPUART_STAT_PF_MASK);
+}
+
+inline void
+clear_stat(UART_Type& p_device) 
+{
+  p_device.STAT = mask_set(p_device.STAT, LPUART_STAT_NF_MASK | LPUART_STAT_FE_MASK | LPUART_STAT_PF_MASK);
+}
 
 inline void start(UART_Type&       p_device)
 {
