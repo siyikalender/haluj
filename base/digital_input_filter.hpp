@@ -81,6 +81,11 @@ struct digital_input_filter
   {
     return m_edge;
   }
+  
+  uint32_t mask() const
+  {
+    return m_mask;
+  }
 
   uint32_t      m_input[c_buffer_size];
   uint32_t      m_mask;
