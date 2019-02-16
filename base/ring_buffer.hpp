@@ -68,7 +68,7 @@ struct ring_buffer_adaptor
     m_tail    = 0;
     m_head    = 0;
     if (p_zero)
-      std::fill(m_data_begin, m_data_end, 0);
+      std::fill(m_data_begin, m_data_end, BaseType());
   }
 
   constexpr std::size_t size() const
