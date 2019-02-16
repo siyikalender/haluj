@@ -154,6 +154,11 @@ struct uart : peripheral<Specifier>
   {
     return specific::is_error(*uart_addr());
   }
+
+  static constexpr void clear_errors() 
+  {
+    specific::clear_errors(*uart_addr());
+  }
   
   static constexpr void write(const uint32_t p_data) 
   {

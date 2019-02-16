@@ -167,6 +167,12 @@ is_error(UART_Type& p_device)
   return mask_test(p_device.S1, UART_S1_NF_MASK | UART_S1_FE_MASK | UART_S1_PF_MASK);
 }
 
+inline void
+clear_errors(UART_Type& p_device) 
+{
+  volatile uint32_t dummy = p_device.D;
+}
+
 inline void 
 start(UART_Type& p_device)
 {

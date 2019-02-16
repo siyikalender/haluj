@@ -54,7 +54,7 @@ namespace mkl03
 {
 
 /// \fn set_baud_rate
-/// \brief Sets baud rate registers. Assumed UART BDH register is cleared
+/// \brief Sets baud rate registers. 
 inline uint32_t 
 set_baud_rate(LPUART_Type&    p_device, 
               const uint32_t  p_peripheral_clock, 
@@ -93,7 +93,7 @@ set_baud_rate(LPUART_Type&    p_device,
 }
 
 /// \fn set_fractional_divider
-/// \brief Sets fractional divider. Assumed UART C4 register is cleared
+/// \brief This function is not supported by the device
 inline uint32_t 
 set_fractional_divider(UART_Type&      p_device, 
                        const uint32_t  p_peripheral_clock, 
@@ -104,7 +104,7 @@ set_fractional_divider(UART_Type&      p_device,
 }
 
 /// \fn set_bits
-/// \brief Sets data bits. Assumed UART C1 and C4 register is cleared
+/// \brief Sets data bits. 
 inline void
 set_bits(UART_Type&       p_device, 
          const uint32_t   p_value)
@@ -128,7 +128,7 @@ set_bits(UART_Type&       p_device,
 }
 
 /// \fn set_parity
-/// \brief Sets parity. Assumed UART C1 is cleared
+/// \brief Sets parity. 
 inline void
 set_parity(UART_Type&       p_device, 
            const uint32_t   p_value)
@@ -153,7 +153,7 @@ set_parity(UART_Type&       p_device,
 }
 
 /// \fn set_stop_bits
-/// \brief Sets stop bits. Assumed UART BDH SBNS field is cleared
+/// \brief Sets stop bits.
 inline void
 set_stop_bits(UART_Type&       p_device, 
               const uint32_t   p_value)
@@ -201,7 +201,7 @@ is_error(UART_Type& p_device)
 }
 
 inline void
-clear_stat(UART_Type& p_device) 
+clear_errors(UART_Type& p_device) 
 {
   p_device.STAT = mask_set(p_device.STAT, LPUART_STAT_NF_MASK | LPUART_STAT_FE_MASK | LPUART_STAT_PF_MASK);
 }
