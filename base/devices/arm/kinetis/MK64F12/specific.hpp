@@ -60,7 +60,7 @@ set_baud_rate(UART_Type&      p_device,
               const uint32_t  p_peripheral_clock, 
               const uint32_t  p_baud_rate) 
 {
-  uint32_t result = (p_peripheral_clock / (p_baud_rate * 16U));;
+  uint32_t result = (p_peripheral_clock / (p_baud_rate * 16U));
   p_device.BDH |= UART_BDH_SBR(result >> 8); 
   p_device.BDL  = UART_BDL_SBR(result);
   return result;
@@ -164,7 +164,7 @@ is_tx_ready(UART_Type& p_device)
 inline bool 
 is_error(UART_Type& p_device) 
 {
-  return mask_test(p_device.S1, UART_S1_NF_MASK | UART_S1_FE_MASK | UART_S1_PF_MASK);
+  return (p_device.S1 & (UART_S1_OR_MASK | UART_S1_NF_MASK | UART_S1_FE_MASK | UART_S1_PF_MASK)) != 0;
 }
 
 inline void
@@ -195,6 +195,8 @@ clear(UART_Type& p_device)
   p_device.C1  = 0;
   p_device.C4  = 0;
   p_device.BDH = 0;
+  volatile uint32_t dummy = p_device.D;
+  p_device.CFIFO = 0xC0; // flush tx fifo rx fifo
 }
 
 /////////////////////////////////////////////////////////////
