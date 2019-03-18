@@ -111,13 +111,13 @@ struct tpm : peripheral<Specifier>
     };
     
     template<typename Options>
-    static void configure(Options p_opts)
+    static inline void configure(Options p_opts)
     {
       channel_addr()->CnSC = 
         p_opts.template accept<uint32_t>(channel<Channel>(), or_op());
     }
 
-    static void stop()
+    static inline void stop()
     {
       wait_if<1000>(
         [&]() -> bool 
@@ -132,12 +132,12 @@ struct tpm : peripheral<Specifier>
       );
     }
 
-    static void set(unsigned p_value)
+    static inline void set(unsigned p_value)
     {
       channel_addr()->CnV = p_value;
     }
     
-    static bool is_active()
+    static inline bool is_active()
     {
       uint32_t m = 
         mask(TPM_CnSC_ELSA_MASK | 
@@ -148,12 +148,12 @@ struct tpm : peripheral<Specifier>
       return (channel_addr()->CnSC & m) == 0;
     }
       
-    static bool test_interrupt()
+    static inline bool test_interrupt()
     {
       return mask_test(channel_addr()->CnSC, TPM_CnSC_CHF_MASK);
     }
 
-    static void clear_interrupt()
+    static inline void clear_interrupt()
     {
       channel_addr()->CnSC |= TPM_CnSC_CHF_MASK;
     }    
@@ -212,7 +212,7 @@ struct tpm : peripheral<Specifier>
     // clock_modes except the disable option
   }
   
-  static void stop()
+  static inline void stop()
   {
     wait_if<1000>(
       [&]() -> bool 
@@ -225,23 +225,23 @@ struct tpm : peripheral<Specifier>
     );
   }
   
-  static void clear()
+  static inline void clear()
   {
     clear_interrupt();
     tpm_addr()->SC = 0;    
   }
 
-  static bool test_interrupt()
+  static inline  bool test_interrupt()
   {
     return mask_test(tpm_addr()->SC, TPM_SC_TOF_MASK);
   }
 
-  static void clear_interrupt()
+  static inline  void clear_interrupt()
   {
     tpm_addr()->SC |= TPM_SC_TOF_MASK;
   }
 
-  static void clear_all_interrupts()
+  static inline void clear_all_interrupts()
   {
     tpm_addr()->STATUS = TPM_STATUS_CH0F_MASK |   
                          TPM_STATUS_CH1F_MASK | 
@@ -249,7 +249,7 @@ struct tpm : peripheral<Specifier>
   }
   
   template<typename Options>
-  static void configure(Options p_opts)
+  static inline void configure(Options p_opts)
   {
     stop();
     tpm_addr()->SC = 
@@ -257,22 +257,22 @@ struct tpm : peripheral<Specifier>
     start();
   }  
   
-  static bool is_running()
+  static inline bool is_running()
   {
     return (tpm_addr()->SC & TPM_SC_CMOD_MASK) != 0; 
   }
   
-  static void set_count(const unsigned p_value)
+  static inline void set_count(const unsigned p_value)
   {
     tpm_addr()->CNT = TPM_CNT_COUNT(p_value);
   }
   
-  static unsigned get_count()
+  static inline unsigned get_count()
   {
     return tpm_addr()->CNT >> TPM_CNT_COUNT_SHIFT;
   }
   
-  static void set_mod(const unsigned p_value)
+  static inline void set_mod(const unsigned p_value)
   {
     tpm_addr()->MOD = TPM_MOD_MOD(p_value);
   }
