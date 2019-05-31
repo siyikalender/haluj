@@ -98,7 +98,7 @@ struct i2c_master
         {
         case states::start: // Generate Start
           T::enable_tx();
-          T::start();
+          T::start(); // Generate a start signal which sets SDA line to low.
           delay = duration(c_start_time_out);
           break;
         case states::tx_address: // Send Address

@@ -108,7 +108,7 @@ struct ring_buffer_adaptor
 
   bool full() const
   {
-    return m_full; // hata var cyclic olması göz önüne alınmalı
+    return m_full; 
   }
 
   bool empty() const
@@ -125,8 +125,8 @@ struct ring_buffer_adaptor
       {
         result      = m_data_begin[m_tail];
         m_tail      = cyclic_increment(m_tail, size());
-        m_empty     = (m_head == m_tail);
-        m_full      = false;
+        m_empty     = (m_head == m_tail);   // <-- possible race condition
+        m_full      = false;                // <-- possible race condition
       }
     }
     return result;
@@ -156,9 +156,9 @@ struct ring_buffer_adaptor
       {
         m_data_begin[m_head] = p_data;
         m_head      = cyclic_increment(m_head, size());
-        m_empty     = false;
-        m_full      = (m_head == m_tail);
-        result      = true;
+        m_empty     = false;                // <-- possible race condition
+        m_full      = (m_head == m_tail);   // <-- possible race condition
+        result      = true;                 
       }
     }
     return result;
