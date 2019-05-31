@@ -49,7 +49,7 @@ constexpr uint32_t clkdiv()
 constexpr uint32_t  c_device_clock    = 48000000U;
 constexpr uint32_t  c_divisor         = 1U;
 constexpr uint32_t  c_core_divisor    = 1U;
-constexpr uint32_t  c_flash_divisor   = 4U;
+constexpr uint32_t  c_flash_divisor   = 2U;
 
 uint32_t SystemCoreClock = c_device_clock;
 
