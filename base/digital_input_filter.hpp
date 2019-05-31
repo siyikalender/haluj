@@ -34,12 +34,12 @@ For more information, please refer to <http://unlicense.org>
 
 #include <algorithm>
 
-template<unsigned BufferSize>
+template<typename T, unsigned BufferSize>
 struct digital_input_filter
 {
   static constexpr unsigned c_buffer_size = BufferSize;
 
-  digital_input_filter(const uint32_t p_mask = 0U)
+  digital_input_filter(const T p_mask = 0U)
   : m_mask(p_mask),
     m_value(0U),
     m_edge(0U)
@@ -47,14 +47,14 @@ struct digital_input_filter
     std::fill_n(&m_input[0], c_buffer_size, 0U);
   }
 
-  uint32_t operator()(const uint32_t      p_input)
+  T operator()(const T      p_input)
   {
     for (unsigned i = (c_buffer_size - 1U); i > 0U; i--)
     {
       m_input[i]  =   m_input[i - 1U];
     }
 
-    uint32_t result = m_input[0U] = p_input & m_mask;
+    T result = m_input[0U] = p_input & m_mask;
 
     for (unsigned i = 1U; i < c_buffer_size; i++)
     {
@@ -71,26 +71,26 @@ struct digital_input_filter
     return m_value;
   }
 
-  uint32_t      value() const
+  T      value() const
   {
     return m_value;
   }
 
   // be aware m_edge changes in c_time_step.
-  uint32_t      edge() const
+  T      edge() const
   {
     return m_edge;
   }
   
-  uint32_t mask() const
+  T mask() const
   {
     return m_mask;
   }
 
-  uint32_t      m_input[c_buffer_size];
-  uint32_t      m_mask;
-  uint32_t      m_value;
-  uint32_t      m_edge;
+  T      m_input[c_buffer_size];
+  T      m_mask;
+  T      m_value;
+  T      m_edge;
 };
 
 // HALUJ_BASE_DIGITAL_INPUT_FILTER_HPP
