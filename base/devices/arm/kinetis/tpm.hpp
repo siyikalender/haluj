@@ -277,6 +277,11 @@ struct tpm : peripheral<Specifier>
     tpm_addr()->MOD = TPM_MOD_MOD(p_value);
   }
 
+  static inline uint32_t get_mod()
+  {
+    return (tpm_addr()->MOD & TPM_MOD_MOD_MASK) & TPM_MOD_MOD_SHIFT;
+  }
+
 };
 
 } // namespace kinetis
