@@ -197,13 +197,13 @@ inline bool is_tx_ready(UART_Type&       p_device)
 inline bool 
 is_error(UART_Type& p_device) 
 {
-  return mask_test(p_device.STAT, LPUART_STAT_NF_MASK | LPUART_STAT_FE_MASK | LPUART_STAT_PF_MASK);
+  return (p_device.STAT & (LPUART_STAT_OR_MASK | LPUART_STAT_NF_MASK | LPUART_STAT_FE_MASK | LPUART_STAT_PF_MASK)) != 0;
 }
 
 inline void
 clear_errors(UART_Type& p_device) 
 {
-  p_device.STAT = mask_set(p_device.STAT, LPUART_STAT_NF_MASK | LPUART_STAT_FE_MASK | LPUART_STAT_PF_MASK);
+  p_device.STAT = mask_set(p_device.STAT,  LPUART_STAT_OR_MASK | LPUART_STAT_NF_MASK | LPUART_STAT_FE_MASK | LPUART_STAT_PF_MASK);
 }
 
 inline void start(UART_Type&       p_device)
@@ -215,9 +215,9 @@ inline void start(UART_Type&       p_device)
 
 inline void stop(UART_Type&       p_device)
 {
-  p_device.CTRL = 
-    mask_clear(p_device.CTRL, 
-               LPUART_CTRL_TE_MASK | LPUART_CTRL_RE_MASK);
+  p_device.CTRL = mask_clear(p_device.CTRL, 
+                             LPUART_CTRL_TE_MASK | LPUART_CTRL_RE_MASK);
+  while((p_device.CTRL & (LPUART_CTRL_TE_MASK | LPUART_CTRL_RE_MASK)) != 0);
 }
 
 inline void clear(UART_Type&       p_device)
@@ -227,7 +227,7 @@ inline void clear(UART_Type&       p_device)
   //                 LPUART_STAT_NF_MASK     | LPUART_STAT_FE_MASK       | 
   //                 LPUART_STAT_PF_MASK     | LPUART_STAT_MA1F_MASK     |
   //                 LPUART_STAT_MA2F_MASK;
-  // p_device.CTRL = 0;
+  p_device.CTRL = 0;
 }
 
 /////////////////////////////////////////////////////////////
@@ -281,36 +281,108 @@ inline uint32_t status(I2C_Type& p_device)
 
 /////////////////////////////////////////////////////////////
 
-inline void start(ADC_Type&       p_device, 
+/// \fn start
+/// \brief starts ADC
+inline void start(ADC_Type&       p_device,
+                  const unsigned  p_reg,
                   const unsigned  p_channel, 
-                  const bool      p_is_differential)
-{}
+                  const bool      /* p_is_differential */)
+{
+  p_device.SC1[p_reg] = ADC_SC1_ADCH(p_channel);
+}
 
 /// \fn configure
 /// \brief Configures ADC
 inline void
 configure(ADC_Type& p_device)
-{}
+{
+  p_device.CFG1 =  ADC_CFG1_ADIV(3)     | // 2^3=8 /8
+                   ADC_CFG1_ADLSMP_MASK |
+                   ADC_CFG1_MODE(0)     |  // 8-Bit Mode
+                   ADC_CFG1_ADICLK(0);   // Bus Clock
+
+  p_device.CFG2 = // ADC_CFG2_MUXSEL_MASK | // Enable for SE_b inputs
+                 ADC_CFG2_ADLSTS(0x00); // ADLSTS_20
+
+//  p_device.CV1  = 0x12u;
+//  p_device.CV2  = 0x78u;
+//  p_device.SC2  = ADC_SC2_REFSEL(0x00); // REFSEL_EXT (VREFH ve VREFL)
+  p_device.SC2  = 0x00; // REFSEL_EXT (VREFH ve VREFL)
+
+//  p_device.SC3  = ADC_SC3_AVGE_MASK       |
+//                  ADC_SC3_AVGS(0x00); // 32 Sample Average
+  p_device.SC3  = 0x00;
+}
 
 /// \fn calibrate
 /// \brief Calibrates ADC
 inline void 
 calibrate(ADC_Type& p_device)
-{} 
+{
+  unsigned short cal_var;
+
+//  p_device.SC2 &= ~ADC_SC2_ADTRG_MASK; // Enable Software Conversion Trigger for Calibration Process    - adc_addr()->SC2 = adc_addr()->SC2 | ADC_SC2_ADTRGW(0);
+  //p_device.SC3 &= ( ~ADC_SC3_ADCO_MASK & ~ADC_SC3_AVGS_MASK ); // set single conversion, clear avgs bitfield for next writing
+  p_device.SC3 |= ( ADC_SC3_AVGE_MASK | ADC_SC3_AVGS(0x03) );  // Turn averaging ON and set at max value ( 32 )
+
+  p_device.SC3 |= ADC_SC3_CAL_MASK ;      // Start CAL
+  while ( (p_device.SC1[0] & ADC_SC1_COCO_MASK ) == 0 ); // Wait calibration end
+
+  if ((p_device.SC3 & ADC_SC3_CALF_MASK) == ADC_SC3_CALF_MASK )
+  {
+    return;    // Check for Calibration fail error and return
+  }
+  // Calculate plus-side calibration
+  cal_var = 0x00;
+
+  cal_var =  p_device.CLP0;
+  cal_var += p_device.CLP1;
+  cal_var += p_device.CLP2;
+  cal_var += p_device.CLP3;
+  cal_var += p_device.CLP4;
+  cal_var += p_device.CLPS;
+
+  cal_var = cal_var/2;
+  cal_var |= 0x8000; // Set MSB
+
+  p_device.PG = ADC_PG_PG(cal_var);
+
+  p_device.SC3 &= ~ADC_SC3_CAL_MASK ; /* Clear CAL bit */
+}  
 
 /// \fn is_data_available
 /// \brief Checks Conversdion is completed
-inline bool is_data_available(ADC_Type& p_device, const unsigned p_channel)
+inline bool is_data_available(ADC_Type& p_device, const unsigned p_reg)
 {
-  return true;
+  return ((p_device.SC1[p_reg] & ADC_SC1_COCO_MASK ) == ADC_SC1_COCO_MASK);
 }
 
 /// \fn read
 /// \brief Reads the conversion result
-inline uint32_t read(ADC_Type& p_device, const unsigned p_channel)
+inline uint32_t read(ADC_Type& p_device, const unsigned p_reg)
 {
-  return 0;
+  return p_device.R[p_reg];
 }
+
+/////////////////////////////////////////////////////////////
+
+inline void start_watchdog()
+{
+  SIM->COPC = SIM_COPC_COPT(1); // LPO:1Khz , 2^5 clock -> 32mS
+}
+
+inline void stop_watchdog()
+{
+  SIM->COPC = 0x00u;
+}
+
+inline void reset_watchdog()
+{
+  SIM->SRVCOP = 0x55u;
+  SIM->SRVCOP = 0xAAu;
+}
+
+/////////////////////////////////////////////////////////////
 
 } // namespace mkl03
 

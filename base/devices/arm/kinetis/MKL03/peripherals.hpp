@@ -40,6 +40,8 @@ For more information, please refer to <http://unlicense.org>
 // #include "spi.hpp"
 #include "i2c.hpp"
 #include "tpm.hpp"
+#include "lptmr.hpp"
+#include "adc.hpp"
 
 namespace haluj
 {
@@ -152,6 +154,35 @@ struct _TPM1
 
 typedef tpm<_TPM0>  tpm_0; 
 typedef tpm<_TPM1>  tpm_1;
+
+struct _LPTMR0
+{
+  static constexpr intptr_t sim_base    = SIM_BASE;
+  static constexpr intptr_t lptmr_base  = LPTMR0_BASE;
+  static constexpr uint32_t scgc_mask   = SIM_SCGC5_LPTMR_MASK;      
+  
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC5); 
+  }
+};
+
+typedef lptmr<_LPTMR0>  lptmr_0; 
+
+// ADC
+struct _ADC0
+{
+  static constexpr intptr_t sim_base  = SIM_BASE;
+  static constexpr intptr_t adc_base  = ADC0_BASE;
+  static constexpr uint32_t scgc_mask = SIM_SCGC6_ADC0_MASK;    
+  
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC6); 
+  }    
+};
+
+typedef adc<_ADC0>  adc_0;
 
 } // namespace mkl03
 
