@@ -134,7 +134,7 @@ struct i2c : peripheral<Specifier>
     {
       if (value > 0)
       {
-        i2c<T>::i2c_addr()->A1 = (value << 1);
+        i2c<T>::i2c_addr()->A1 = i2c::make_address(value);
       }
       return  0;
     }
@@ -192,6 +192,12 @@ struct i2c : peripheral<Specifier>
     idle();
     p_opts.template accept<uint32_t>(i2c<Specifier>(), null_op());
   }
+  
+  static constexpr uint8_t 
+    make_address(const uint8_t p_address_7_bits)
+  {
+    return p_address_7_bits << 1;
+  }  
   
 };
 

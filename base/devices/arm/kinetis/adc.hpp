@@ -61,10 +61,11 @@ struct adc : peripheral<Specifier>
   struct channel
   {};
   
-  static void start(const unsigned  p_channel, 
+  static void start(const unsigned  p_reg, 
+                    const unsigned  p_channel, 
                     const bool      p_is_differential = false)
   {
-    specific::start(*adc_addr(), p_channel, p_is_differential);
+    specific::start(*adc_addr(), p_reg, p_channel, p_is_differential);
   }
 
   static void stop()
@@ -77,14 +78,14 @@ struct adc : peripheral<Specifier>
   
   static void calibrate();  
   
-  static bool is_data_available(const unsigned p_channel)
+  static bool is_data_available(const unsigned p_reg)
   {
-    return specific::is_data_available(*adc_addr(), p_channel);
+    return specific::is_data_available(*adc_addr(), p_reg);
   }
 
-  static uint32_t read(const unsigned p_channel)
+  static uint32_t read(const unsigned p_reg)
   {
-    return specific::read(*adc_addr(), p_channel);
+    return specific::read(*adc_addr(), p_reg);
   }
   
 };
