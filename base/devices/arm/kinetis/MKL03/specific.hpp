@@ -284,11 +284,11 @@ inline uint32_t status(I2C_Type& p_device)
 /// \fn start
 /// \brief starts ADC
 inline void start(ADC_Type&       p_device,
-                  const unsigned  p_reg,
+                  const unsigned  p_index,
                   const unsigned  p_channel, 
                   const bool      /* p_is_differential */)
 {
-  p_device.SC1[p_reg] = ADC_SC1_ADCH(p_channel);
+  p_device.SC1[p_index] = ADC_SC1_ADCH(p_channel);
 }
 
 /// \fn configure
@@ -352,16 +352,16 @@ calibrate(ADC_Type& p_device)
 
 /// \fn is_data_available
 /// \brief Checks Conversdion is completed
-inline bool is_data_available(ADC_Type& p_device, const unsigned p_reg)
+inline bool is_data_available(ADC_Type& p_device, const unsigned p_index)
 {
-  return ((p_device.SC1[p_reg] & ADC_SC1_COCO_MASK ) == ADC_SC1_COCO_MASK);
+  return ((p_device.SC1[p_index] & ADC_SC1_COCO_MASK ) == ADC_SC1_COCO_MASK);
 }
 
 /// \fn read
 /// \brief Reads the conversion result
-inline uint32_t read(ADC_Type& p_device, const unsigned p_reg)
+inline uint32_t read(ADC_Type& p_device, const unsigned p_index)
 {
-  return p_device.R[p_reg];
+  return p_device.R[p_index];
 }
 
 /////////////////////////////////////////////////////////////
