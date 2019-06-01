@@ -45,35 +45,33 @@ namespace haluj
 namespace base
 {
 
-template< typename      BaseType, 
+template< typename      RandomAccessContainerType, 
           typename      ScopedLock = null_lock>
-struct ring_buffer_adaptor
+struct ring_buffer
 {
-  typedef BaseType                        base_type;
-  typedef BaseType*                       iterator;
-  typedef std::size_t                     index_type;
+  static constexpr unsigned c_empty = 0U;
+  static constexpr unsigned c_full  = 1U;
+    
+  typedef RandomAccessContainerType             container_type;
+  typedef typename container_type::value_type   base_type;
+  typedef base_type*                            iterator;
+  typedef std::size_t                           index_type;
 
-  ring_buffer_adaptor(iterator const p_first, 
-                      iterator const p_last)
-  : m_data_begin(p_first),
-    m_data_end(p_last)
+  ring_buffer()
   {
     clear(true);
   }
 
   void clear(const bool p_zero = false)
   {
-    m_full    = false;
-    m_empty   = true;
+    m_flags   = bit_set(m_flags, c_empty);
     m_tail    = 0;
     m_head    = 0;
-    if (p_zero)
-      std::fill(m_data_begin, m_data_end, BaseType());
   }
 
   constexpr std::size_t size() const
   {
-    return (m_data_end - m_data_begin);
+    return m_container.size();
   }
   
   /// available: how many elements are written/available to read
@@ -81,9 +79,9 @@ struct ring_buffer_adaptor
   {
     std::size_t result;
     
-    if (m_empty)
+    if (empty())
       result = 0;
-    else if (m_full)
+    else if (full())
       result = size();
     else
     {
@@ -97,7 +95,7 @@ struct ring_buffer_adaptor
       }
     }
     return result;
-  }  
+  }
 
   /// remaining: remaining free space to write
   std::size_t remaining() const
@@ -105,106 +103,40 @@ struct ring_buffer_adaptor
     return size() - available();
   }  
 
-
   bool full() const
   {
-    return m_full; 
+    return bit_test(m_flags, c_full); 
   }
 
   bool empty() const
   {
-    return m_empty;
+    return bit_test(m_flags, c_empty);
   }
   
-  optional<BaseType> read()
+  void push(const base_type &p_data)
   {
-    optional<BaseType> result;
-    {
-      ScopedLock lock;
-      if (!empty())
-      {
-        result      = m_data_begin[m_tail];
-        m_tail      = cyclic_increment(m_tail, size());
-        m_empty     = (m_head == m_tail);   // <-- possible race condition
-        m_full      = false;                // <-- possible race condition
-      }
-    }
-    return result;
+    ScopedLock lock;
+    m_container[m_head] = p_data;
+    m_head      = cyclic_increment(m_head, size());
+    m_flags     = (m_head == m_tail) ? c_full : 0; // atomic
   }
 
-  optional<BaseType> peek() const
+  void pop()
   {
-    optional<BaseType> result;
-    {
-      ScopedLock lock;
-
-      if (!empty())
-      {
-        result = m_data_begin[m_tail];
-      }
-    }
-    return result;
+    ScopedLock lock;
+    m_tail      = cyclic_increment(m_tail, size());
+    m_flags     = (m_head == m_tail) ? c_empty : 0; // atomic
   }
-
-  bool write(const BaseType &p_data)
-  {
-    bool          result = false;
-    {
-      ScopedLock lock;
-
-      if (!full())
-      {
-        m_data_begin[m_head] = p_data;
-        m_head      = cyclic_increment(m_head, size());
-        m_empty     = false;                // <-- possible race condition
-        m_full      = (m_head == m_tail);   // <-- possible race condition
-        result      = true;                 
-      }
-    }
-    return result;
-  }
-
-  template<std::size_t  N>
-  bool set(base_type (&p_data)[N])
-  {
-    // static_assert(N <= size(), "ring_buffer::set : input size exceeds limits");
-    bool result = false;
-    
-    if (N <= size())
-    {
-      std::copy_n(&p_data[0], N, &m_data_begin[0]);
-      m_tail = 0;
-      if (N < size())
-        m_head = N;
-      else
-        m_head = 0;
-      m_full  = (N == size());
-      m_empty = false;
-      result  = true;
-    }
-
-    return result;
-  }
-
-  iterator    const m_data_begin;
-  iterator    const m_data_end;
-  index_type  m_tail;
-  index_type  m_head;
-  bool        m_full;
-  bool        m_empty;
-};
-
-template< typename      BaseType, 
-          std::size_t   Size,
-          typename      ScopedLock = null_lock>
-struct ring_buffer
-: ring_buffer_adaptor<BaseType, ScopedLock>
-{
-  ring_buffer()
-  : ring_buffer_adaptor<BaseType, ScopedLock>(&m_data[0], &m_data[Size])
-  {}
   
-  BaseType   m_data[Size];
+  base_type& front() 
+  {
+    return m_container[m_tail];
+  }
+
+  container_type m_container;
+  index_type     m_tail;
+  index_type     m_head;
+  unsigned       m_flags; // <--- should be atomic
 };
 
 } // namespace base

@@ -33,6 +33,7 @@ For more information, please refer to <http://unlicense.org>
 #define I2C_MASTER_HPP
 
 #include <cstdint>
+#include <array>
 
 #include "i2c.hpp"
 #include "ring_buffer.hpp"
@@ -107,10 +108,10 @@ struct i2c_master
           break;
         case states::tx_data: // Send Data
           {
-            auto d = m_tx_buffer.read();
-            if (d)
+            if (!m_tx_buffer.empty())
             {
-              T::write(*d);
+              T::write(m_tx_buffer.front());
+              m_tx_buffer.pop();
               delay = duration(c_xfer_time_out);
             }
           }
@@ -133,7 +134,10 @@ struct i2c_master
         case states::rx_data: 
           if (m_read_count == 2) T::disable_ack(); // second to last byte
           if (m_read_count == 1) T::stop();
-          m_rx_buffer.write(T::read());
+          if (!m_rx_buffer.full())
+            m_rx_buffer.push(T::read());
+          // else
+            // raise error
           delay = duration(c_xfer_time_out);
           break;
         case states::finalize:
@@ -255,7 +259,8 @@ struct i2c_master
       {
         for (std::size_t i = 0; i < p_read_size; i++)
         {
-          p_data[i] = *m_rx_buffer.read();
+          p_data[i] = m_rx_buffer.front();
+          m_rx_buffer.pop();
         }
         result = true;
       }
@@ -278,7 +283,7 @@ struct i2c_master
       
       for (std::size_t i = 0; i < p_write_size; i++)
       {
-        m_tx_buffer.write(*(p_data + i));
+        m_tx_buffer.push(*(p_data + i));
       }
 
       m_slave_address = p_slave_address;
@@ -296,13 +301,13 @@ struct i2c_master
     return (m_state != states::idle);
   }
   
-  set_and_wait                                  m_saw;  
-  states                                        m_state;
-  unsigned                                      m_read_count;
-  ring_buffer<uint8_t, c_tx_buffer_size>        m_tx_buffer;
-  ring_buffer<uint8_t, c_rx_buffer_size>        m_rx_buffer;
-  one_shot_timer<time_point>                    m_timer;
-  uint8_t                                       m_slave_address;
+  set_and_wait                                        m_saw;  
+  states                                              m_state;
+  unsigned                                            m_read_count;
+  ring_buffer<std::array<uint8_t, c_tx_buffer_size>>  m_tx_buffer;
+  ring_buffer<std::array<uint8_t, c_rx_buffer_size>>  m_rx_buffer;
+  one_shot_timer<time_point>                          m_timer;
+  uint8_t                                             m_slave_address;
 };
 
 } // namespace base

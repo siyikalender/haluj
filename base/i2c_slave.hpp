@@ -31,6 +31,7 @@ For more information, please refer to <http://unlicense.org>
 #define I2C_SLAVE_HPP
 
 #include <cstdint>
+#include <array>
 
 #include "i2c.hpp"
 #include "ring_buffer.hpp"
@@ -84,9 +85,11 @@ struct i2c_slave
       {
         // Master reads from device
         T::enable_tx();
-        auto v = m_tx_buffer.read(); 
-        if (v)
-          T::write(*v);
+        if (!m_tx_buffer.empty())
+        {
+          T::write(m_tx_buffer.front());
+          m_tx_buffer.pop();
+        }
         else
           T::write(0);
       }
@@ -129,13 +132,18 @@ struct i2c_slave
             {
               // last byte received. release bus to master control
               T::disable_tx();
-              m_rx_buffer.write(T::read());
+              if (!m_rx_buffer.full())
+                m_rx_buffer.push(T::read());
+              // else
+                // raise error
             }
             else
             {
-              auto v = m_tx_buffer.read();
-              if (v)
-                T::write(*v);
+              if (!m_tx_buffer.empty())
+              {
+                T::write(m_tx_buffer.front());
+                m_tx_buffer.pop();
+              }
               else
                 T::write(0);
             }
@@ -150,7 +158,10 @@ struct i2c_slave
               T::disable_ack(); // NOTE ! Additionally Disable ACK may be required after read
             }
             
-            m_rx_buffer.write(T::read());
+            if (!m_rx_buffer.full())
+              m_rx_buffer.push(T::read());
+            // else
+              // raise error
             
             if (remaining == 1)
             {
@@ -201,11 +212,12 @@ struct i2c_slave
   {
     bool  result = false;
     
-    if ((p_size <= m_rx_buffer.available())  && !is_busy())
+    if ((p_size <= m_rx_buffer.available()) && !is_busy())
     {
       for (std::size_t i = 0; i < p_size; i++)
       {
-        p_data[i] = *m_rx_buffer.read();
+        p_data[i] = m_rx_buffer.front();
+        m_rx_buffer.pop();
       }
 
       result = true;
@@ -226,7 +238,7 @@ struct i2c_slave
       
       for (std::size_t i = 0; i < p_size; i++)
       {
-        m_tx_buffer.write(p_data[i]);
+        m_tx_buffer.push(p_data[i]);
       }
 
       result = true;
@@ -240,11 +252,11 @@ struct i2c_slave
     return false; // TBD
   }
 
-  one_shot_timer<time_point>              m_timer;
-  blackboard_strategy<events>             m_event;
-  bool                                    m_read_mode;
-  ring_buffer<uint8_t, c_tx_buffer_size>  m_tx_buffer;
-  ring_buffer<uint8_t, c_rx_buffer_size>  m_rx_buffer;
+  one_shot_timer<time_point>                          m_timer;
+  blackboard_strategy<events>                         m_event;
+  bool                                                m_read_mode;
+  ring_buffer<std::array<uint8_t, c_tx_buffer_size>>  m_tx_buffer;
+  ring_buffer<std::array<uint8_t, c_rx_buffer_size>>  m_rx_buffer;
 };
 
 } // namespace base
