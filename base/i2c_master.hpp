@@ -151,7 +151,6 @@ struct i2c_master
           break;
         }
         m_timer.set(p_now + delay);
-        m_timer.start();
       },
       [&]() -> bool // Test Function
       {

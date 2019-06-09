@@ -190,7 +190,6 @@ struct i2c_slave
       m_event.clear();
       m_rx_buffer.clear();
       m_timer.set(p_now + duration(c_rx_timeout));
-      m_timer.start();
       arf(m_read_mode);
     }
     
@@ -212,7 +211,7 @@ struct i2c_slave
   {
     bool  result = false;
     
-    if ((p_size <= m_rx_buffer.available()) && !is_busy())
+    if ((p_size <= m_rx_buffer.size()) && !is_busy())
     {
       for (std::size_t i = 0; i < p_size; i++)
       {

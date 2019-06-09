@@ -35,6 +35,7 @@ For more information, please refer to <http://unlicense.org>
 #include <cstdint>
 #include <algorithm>
 
+#include "bitops.hpp"
 #include "optional.hpp"
 #include "cyclic_index.hpp"
 #include "null_lock.hpp"
@@ -56,6 +57,7 @@ struct ring_buffer
   typedef typename container_type::value_type   base_type;
   typedef base_type*                            iterator;
   typedef std::size_t                           index_type;
+  typedef unsigned                              flag_type;
 
   ring_buffer()
   {
@@ -69,25 +71,25 @@ struct ring_buffer
     m_head    = 0;
   }
 
-  constexpr std::size_t size() const
+  constexpr std::size_t capacity() const
   {
     return m_container.size();
   }
   
-  /// available: how many elements are written/available to read
-  std::size_t available() const
+  /// size: how many elements are written/available to read
+  std::size_t size() const
   {
     std::size_t result;
     
     if (empty())
       result = 0;
     else if (full())
-      result = size();
+      result = capacity();
     else
     {
       if (m_head < m_tail)
       {
-        result = size() + m_head - m_tail;
+        result = capacity() + m_head - m_tail;
       }
       else
       {
@@ -100,7 +102,7 @@ struct ring_buffer
   /// remaining: remaining free space to write
   std::size_t remaining() const
   {
-    return size() - available();
+    return capacity() - size();
   }  
 
   bool full() const
@@ -117,15 +119,15 @@ struct ring_buffer
   {
     ScopedLock lock;
     m_container[m_head] = p_data;
-    m_head      = cyclic_increment(m_head, size());
-    m_flags     = (m_head == m_tail) ? c_full : 0; // atomic
+    m_head      = cyclic_increment(m_head, capacity());
+    m_flags     = (m_head == m_tail) ? mask(c_full) : 0; // atomic
   }
 
   void pop()
   {
     ScopedLock lock;
-    m_tail      = cyclic_increment(m_tail, size());
-    m_flags     = (m_head == m_tail) ? c_empty : 0; // atomic
+    m_tail      = cyclic_increment(m_tail, capacity());
+    m_flags     = (m_head == m_tail) ? mask(c_empty) : 0; // atomic
   }
   
   base_type& front() 
@@ -136,7 +138,7 @@ struct ring_buffer
   container_type m_container;
   index_type     m_tail;
   index_type     m_head;
-  unsigned       m_flags; // <--- should be atomic
+  flag_type      m_flags; // <--- should be atomic
 };
 
 } // namespace base

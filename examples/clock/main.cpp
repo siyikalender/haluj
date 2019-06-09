@@ -51,11 +51,11 @@ int main()
   port_a::set_direction(mask(c_test_pin));
   
   periodic_timer<precision_clock::time_point, milliseconds>    
-    tmr(milliseconds(1000)); // software timers are clock agnostic
+    tmr(1000ms);
 
   auto now = precision_clock::initialize();
   
-  tmr.start(now);
+  tmr.set(now);
   
   for (;;)
   {

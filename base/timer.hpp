@@ -57,18 +57,11 @@ struct base_timer
   void set(const time_point&  p_timeout)
   {
     timeout_ = p_timeout;
+    start();
   }
   
   time_point timeout() const
   {
-    return timeout_;
-  }
-  
-  template<typename DurationType>
-  time_point advance(const DurationType& p_interval)
-  {
-    timeout_ += p_interval;
-    
     return timeout_;
   }
   
@@ -131,32 +124,39 @@ struct periodic_timer
 {
   typedef DurationType                duration;
   typedef base_timer<TimePointType>   base;
+  typedef typename base::time_point   time_point;
  
-  periodic_timer(const duration&                    p_period)
+  periodic_timer(const duration&      p_period)
   : base(),
     period(p_period)
   {}
 
-  void start(const typename base::time_point& p_now)
+  void set(const time_point& p_now)
   {
     base::set(p_now + period);
-    base::start();
   }
 
   template<typename Function = default_timer_function> 
-  bool operator()(const typename base::time_point& p_now,
-                  Function                         p_function = Function())
+  bool operator()(const time_point&   p_now,
+                  Function            p_function = Function())
   {
     bool result = false;
     
     if (base::test_timeout(p_now))
     {
-      base::advance(period);
       p_function();
+      advance();
       result  =   true;
     }
     
     return result;
+  }
+
+  time_point advance()
+  {
+    base::timeout_ += period;
+    
+    return base::timeout_;
   }
 
   duration      period;
