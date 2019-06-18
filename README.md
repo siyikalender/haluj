@@ -42,6 +42,6 @@ There is limitation for **clean** that it removes all of the example build outpu
 
 ## Supported Devices
 
-Currently only NXP's Kinetis MK60D10, MKL03Z family devices are supported. 
+Currently, NXP's Kinetis MK60D10, MK64F12, MKV31F51212 and MKL03Z devices are partially supported. 
 
 It is better consumed with yoghurt :)
