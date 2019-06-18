@@ -9,11 +9,11 @@ constexpr std::size_t array_size(const T (&arr)[N])
   return N;
 }
 
-template<typename T, T lower, T upper>
-inline T limit(const T& p_value)
+template<typename T>
+inline T limit(const T p_value, const T p_lower, const T p_upper)
 {
-  return (p_value < lower) ? lower : (
-            (p_value > upper) ? upper : p_value);
+  return (p_value < p_lower) ? p_lower : (
+            (p_value > p_upper) ? p_upper : p_value);
 }
 
 #endif
