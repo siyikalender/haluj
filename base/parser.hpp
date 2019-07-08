@@ -335,7 +335,10 @@ struct seq_p<ExprType, Types...> : rule
   template<typename Iterator>
   bool accept(Iterator &first, Iterator last) const
   {
+    Iterator initial = first;
     bool result = (expr_.accept(first, last) && next_.accept(first, last));
+    if (!result)
+      first = initial;
     return result;
   }
 
@@ -428,6 +431,39 @@ except(const ExprType& p_expr)
 {
   return except_p<ExprType>(p_expr);
 }
+
+template<typename ExprType, typename EscapeExprType>
+struct except_2_p : rule
+{
+  except_2_p(const ExprType&        p_expr, 
+             const EscapeExprType&  p_esc_expr)
+  : expr_(p_expr),
+    esc_expr_(p_esc_expr)
+  {}
+
+  template<typename Iterator>
+  bool accept(Iterator &first, Iterator last) const
+  {
+    Iterator  initial = first;
+    bool      success = false;
+    while((esc_expr_.accept(first, last) && expr_.accept(first, last) ) || 
+          (!(success = expr_.accept(first, last)) && (first != last) && (first++ != 0) ) );
+    if (!success)
+      first = initial;
+    return success;
+  }
+
+  ExprType          expr_;
+  EscapeExprType    esc_expr_;
+};
+
+template<typename ExprType, typename EscapeExprType>
+except_2_p<ExprType, EscapeExprType>
+except_2(const ExprType& p_expr, const EscapeExprType& p_esc_expr)
+{
+  return except_2_p<ExprType, EscapeExprType>(p_expr, p_esc_expr);
+}
+
 
 template<typename ExprType>
 struct accept_adaptor_p : rule
