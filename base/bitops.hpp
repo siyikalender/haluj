@@ -49,7 +49,7 @@ template<typename T, typename... Args>
 constexpr inline T 
 mask(const T p_bit_offset, Args... args)
 {
-  return T(T(1) << p_bit_offset) | mask(args...);
+  return mask(p_bit_offset) | mask(args...);
 }
 
 template<typename T>
@@ -114,6 +114,15 @@ bit_set(const T   p_value,
   return mask_set(p_value, mask(p_bit_offset));
 }
 
+template<typename T, typename U, typename... Args>
+inline T 
+bit_set(const T   p_value, 
+        const U   p_bit_offset,
+        Args...   args)
+{
+  return mask_set(p_value, mask(p_bit_offset, args...));
+}
+
 template<typename T, typename U>
 inline T 
 bit_clear(const T p_value, 
@@ -122,12 +131,31 @@ bit_clear(const T p_value,
   return mask_clear(p_value, mask(p_bit_offset));
 }
 
+template<typename T, typename U, typename... Args>
+inline T 
+bit_clear(const T   p_value, 
+          const U   p_bit_offset,
+          Args...   args)
+{
+  return mask_clear(p_value, mask(p_bit_offset, args...));
+}
+
+
 template<typename T, typename U>
 inline T
 bit_toggle(const T p_value, 
            const U p_bit_offset)
 {
   return mask_toggle(p_value, mask(p_bit_offset));
+}
+
+template<typename T, typename U, typename... Args>
+inline T 
+bit_toggle(const T   p_value, 
+           const U   p_bit_offset,
+          Args...   args)
+{
+  return mask_toggle(p_value, mask(p_bit_offset, args...));
 }
 
 template<typename T, typename U>
