@@ -1,5 +1,5 @@
 /// \file timer.hpp
-/// abstract std chrono compliant timer implementation
+/// abstract timer implementation
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -39,127 +39,113 @@ namespace haluj
 namespace base
 {
 
-struct default_timer_function
+struct default_function
 {
   void operator()() {};
 };
 
-template<typename TimePointType>
-struct base_timer
+struct one_shot
 {
-  typedef TimePointType       time_point;
+  template<typename Implementation>
+  void operator()(Implementation& p_impl)
+  {
+    p_impl.stop();
+  }
+};
 
-  base_timer()
-  : run_(false),
-    timeout_()
+struct periodic
+{
+  template<typename Implementation>
+  void operator()(Implementation& )
   {}
-  
-  void set(const time_point&  p_timeout)
+};
+
+template<std::size_t N>
+struct n_shot
+{
+  template<typename Implementation>
+  void operator()(Implementation& p_impl)
   {
-    timeout_ = p_timeout;
-    start();
+    current ++;
+    if (current >= N)
+    {
+      p_impl.stop();
+    }
   }
+
+  std::size_t   current = 0;
+};
+
+
+template<typename Implementation, typename Continuity>
+struct timer
+{
+  typedef Implementation                    implementation;
+  typedef Continuity                        continuity;
+  typedef typename implementation::duration duration;
   
-  time_point timeout() const
+  // Constructors
+
+  timer()
+  {}
+
+  timer(const timer& ) = delete;
+  
+  timer(timer&& ) = delete;
+
+  // Operators
+
+  template<typename Function = default_function> 
+  bool operator()(duration  p_delta,
+                  Function  p_function = Function())
   {
-    return timeout_;
+    bool result = impl_(p_delta);
+    
+    if (result)
+    {
+      cont_(impl_);
+      p_function();
+    }
+    
+    return result;
   }
+
+  // Methods
   
-  void start()
+  void set(duration p_value)
   {
-    run_ = true;
-  }
-  
-  void stop()
-  {
-    run_ = false;
-  }
-  
-  bool test_timeout(const time_point& p_now) const
-  {
-    return run_ && (p_now >= timeout_);
+    impl_.load(p_value);
+    impl_.reset();
+    impl_.start();
   }
   
   bool is_running() const
   {
-    return run_;
-  }
+    return impl_.is_running();
+  }  
 
-  bool              run_;
-  time_point        timeout_;
+// private:
+
+  implementation  impl_;
+  continuity      cont_;
+
 };
 
-template<typename TimePointType>
-struct one_shot_timer 
-: base_timer<TimePointType>
+// helpers
+template<typename T, typename D = T>
+struct delta
 {
-  typedef base_timer<TimePointType> base;
+  delta(T p_initial)
+  : previous_(p_initial)
+  {}
   
-  one_shot_timer()
-  : base()
-  {}
-
-  template<typename Function = default_timer_function> 
-  bool operator()(const typename base::time_point&    p_now,
-                  Function                            p_function = Function())
+  D operator()(T current)
   {
-    bool result = false;
-    
-    if (base::test_timeout(p_now))
-    {
-      base::stop();
-      p_function();
-      result = true;
-    }
-    
+    D result  = current - previous_;  
+    previous_ = current;
     return result;
   }
-
-};
-
-template<typename TimePointType,
-         typename DurationType>
-struct periodic_timer 
-: base_timer<TimePointType>
-{
-  typedef DurationType                duration;
-  typedef base_timer<TimePointType>   base;
-  typedef typename base::time_point   time_point;
- 
-  periodic_timer(const duration&      p_period)
-  : base(),
-    period(p_period)
-  {}
-
-  void set(const time_point& p_now)
-  {
-    base::set(p_now + period);
-  }
-
-  template<typename Function = default_timer_function> 
-  bool operator()(const time_point&   p_now,
-                  Function            p_function = Function())
-  {
-    bool result = false;
-    
-    if (base::test_timeout(p_now))
-    {
-      p_function();
-      advance();
-      result  =   true;
-    }
-    
-    return result;
-  }
-
-  time_point advance()
-  {
-    base::timeout_ += period;
-    
-    return base::timeout_;
-  }
-
-  duration      period;
+  T     previous_;
 };
 
 } // namespace base

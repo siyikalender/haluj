@@ -30,44 +30,69 @@ For more information, please refer to <http://unlicense.org>
 /// \date   2018
 
 #include "bitops.hpp"
+#include "pin.hpp"
 #include "peripherals.hpp"
-#include "clock.hpp"
 #include "timer.hpp"
+#include "systick.hpp"
+#include "timer_implementations/software.hpp"
 
-using namespace std::chrono;
 using namespace haluj::base;
 using namespace haluj::base::devices::arm;
 using namespace haluj::base::devices::arm::kinetis;
 using namespace haluj::base::devices::arm::kinetis::specific;
+using namespace haluj::base::timer_implementations;
 
-constexpr uint32_t c_test_pin = 15;
+using blue    = pin<port_b, 21>;
+using red     = pin<port_b, 22>;
+
+// counter based software timer special type definitions
+// software timer implementation can be forward (up counting) or backward (down counting) in direction.
+// the duration type can be based on int, double, chrono clock duration. Use of signed types is recommended.
+using fwd_int_periodic_timer    = timer<software::implementation<software::forward<int>>,  periodic>;
+// using bwd_int_periodic_timer    = timer<software::implementation<software::backward<int>>, periodic>;
+// using fwd_chrono_one_shot_timer = timer<software::implementation<software::forward<std::chrono::system_clock::duration>>,  one_shot>;
+
+// ARM architecture systick based periodic timer definition
+using systick_periodic_timer    = timer<systick, periodic>;
 
 int main()
 {
-  open<port_a>();
+  open<port_b>();
   
-  port_a::configure(c_test_pin, options(port_a::mux::_1));
+  port_b::configure(red::index,  options(port_b::mux::_1));
+  port_b::configure(blue::index, options(port_b::mux::_1));
   
-  port_a::set_direction(mask(c_test_pin));
+  port_b::set_direction(mask(red::index, blue::index));
   
-  periodic_timer<precision_clock::time_point, milliseconds>    
-    tmr(1000ms);
+  red::set();
+  blue::set();
+  
+  // declaration of timers
+  systick_periodic_timer    tmr_0;
+  fwd_int_periodic_timer    tmr_1;
+  
+  // load and start the timers
+  tmr_0.set(system_core_clock() / 10);
+  tmr_1.set(5);
 
-  auto now = precision_clock::initialize();
-  
-  tmr.set(now);
-  
   for (;;)
   {
-    now = precision_clock::now(); // clock interface is based on chrono
-    
-    tmr(
-      now, 
+    // process timers
+    tmr_0(
+      0, // this value is omitted for systick or other hardware timers. Just give a zero value
+      // lambda for tmr_0 timeout
       [&]() {
-        port_a::toggle(mask(c_test_pin));
+        red::toggle();
+        tmr_1(
+          1, // delta 1 increase/decrease count value by 1
+          // lambda from tmr_1 timeout
+          [&] {
+            blue::toggle();
+          }
+        );
       }
     );
   }
-  
+
   return 0;
 }

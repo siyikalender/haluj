@@ -34,14 +34,14 @@ For more information, please refer to <http://unlicense.org>
 #include "clock.hpp"
 #include "i2c_master.hpp"
 #include "i2c_slave.hpp"
+#include "systick.hpp"
 
 using namespace haluj::base;
 using namespace haluj::base::devices::arm;
 using namespace haluj::base::devices::arm::kinetis;
 using namespace haluj::base::devices::arm::kinetis::specific;
 
-typedef precision_clock::time_point   time_point;
-typedef std::chrono::microseconds     microseconds;
+using systick_periodic_timer    = timer<systick, periodic>;
 
 int main()
 {
@@ -65,63 +65,71 @@ int main()
   
   auto now = precision_clock::initialize();
   
-  i2c_master<i2c_0, 8, 8,  time_point, microseconds, 50, 150, 50> master;
-  i2c_slave<i2c_1,  8, 8,  time_point, microseconds, 2000> slave;
+  systick_periodic_timer      tmr_0;
+  
+  i2c_master<i2c_0, 8, 8,  int, 2, 6, 2> master;
+  i2c_slave<i2c_1,  8, 8,  int, 80> slave;
 
   // These variables are related to slave example use case
-  unsigned        master_message_state = 0U;
-  unsigned        r_index       = 0U;
-  unsigned        current_index = 0U;
+  unsigned        master_message_state  = 0U;
+  unsigned        r_index               = 0U;
+  unsigned        current_index         = 0U;
   uint8_t         rx_buf[8];
+
+  tmr_0.set(system_core_clock() / 40000); // 40kHz -> 25uS
 
   for (;;)
   {
-    now = precision_clock::now();
-    
-    ///////////// Master
-    master(now);
-    
-    ///////////// Slave 
-    slave(
-      now,
-      [&](bool p_read_mode)  // Address received handler
+    tmr_0(
+      0, // omit this parameter for systick or other hardware timers
+      [&]() 
       {
-        master_message_state = (p_read_mode) ? 0 : 1;        
-      },
-      [&]() // Timeout handler, to clear things up
-      {
-        master_message_state  = 0;
-        r_index             = 0;        
-      } 
-    );
-    
-    uint8_t   d;
-    // Process received message. This is an example use case. 
-    while(slave.read(&d, 1))
-    {
-      switch(master_message_state)
-      {
-      default: // case 0
-        break;
-      case 1: // Access to Command Register
-        {
-          // Data holds the register
-          master_message_state  = 2;
-          current_index       = 0;
-        }
-        break;
-      case 2: // Receive  INCOMING DATA
-        {
-          if (++current_index >= sizeof(rx_buf))
+        ///////////// Master
+        master(1);
+        
+        ///////////// Slave 
+        slave(
+          1,
+          [&](bool p_read_mode)  // Address received handler
           {
-            current_index = 0;
-            // Process data on transition
-            master_message_state = 0;
+            master_message_state = (p_read_mode) ? 0 : 1;        
+          },
+          [&]() // Timeout handler, to clear things up
+          {
+            master_message_state  = 0;
+            r_index             = 0;        
+          } 
+        );
+          
+        uint8_t   d;
+        // Process received message. This is an example use case. 
+        while(slave.read(&d, 1))
+        {
+          switch(master_message_state)
+          {
+          default: // case 0
+            break;
+          case 1: // Access to Command Register
+            {
+              // Data holds the register
+              master_message_state  = 2;
+              current_index         = 0;
+            }
+            break;
+          case 2: // Receive  INCOMING DATA
+            {
+              if (++current_index >= sizeof(rx_buf))
+              {
+                current_index         = 0;
+                // Process data on transition
+                master_message_state  = 0;
+              }
+            }
+            break;
           }
         }
-        break;
       }
-    }
+    );
   }
   
   // stop(i2c_0);

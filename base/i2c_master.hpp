@@ -39,6 +39,7 @@ For more information, please refer to <http://unlicense.org>
 #include "ring_buffer.hpp"
 #include "set_and_wait.hpp"
 #include "timer.hpp"
+#include "timer_implementations/software.hpp"
 
 namespace haluj
 {
@@ -49,15 +50,15 @@ namespace base
 template<typename     T,
          std::size_t  TxBufferSize,
          std::size_t  RxBufferSize,
-         typename     TimePoint,
          typename     Duration,
          unsigned     StartTimeOut,
          unsigned     XferTimeOut,
          unsigned     StopTimeOut>
 struct i2c_master
 {
-  typedef TimePoint   time_point;
   typedef Duration    duration;
+  
+  using bwd_int_one_shot_timer    = timer<timer_implementations::software::implementation<timer_implementations::software::backward<int>>,  one_shot>;
   
   static constexpr unsigned c_tx_buffer_size  = TxBufferSize;
   static constexpr unsigned c_rx_buffer_size  = RxBufferSize;
@@ -88,7 +89,7 @@ struct i2c_master
     static_assert(RxBufferSize > 0, "Rx Buffer Size must be greater than 0");
   }
   
-  void operator ()(const time_point p_now)
+  void operator ()(const duration p_delta)
   {
     m_saw(
       [&]()   // SET function
@@ -150,12 +151,12 @@ struct i2c_master
         default:
           break;
         }
-        m_timer.set(p_now + delay);
+        m_timer.set(delay);
       },
       [&]() -> bool // Test Function
       {
         bool result = false;
-        bool timeout = m_timer(p_now);
+        bool timeout = m_timer(p_delta);
         switch(m_state)
         {
         case states::wait_busy:
@@ -305,7 +306,7 @@ struct i2c_master
   unsigned                                            m_read_count;
   ring_buffer<std::array<uint8_t, c_tx_buffer_size>>  m_tx_buffer;
   ring_buffer<std::array<uint8_t, c_rx_buffer_size>>  m_rx_buffer;
-  one_shot_timer<time_point>                          m_timer;
+  bwd_int_one_shot_timer                              m_timer;
   uint8_t                                             m_slave_address;
 };
 

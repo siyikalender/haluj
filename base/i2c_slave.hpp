@@ -48,13 +48,13 @@ namespace base
 template<typename     T,
          std::size_t  TxBufferSize,
          std::size_t  RxBufferSize,
-         typename     TimePoint,
          typename     Duration,
          unsigned     RxTimeout>
 struct i2c_slave
 {
-  typedef TimePoint       time_point;
   typedef Duration        duration;
+
+  using bwd_int_one_shot_timer    = timer<timer_implementations::software::implementation<timer_implementations::software::backward<int>>,  one_shot>;
   
   static constexpr unsigned c_tx_buffer_size  = TxBufferSize;
   static constexpr unsigned c_rx_buffer_size  = RxBufferSize;
@@ -178,7 +178,7 @@ struct i2c_slave
   
   template<typename AddressReceivedFunction,
            typename TimeoutFunction>
-  void operator ()(const time_point&       p_now, 
+  void operator ()(const duration   p_delta, 
             AddressReceivedFunction arf,
             TimeoutFunction         tof)
   {
@@ -189,12 +189,12 @@ struct i2c_slave
     {
       m_event.clear();
       m_rx_buffer.clear();
-      m_timer.set(p_now + duration(c_rx_timeout));
+      m_timer.set(duration(c_rx_timeout));
       arf(m_read_mode);
     }
     
     m_timer(
-      p_now, 
+      p_delta, 
       [&]()
       {
         m_event.clear();
@@ -251,8 +251,8 @@ struct i2c_slave
     return false; // TBD
   }
 
-  one_shot_timer<time_point>                          m_timer;
-  blackboard_strategy<events>                         m_event;
+  bwd_int_one_shot_timer                              m_timer;
+  strategy::blackboard<events>                        m_event;
   bool                                                m_read_mode;
   ring_buffer<std::array<uint8_t, c_tx_buffer_size>>  m_tx_buffer;
   ring_buffer<std::array<uint8_t, c_rx_buffer_size>>  m_rx_buffer;

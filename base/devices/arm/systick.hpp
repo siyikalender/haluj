@@ -1,5 +1,5 @@
-/// \file clock.hpp
-/// implementation of clock 
+/// \file systick.hpp
+/// timer complaint ARM systick implementation
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -28,30 +28,12 @@ For more information, please refer to <http://unlicense.org>
 */
 
 /// \author Selcuk Iyikalender
-/// \date   2018
+/// \date   2019
 
-#include "clock.hpp"
-#include "vendor.h"
+#ifndef HALUJ_BASE_DEVICES_ARM_SYSTICK_HPP
+#define HALUJ_BASE_DEVICES_ARM_SYSTICK_HPP
 
-#define SYSTICK_HZ      100000U
-#define SYSTICK_US      (1000000U/SYSTICK_HZ)
-
-// volatile std::atomic<int64_t>   now__;
-
-volatile int64_t  now__   = 0ULL;
-
-volatile bool g_flag = false;
-
-extern "C"
-#ifndef DONT_USE_RAM_CODE
-__attribute((section(".ramcode")))
-#endif
-void SysTick_isr(void)
-{
-  g_flag = true;
-  now__ += SYSTICK_US; // 64 bit update may not be safe
-  asm ("" : : : "memory"); // gcc specific
-}
+#include <cstdint>
 
 namespace haluj
 {
@@ -61,32 +43,64 @@ namespace base
 
 namespace devices
 {
-
+  
 namespace arm
 {
 
-precision_clock::time_point 
-precision_clock::initialize()
+struct systick
 {
-  SysTick_Config(SystemCoreClock / SYSTICK_HZ);
-  return 
-    precision_clock::time_point(precision_clock::duration(0ULL));  
-}
+  typedef uint32_t duration;
+  
+  bool operator()(const uint32_t)
+  {
+    return predicate();
+  }
 
-precision_clock::time_point 
-precision_clock::now()
-{
-  precision_clock::time_point    result;
-  __disable_irq();
-  result = precision_clock::time_point(precision_clock::duration(static_cast<int64_t>(now__)));
-  __enable_irq();
-  return result;
-}
+  bool predicate() const
+  {
+    return bit_test(SysTick->CTRL, SysTick_CTRL_COUNTFLAG_Pos);
+  }
+
+  void reset()
+  {
+    SysTick->VAL   = 0UL;
+  }
+
+  void load(const uint32_t p_value) 
+  {
+    SysTick->LOAD  = p_value - 1U;
+  }
+
+  void start()
+  {
+    SysTick->CTRL = 
+      bit_set(SysTick->CTRL, 
+              SysTick_CTRL_CLKSOURCE_Pos, 
+              SysTick_CTRL_ENABLE_Pos);
+  }
+  
+  void stop()
+  {
+    SysTick->CTRL = 
+      bit_clear(SysTick->CTRL, 
+                SysTick_CTRL_CLKSOURCE_Pos, 
+                SysTick_CTRL_ENABLE_Pos);
+  }
+  
+  bool is_running() const
+  {
+    return bit_test(SysTick->CTRL, SysTick_CTRL_ENABLE_Pos);
+  }
+  
+};
+  
+} // namespace devices
 
 } // namespace arm
-
-} // namespace devices
 
 } // namespace base
 
 } // namespace haluj
+
+#endif // HALUJ_BASE_DEVICES_ARM_SYSTICK_HPP
+

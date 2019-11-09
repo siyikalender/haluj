@@ -71,9 +71,11 @@ on(const EventType p_event,
       (p_event, p_event_strategy);
 }
 
-
+namespace strategy
+{
+  
 template <typename EventType>
-struct blackboard_strategy
+struct blackboard
 {
   bool test(EventType   p_event) const
   {
@@ -112,6 +114,8 @@ struct blackboard_strategy
   bool      is_valid = false;
   EventType pending_event;
 };
+
+} // namespace strategy
 
 } // namespace base
 
