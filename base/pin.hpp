@@ -32,6 +32,8 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_BASE_PIN_HPP
 #define HALUJ_BASE_PIN_HPP
 
+#include <cstdint>
+
 #include "bitops.hpp"
 
 namespace haluj
@@ -86,7 +88,12 @@ struct pin
   static bool test_interrupt_clear()
   {
     return port::test_interrupt_clear(index);
-  }  
+  }
+  
+  static void assign(bool p_value)
+  {
+    if (p_value) set(); else clear();
+  }
 
 };
 
