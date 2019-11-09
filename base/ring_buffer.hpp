@@ -47,17 +47,19 @@ namespace base
 {
 
 template< typename      RandomAccessContainerType, 
+          typename      FlagsType  = uint8_t,
           typename      ScopedLock = null_lock>
 struct ring_buffer
 {
-  static constexpr unsigned c_empty = 0U;
-  static constexpr unsigned c_full  = 1U;
-    
   typedef RandomAccessContainerType             container_type;
   typedef typename container_type::value_type   base_type;
   typedef base_type*                            iterator;
   typedef std::size_t                           index_type;
-  typedef unsigned                              flag_type;
+  typedef FlagsType                             flags_type;
+
+
+  static constexpr uint8_t c_empty = 0U;
+  static constexpr uint8_t c_full  = 1U;
 
   ring_buffer()
   {
@@ -66,7 +68,7 @@ struct ring_buffer
 
   void clear(const bool p_zero = false)
   {
-    m_flags   = bit_set(m_flags, c_empty);
+    m_flags   = mask(c_empty); // non atomic due to store
     m_tail    = 0;
     m_head    = 0;
   }
@@ -107,27 +109,35 @@ struct ring_buffer
 
   bool full() const
   {
-    return bit_test(m_flags, c_full); 
+    return bit_test(uint8_t(m_flags), c_full); 
   }
 
   bool empty() const
   {
-    return bit_test(m_flags, c_empty);
+    return bit_test(uint8_t(m_flags), c_empty);
   }
   
   void push(const base_type &p_data)
   {
     ScopedLock lock;
     m_container[m_head] = p_data;
-    m_head      = cyclic_increment(m_head, capacity());
-    m_flags     = (m_head == m_tail) ? mask(c_full) : 0; // atomic
+    m_head      =   cyclic_increment(m_head, capacity());
+    m_flags     &=  ~mask(c_empty); // atomic, depending on flags_type
+    if (m_head == m_tail)
+    {
+      m_flags |= mask(c_full);      // atomic, depending on flags_type
+    }
   }
 
   void pop()
   {
     ScopedLock lock;
-    m_tail      = cyclic_increment(m_tail, capacity());
-    m_flags     = (m_head == m_tail) ? mask(c_empty) : 0; // atomic
+    m_tail       = cyclic_increment(m_tail, capacity());
+    m_flags     &= ~mask(c_full); // atomic, depending on flags_type
+    if (m_head == m_tail)
+    {
+      m_flags |= mask(c_empty);   // atomic, depending on flags_type
+    }
   }
   
   base_type& front() 
@@ -135,10 +145,10 @@ struct ring_buffer
     return m_container[m_tail];
   }
 
-  container_type m_container;
-  index_type     m_tail;
-  index_type     m_head;
-  flag_type      m_flags; // <--- should be atomic
+  container_type      m_container;
+  index_type          m_tail;
+  index_type          m_head;
+  flags_type          m_flags; // <--- should be atomic
 };
 
 } // namespace base
