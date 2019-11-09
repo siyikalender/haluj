@@ -41,6 +41,7 @@ For more information, please refer to <http://unlicense.org>
 #include "i2c.hpp"
 #include "adc.hpp"
 #include "vref.hpp"
+#include "ftm.hpp"
 
 namespace haluj
 {
@@ -178,6 +179,19 @@ typedef uart<U0>  uart_0;
 typedef uart<U1>  uart_1;
 typedef uart<U2>  uart_2;
 
+struct _LPUART0
+{
+  static constexpr intptr_t   sim_base        = SIM_BASE;
+  static constexpr intptr_t   uart_base       = LPUART0_BASE;
+  static constexpr uint32_t   scgc_mask       = SIM_SCGC6_LPUART0_MASK;  
+  static constexpr bool       uses_core_clock = true;
+
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC6); 
+  }  
+};
+
 // SPI 
 struct _SPI0
 {
@@ -276,6 +290,60 @@ struct _VREF_0
 };
 
 typedef vref<_VREF_0>  vref_0;
+
+// VREF 
+struct _FTM_0
+{
+  static constexpr intptr_t sim_base  = SIM_BASE;
+  static constexpr intptr_t ftm_base  = FTM0_BASE;
+  static constexpr uint32_t scgc_mask = SIM_SCGC6_FTM0_MASK;    
+  
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC6); 
+  }    
+};
+
+struct _FTM_1
+{
+  static constexpr intptr_t sim_base  = SIM_BASE;
+  static constexpr intptr_t ftm_base  = FTM1_BASE;
+  static constexpr uint32_t scgc_mask = SIM_SCGC6_FTM1_MASK;    
+  
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC6); 
+  }    
+};
+
+struct _FTM_2
+{
+  static constexpr intptr_t sim_base  = SIM_BASE;
+  static constexpr intptr_t ftm_base  = FTM2_BASE;
+  static constexpr uint32_t scgc_mask = SIM_SCGC6_FTM2_MASK;
+  
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC6); 
+  }    
+};
+
+struct _FTM_3
+{
+  static constexpr intptr_t sim_base  = SIM_BASE;
+  static constexpr intptr_t ftm_base  = FTM3_BASE;
+  static constexpr uint32_t scgc_mask = SIM_SCGC6_FTM3_MASK;    
+  
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC6); 
+  }    
+};
+
+typedef ftm<_FTM_0>  ftm_0;
+typedef ftm<_FTM_1>  ftm_1;
+typedef ftm<_FTM_2>  ftm_2;
+typedef ftm<_FTM_3>  ftm_3;
 
 } // namespace mkv31f
 
