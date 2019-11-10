@@ -11,7 +11,7 @@ TOOLCHAIN_PREFIX = arm-none-eabi-
 
 BOOST_INCLUDE_DIR = 
 
-HALUJ_DIR    = ../../haluj
+HALUJ_DIR    = ..
 
 LD_FILE           = $(HALUJ_DIR)/base/devices/arm/kinetis/MKV31/ld/KV31F512xxx12_flash.ld
 
@@ -26,6 +26,7 @@ SPECIFIC_SRC_DIRS = .
 SPECIFIC_SRC_DIRS += $(HALUJ_DIR)/base/devices/arm
 SPECIFIC_SRC_DIRS += $(HALUJ_DIR)/base/devices/arm/kinetis
 SPECIFIC_SRC_DIRS += $(HALUJ_DIR)/base/devices/arm/kinetis/MKV31
+SPECIFIC_SRC_DIRS += $(HALUJ_DIR)/bsp/L03MCK100-50M-KV31F12
 
 SPECIFIC_COMPILER_OPTIONS =   -O2
 SPECIFIC_COMPILER_OPTIONS +=  -DMKV31F51212 

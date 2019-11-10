@@ -31,7 +31,6 @@ For more information, please refer to <http://unlicense.org>
 
 #include "bitops.hpp"
 #include "peripherals.hpp"
-#include "clock.hpp"
 #include "i2c_master.hpp"
 #include "i2c_slave.hpp"
 #include "systick.hpp"
@@ -62,8 +61,6 @@ int main()
       i2c_1::baud_rate<400000>()
     )
   );
-  
-  auto now = precision_clock::initialize();
   
   systick_periodic_timer      tmr_0;
   

@@ -1,5 +1,5 @@
-/// \file system_MKV31F51212.cpp
-/// System initialization functions
+/// \file bsp.cpp
+/// BSP for FRDM-K64F boards
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -28,43 +28,44 @@ For more information, please refer to <http://unlicense.org>
 */
 
 /// \author Selcuk Iyikalender
-/// \date   2018
+/// \date   2019
 
 #include "vendor.h"
 #include "mcg.hpp"
 
-extern "C" void disable_watchdog()
+extern "C" void set_sys_dividers(uint32_t outdiv1, uint32_t outdiv2, uint32_t outdiv3, uint32_t outdiv4);
+
+using namespace haluj::base::devices::arm::kinetis;
+
+constexpr uint32_t  c_crystal_freq    = 50000000U;
+constexpr bool      c_high_gain       = false;
+constexpr bool      c_use_crystal     = false;
+constexpr uint32_t  c_divisor         = 20U;
+constexpr uint32_t  c_multiplier      = 48U;
+constexpr uint32_t  c_mcg_out_freq    = pll_frequency(c_crystal_freq, c_divisor, c_multiplier);
+constexpr uint32_t  c_core_divisor    = 1U;
+constexpr uint32_t  c_bus_divisor     = 2U;
+constexpr uint32_t  c_flexbus_divisor = 2U;
+constexpr uint32_t  c_flash_divisor   = 4U;
+
+extern "C" 
+void bsp_initialize_clock(const uint32_t p_default_clock)
 {
-  /* WDOG->UNLOCK: WDOGUNLOCK=0xC520 */
-  WDOG->UNLOCK = WDOG_UNLOCK_WDOGUNLOCK(0xC520); /* Key 1 */
-  /* WDOG->UNLOCK: WDOGUNLOCK=0xD928 */
-  WDOG->UNLOCK = WDOG_UNLOCK_WDOGUNLOCK(0xD928); /* Key 2 */
-  /* WDOG->STCTRLH: ?=0,DISTESTWDOG=0,BYTESEL=0,TESTSEL=0,TESTWDOG=0,?=0,?=1,WAITEN=1,STOPEN=1,DBGEN=0,ALLOWUPDATE=1,WINEN=0,IRQRSTEN=0,CLKSRC=1,WDOGEN=0 */
-  WDOG->STCTRLH = WDOG_STCTRLH_BYTESEL(0x00) |
-                 WDOG_STCTRLH_WAITEN_MASK |
-                 WDOG_STCTRLH_STOPEN_MASK |
-                 WDOG_STCTRLH_ALLOWUPDATE_MASK |
-                 WDOG_STCTRLH_CLKSRC_MASK |
-                 0x0100U;
-}
-
-extern "C" void bsp_initialize_clock(const uint32_t p_default_clock);
-
-constexpr uint32_t  c_device_clock    = 20971520U;
-
-uint32_t SystemCoreClock = c_device_clock;
-
-extern "C" void system_init()
-{
-  #if ((__FPU_PRESENT == 1) && (__FPU_USED == 1))
-  SCB->CPACR |= ((3UL << 10*2) | (3UL << 11*2));    /* set CP10, CP11 Full Access */
-  #endif   
-  #if (__MPU_PRESENT == 1)
-  // disable MPU
-  MPU_CESR &= ~MPU_CESR_VLD_MASK;
-  #endif
-  // initialize PLL
+  set_sys_dividers(clkdiv<c_core_divisor>(), 
+                   clkdiv<c_bus_divisor>(), 
+                   clkdiv<c_flexbus_divisor>(), 
+                   clkdiv<c_flash_divisor>());
   
-  bsp_initialize_clock(c_device_clock);
+  if (init_pll<c_crystal_freq, 
+                    c_high_gain, 
+                    c_use_crystal, 
+                    c_divisor, 
+                    c_multiplier>())
+  {  
+    SystemCoreClock = c_mcg_out_freq / c_core_divisor;
+  }
+  else
+  {
+    SystemCoreClock = p_default_clock / c_core_divisor;
+  }
 }
-

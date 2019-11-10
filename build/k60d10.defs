@@ -11,19 +11,22 @@ TOOLCHAIN_PREFIX = arm-none-eabi-
 
 BOOST_INCLUDE_DIR = 
 
-LD_FILE           = ../base/devices/arm/kinetis/MK60D10/ld/K60DX256xxx10_flash.ld
+HALUJ_DIR    = ..
+
+LD_FILE           = $(HALUJ_DIR)/base/devices/arm/kinetis/MK60D10/ld/K60DX256xxx10_flash.ld
 
 SPECIFIC_INC_DIRS = .
-SPECIFIC_INC_DIRS += ../base/
-SPECIFIC_INC_DIRS += ../base/devices/arm
-SPECIFIC_INC_DIRS += ../base/devices/arm/vendor
-SPECIFIC_INC_DIRS += ../base/devices/arm/kinetis
-SPECIFIC_INC_DIRS += ../base/devices/arm/kinetis/MK60D10
+SPECIFIC_INC_DIRS += $(HALUJ_DIR)/base/
+SPECIFIC_INC_DIRS += $(HALUJ_DIR)/base/devices/arm
+SPECIFIC_INC_DIRS += $(HALUJ_DIR)/base/devices/arm/vendor
+SPECIFIC_INC_DIRS += $(HALUJ_DIR)/base/devices/arm/kinetis
+SPECIFIC_INC_DIRS += $(HALUJ_DIR)/base/devices/arm/kinetis/MK60D10
 
 SPECIFIC_SRC_DIRS = .
-SPECIFIC_SRC_DIRS += ../base/devices/arm
-SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis
-SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis/MK60D10
+SPECIFIC_SRC_DIRS += $(HALUJ_DIR)/base/devices/arm
+SPECIFIC_SRC_DIRS += $(HALUJ_DIR)/base/devices/arm/kinetis
+SPECIFIC_SRC_DIRS += $(HALUJ_DIR)/base/devices/arm/kinetis/MK60D10
+SPECIFIC_SRC_DIRS += $(HALUJ_DIR)/bsp/L03MCK100-10M-K60D10
 
 SPECIFIC_COMPILER_OPTIONS =   -O2
 SPECIFIC_COMPILER_OPTIONS +=  -DK60D10 

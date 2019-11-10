@@ -48,60 +48,21 @@ extern "C" void disable_watchdog()
                  0x0100U;
 }
 
-extern "C" void set_sys_dividers(uint32_t outdiv1, uint32_t outdiv2, uint32_t outdiv3, uint32_t outdiv4);
-
-constexpr uint32_t 
-pll_frequency(const uint32_t p_frequency,
-              const uint32_t p_divisor,
-              const uint32_t p_multiplier)
-{
-  return (p_frequency / p_divisor) * p_multiplier;
-}
-
-template<uint32_t Value>
-constexpr uint32_t clkdiv()
-{
-  static_assert((Value >= 1) && (Value <= 16), "Invalid clkdiv value");
-  return Value - 1U;
-}
+extern "C" void bsp_initialize_clock(const uint32_t p_default_clock);
 
 constexpr uint32_t  c_device_clock    = 20971520U;
-constexpr uint32_t  c_crystal_freq    = 16000000U;
-constexpr bool      c_high_gain       = true;
-constexpr bool      c_external_ref    = true;
-constexpr uint32_t  c_divisor         = 8U;
-constexpr uint32_t  c_multiplier      = 50U;
-constexpr uint32_t  c_mcg_out_freq    = pll_frequency(c_crystal_freq, c_divisor, c_multiplier);
-constexpr uint32_t  c_core_divisor    = 1U;
-constexpr uint32_t  c_bus_divisor     = 2U;
-constexpr uint32_t  c_flexbus_divisor = 2U;
-constexpr uint32_t  c_flash_divisor   = 4U;
 
 uint32_t SystemCoreClock = c_device_clock;
 
-using namespace haluj::base::devices::arm::kinetis;
+// using namespace haluj::base::devices::arm::kinetis;
 
 extern "C" void system_init()
 {
+  // #if (__MPU_PRESENT == 1) <-- !
   // disable MPU
   MPU_CESR &= ~MPU_CESR_VLD_MASK;
+  // #endif
   // initialize PLL 
-  set_sys_dividers(clkdiv<c_core_divisor>(), 
-                   clkdiv<c_bus_divisor>(), 
-                   clkdiv<c_flexbus_divisor>(), 
-                   clkdiv<c_flash_divisor>());
-  
-  if (init_pll<c_crystal_freq, 
-                    c_high_gain, 
-                    c_external_ref, 
-                    c_divisor, 
-                    c_multiplier>())
-  {  
-    SystemCoreClock = c_mcg_out_freq / c_core_divisor;
-  }
-  else
-  {
-    SystemCoreClock = c_device_clock / c_core_divisor;
-  }
+  bsp_initialize_clock(c_device_clock);
 }
 

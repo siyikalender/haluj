@@ -11,21 +11,22 @@ TOOLCHAIN_PREFIX = arm-none-eabi-
 
 BOOST_INCLUDE_DIR = 
 
-HALUJ_DIR    = ../../haluj
+HALUJ_DIR    = ..
 
 LD_FILE           = $(HALUJ_DIR)/base/devices/arm/kinetis/MK64F12/ld/K64FN1Mxxx12_flash.ld
 
 SPECIFIC_INC_DIRS = .
-SPECIFIC_INC_DIRS += ../base/
-SPECIFIC_INC_DIRS += ../base/devices/arm
-SPECIFIC_INC_DIRS += ../base/devices/arm/vendor
-SPECIFIC_INC_DIRS += ../base/devices/arm/kinetis
-SPECIFIC_INC_DIRS += ../base/devices/arm/kinetis/MK64F12
+SPECIFIC_INC_DIRS += $(HALUJ_DIR)/base/
+SPECIFIC_INC_DIRS += $(HALUJ_DIR)/base/devices/arm
+SPECIFIC_INC_DIRS += $(HALUJ_DIR)/base/devices/arm/vendor
+SPECIFIC_INC_DIRS += $(HALUJ_DIR)/base/devices/arm/kinetis
+SPECIFIC_INC_DIRS += $(HALUJ_DIR)/base/devices/arm/kinetis/MK64F12
 
 SPECIFIC_SRC_DIRS = .
-SPECIFIC_SRC_DIRS += ../base/devices/arm
-SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis
-SPECIFIC_SRC_DIRS += ../base/devices/arm/kinetis/MK64F12
+SPECIFIC_SRC_DIRS += $(HALUJ_DIR)/base/devices/arm
+SPECIFIC_SRC_DIRS += $(HALUJ_DIR)/base/devices/arm/kinetis
+SPECIFIC_SRC_DIRS += $(HALUJ_DIR)/base/devices/arm/kinetis/MK64F12
+SPECIFIC_SRC_DIRS += $(HALUJ_DIR)/bsp/FRDM-K64F
 
 SPECIFIC_COMPILER_OPTIONS =   -O2
 SPECIFIC_COMPILER_OPTIONS +=  -DK64F12 

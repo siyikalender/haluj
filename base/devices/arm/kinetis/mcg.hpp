@@ -312,6 +312,21 @@ inline bool init_pll()
   return std::get<0>(result);
 }
 
+constexpr uint32_t 
+pll_frequency(const uint32_t p_frequency,
+              const uint32_t p_divisor,
+              const uint32_t p_multiplier)
+{
+  return (p_frequency / p_divisor) * p_multiplier;
+}
+
+template<uint32_t Value>
+constexpr uint32_t clkdiv()
+{
+  static_assert((Value >= 1) && (Value <= 16), "Invalid clkdiv value");
+  return Value - 1U;
+}
+
 } // namespace haluj
 
 } // namespace base

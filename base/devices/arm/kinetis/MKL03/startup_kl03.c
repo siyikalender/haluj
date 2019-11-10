@@ -148,7 +148,7 @@ uint8_t g_bootloader_field_values[]={
   // I2C address (1 byte)
   0x10, // Enable UART
   // Peripheral Detection Timeout (2 bytes)
-  0xF4, 0x01,
+  0xE8, 0x03,
   // USB Vendor Id (2 bytes)
   0xFF, 0xFF,
   // USB Product Id (2 bytes)

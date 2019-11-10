@@ -1,5 +1,5 @@
 /// \file specific.hpp
-/// specific definitions for Kinetis MK60D10 family devices
+/// specific definitions for Kinetis KV31 family devices
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -29,8 +29,8 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_DEVICES_ARM_KINETIS_MK60D10_SPECIFIC_HPP
-#define HALUJ_BASE_DEVICES_ARM_KINETIS_MK60D10_SPECIFIC_HPP
+#ifndef HALUJ_BASE_DEVICES_ARM_KINETIS_KV31_SPECIFIC_HPP
+#define HALUJ_BASE_DEVICES_ARM_KINETIS_KV31_SPECIFIC_HPP
 
 #include <cstdint>
 #include "vendor.h"
@@ -374,6 +374,6 @@ namespace specific = mkv31f;
 
 } // namespace haluj
 
-// HALUJ_BASE_DEVICES_ARM_KINETIS_MK60D10_SPECIFIC_HPP
+// HALUJ_BASE_DEVICES_ARM_KINETIS_KV31_SPECIFIC_HPP
 #endif
 

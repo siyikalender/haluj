@@ -60,7 +60,7 @@ set_baud_rate(UART_Type&      p_device,
               const uint32_t  p_peripheral_clock, 
               const uint32_t  p_baud_rate) 
 {
-  uint32_t result = (p_peripheral_clock / (p_baud_rate * 16U));;
+  uint32_t result = (p_peripheral_clock / (p_baud_rate * 16U));
   p_device.BDH |= UART_BDH_SBR(result >> 8); 
   p_device.BDL  = UART_BDL_SBR(result);
   return result;
@@ -109,10 +109,10 @@ set_parity(UART_Type&       p_device,
   {
   default: // 0 none
     break;
-  case 1:
+  case 1:  // 1 even
     p_device.C1 = mask_set(p_device.C1, UART_C1_PE_MASK);
     break;
-  case 2:
+  case 2:  // 2 odd
     p_device.C1 = mask_set(p_device.C1, UART_C1_PE_MASK | UART_C1_PT_MASK);
     break;
   }
@@ -159,7 +159,19 @@ inline bool
 is_tx_ready(UART_Type& p_device) 
 {
   return mask_test(p_device.S1, UART_S1_TDRE_MASK);
-}  
+}
+
+inline bool 
+is_error(UART_Type& p_device) 
+{
+  return (p_device.S1 & (UART_S1_OR_MASK | UART_S1_NF_MASK | UART_S1_FE_MASK | UART_S1_PF_MASK)) != 0;
+}
+
+inline void
+clear_errors(UART_Type& p_device) 
+{
+  volatile uint32_t dummy = p_device.D;
+}
 
 inline void 
 start(UART_Type& p_device)
@@ -183,6 +195,8 @@ clear(UART_Type& p_device)
   p_device.C1  = 0;
   p_device.C4  = 0;
   p_device.BDH = 0;
+  volatile uint32_t dummy = p_device.D;
+  p_device.CFIFO = 0xC0; // flush tx fifo rx fifo
 }
 
 /////////////////////////////////////////////////////////////
@@ -239,16 +253,17 @@ inline uint32_t status(I2C_Type& p_device)
 /// \fn start
 /// \brief starts ADC
 inline void start(ADC_Type&       p_device, 
+                  const unsigned  p_index, 
                   const unsigned  p_channel, 
                   const bool      p_is_differential)
 {
   if (p_is_differential)
   {
-    p_device.SC1[0] = ADC_SC1_DIFF_MASK | ADC_SC1_ADCH(p_channel);
+    p_device.SC1[p_index] = ADC_SC1_DIFF_MASK | ADC_SC1_ADCH(p_channel);
   }
   else
   {
-    p_device.SC1[0] = ADC_SC1_ADCH(p_channel);
+    p_device.SC1[p_index] = ADC_SC1_ADCH(p_channel);
   }
 }
 
@@ -335,16 +350,16 @@ calibrate(ADC_Type& p_device)
 
 /// \fn is_data_available
 /// \brief Checks Conversdion is completed
-inline bool is_data_available(ADC_Type& p_device, const unsigned p_channel)
+inline bool is_data_available(ADC_Type& p_device, const unsigned p_index)
 {
-  return ((p_device.SC1[p_channel] & ADC_SC1_COCO_MASK ) == ADC_SC1_COCO_MASK);
+  return ((p_device.SC1[p_index] & ADC_SC1_COCO_MASK ) == ADC_SC1_COCO_MASK);
 }
 
 /// \fn read
 /// \brief Reads the conversion result
-inline uint32_t read(ADC_Type& p_device, const unsigned p_channel)
+inline uint32_t read(ADC_Type& p_device, const unsigned p_index)
 {
-  return p_device.R[p_channel];
+  return p_device.R[p_index];
 }
 
 } // namespace mk60d10

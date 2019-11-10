@@ -31,7 +31,6 @@ For more information, please refer to <http://unlicense.org>
 
 #include "bitops.hpp"
 #include "peripherals.hpp"
-#include "clock.hpp"
 #include "timer.hpp"
 #include "pin.hpp"
 #include "state_machine.hpp"
@@ -39,7 +38,7 @@ For more information, please refer to <http://unlicense.org>
 #include "systick.hpp"
 #include "timer_implementations/software.hpp"
 
-using namespace std::chrono;
+
 using namespace haluj::base;
 using namespace haluj::base::devices::arm;
 using namespace haluj::base::devices::arm::kinetis;
