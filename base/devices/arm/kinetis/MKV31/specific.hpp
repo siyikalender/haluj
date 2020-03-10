@@ -218,7 +218,7 @@ clear(SPI_Type& p_device)
 inline void
 start(SPI_Type& p_device)
 {
-  p_device.MCR |= SPI_MCR_HALT_MASK;
+  p_device.MCR &= ~SPI_MCR_HALT_MASK;
 }
 
 /// \fn stop
@@ -226,7 +226,7 @@ start(SPI_Type& p_device)
 inline void
 stop(SPI_Type& p_device)
 {
-  p_device.MCR &= ~SPI_MCR_HALT_MASK;
+  p_device.MCR |= SPI_MCR_HALT_MASK;
 }
 
 /////////////////////////////////////////////////////////////
