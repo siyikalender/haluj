@@ -39,6 +39,7 @@ For more information, please refer to <http://unlicense.org>
 #include "uart.hpp"
 #include "spi.hpp"
 #include "i2c.hpp"
+#include "crc.hpp"
 
 namespace haluj
 {
@@ -273,6 +274,28 @@ struct _I2C1
 
 typedef i2c<_I2C0>  i2c_0;
 typedef i2c<_I2C1>  i2c_1;
+
+// CRC
+
+struct _CRC0
+{
+  static constexpr intptr_t sim_base  = SIM_BASE;
+  static constexpr intptr_t crc_base  = CRC_BASE;
+  static constexpr uint32_t scgc_mask = SIM_SCGC6_CRC_MASK;    
+  
+  static reg_addr_type scgc_addr() 
+  { 
+    return &(reinterpret_cast<SIM_Type*>(sim_base)->SCGC6); 
+  }  
+};
+
+template <std::size_t Bits, 
+          uint32_t    TruncPoly,
+          uint32_t    InitRem, 
+          uint32_t    FinalXor,
+          bool        ReflectIn, 
+          bool        ReflectRem>
+using crc_0 = crc<_CRC0, Bits, TruncPoly, InitRem, FinalXor, ReflectIn, ReflectRem>;
 
 } // namespace mk64f12
 
