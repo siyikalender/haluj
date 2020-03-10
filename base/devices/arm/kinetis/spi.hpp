@@ -190,6 +190,7 @@ struct spi : peripheral<Specifier>
   static constexpr void 
   configure(Options p_opts)
   {
+    /*
     spi_addr()->MCR     = SPI_MCR_MDIS_MASK | SPI_MCR_HALT_MASK;
     spi_addr()->CTAR[0] = SPI_CTAR_PASC(2)    | 
                                   SPI_CTAR_ASC(1)     | 
@@ -197,7 +198,91 @@ struct spi : peripheral<Specifier>
                                   SPI_CTAR_CSSCK(1)   | 
                                   SPI_CTAR_PBR(2)     | 
                                   SPI_CTAR_BR(4);
-    p_opts.template accept<uint32_t>(spi<Specifier>(), null_op());
+    p_opts.template accept<uint32_t>(spi<Specifier>(), null_op());*/
+    spi_addr()->MCR |= SPI_MCR_MSTR_MASK | SPI_MCR_HALT_MASK;
+
+    // static void init_fifo(void)
+    spi_addr()->MCR &= ~SPI_MCR_MDIS_MASK;
+
+    spi_addr()->MCR |= SPI_MCR_DIS_RXF_MASK |
+                  SPI_MCR_DIS_TXF_MASK |
+                  SPI_MCR_CLR_RXF_MASK |
+                  SPI_MCR_CLR_TXF_MASK;
+
+    // static void init_inactive_cs(void)
+    spi_addr()->MCR |= SPI_MCR_PCSIS(1<<0) | SPI_MCR_PCSIS(1<<1);
+
+    // static void init_frame_size(void)
+    spi_addr()->CTAR[0] &= ~SPI_CTAR_FMSZ_MASK;
+    spi_addr()->CTAR[0] |= SPI_CTAR_FMSZ(7) | 
+                      // ((phase) ? SPI_CTAR_CPHA_MASK : 0u) | 
+                      SPI_CTAR_PASC(2) | 
+                      SPI_CTAR_ASC(1) | 
+                      SPI_CTAR_PCSSCK(2) | 
+                      SPI_CTAR_CSSCK(1) | 
+                      SPI_CTAR_PBR(2) | 
+                      SPI_CTAR_BR(4);    
+    
+    spi_addr()->MCR &= ~SPI_MCR_HALT_MASK;
+  }
+  
+  static constexpr uint32_t
+  read()
+  {
+    return SPI_POPR_RXDATA(spi_addr()->POPR);
+  }
+  
+  static constexpr uint32_t 
+  sync_xfer(uint32_t p_data, 
+            uint32_t p_channel, 
+            bool     p_end)
+  {
+    async_xfer(p_data, p_channel, p_end);
+
+    wait_xfer();
+    
+    return  read();
+  }
+
+  static constexpr void 
+  async_xfer(uint32_t p_data, 
+             uint32_t p_channel, 
+             bool     p_end)
+  {
+    uint32_t    ch_mask = mask(p_channel);
+    if(p_end)
+      spi_addr()->PUSHR = SPI_PUSHR_EOQ_MASK  |
+                     SPI_PUSHR_PCS(ch_mask) |
+                     SPI_PUSHR_TXDATA(p_data);
+    else
+      spi_addr()->PUSHR = SPI_PUSHR_CONT_MASK |
+                     SPI_PUSHR_PCS(ch_mask) |
+                     SPI_PUSHR_TXDATA(p_data);
+  }
+
+  static constexpr void
+  wait_xfer()
+  {
+    while((spi_addr()->SR & SPI_SR_TCF_MASK) == 0);
+    spi_addr()->SR |= SPI_SR_TCF_MASK;
+  }
+
+  static constexpr bool 
+  is_xfer_completed()
+  {
+    bool result = false;
+    if ((spi_addr()->SR & SPI_SR_TCF_MASK) == SPI_SR_TCF_MASK)
+    {
+      result = true;
+      spi_addr()->SR |= SPI_SR_TCF_MASK;
+    }
+    return result;
+  }
+  
+  static constexpr bool 
+  is_tx_buffer_not_full()
+  {
+    return (bit_test(spi_addr()->SR, SPI_SR_TFFF_MASK));
   }
 
 };
