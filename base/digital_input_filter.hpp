@@ -76,7 +76,6 @@ struct digital_input_filter
     return m_value;
   }
 
-  // be aware m_edge changes in c_time_step.
   T      edge() const
   {
     return m_edge;
