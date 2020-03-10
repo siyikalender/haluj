@@ -29,8 +29,8 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_DEVICES_KINETIS_MK60D10_VENDOR_H
-#define HALUJ_BASE_DEVICES_KINETIS_MK60D10_VENDOR_H
+#ifndef HALUJ_BASE_DEVICES_KINETIS_KV31F51212_VENDOR_H
+#define HALUJ_BASE_DEVICES_KINETIS_KV31F51212_VENDOR_H
 
 #include "MKV31F51212.h"
 
@@ -43,5 +43,5 @@ For more information, please refer to <http://unlicense.org>
 #define PLL_MAXIMUM_FREQ_HZ    120000000U
 #define PLL_MINIMUM_FREQ_HZ    48000000U
 
-// HALUJ_BASE_DEVICES_KINETIS_MK60D10_VENDOR_H
+// HALUJ_BASE_DEVICES_KINETIS_KV31F51212_VENDOR_H
 #endif 
