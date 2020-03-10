@@ -39,49 +39,21 @@ namespace haluj
 namespace base
 {
 
-struct default_function
+struct periodic
 {
-  void operator()() {};
+  bool operator()() { return false; };
 };
 
 struct one_shot
 {
-  template<typename Implementation>
-  void operator()(Implementation& p_impl)
-  {
-    p_impl.stop();
-  }
-};
-
-struct periodic
-{
-  template<typename Implementation>
-  void operator()(Implementation& )
-  {}
-};
-
-template<std::size_t N>
-struct n_shot
-{
-  template<typename Implementation>
-  void operator()(Implementation& p_impl)
-  {
-    current ++;
-    if (current >= N)
-    {
-      p_impl.stop();
-    }
-  }
-
-  std::size_t   current = 0;
+  bool operator()() { return true; };
 };
 
 
-template<typename Implementation, typename Continuity>
+template<typename Implementation>
 struct timer
 {
   typedef Implementation                    implementation;
-  typedef Continuity                        continuity;
   typedef typename implementation::duration duration;
   
   // Constructors
@@ -95,7 +67,7 @@ struct timer
 
   // Operators
 
-  template<typename Function = default_function> 
+  template<typename Function = periodic> 
   bool operator()(duration  p_delta,
                   Function  p_function = Function())
   {
@@ -103,10 +75,11 @@ struct timer
     
     if (result)
     {
-      cont_(impl_);
-      p_function();
+      if (p_function())
+      {
+        impl_.stop();
+      }      
     }
-    
     return result;
   }
 
@@ -119,6 +92,11 @@ struct timer
     impl_.start();
   }
   
+  void stop()
+  {
+    impl_.stop();
+  }
+  
   bool is_running() const
   {
     return impl_.is_running();
@@ -127,7 +105,58 @@ struct timer
 // private:
 
   implementation  impl_;
-  continuity      cont_;
+};
+
+template<typename Implementation>
+struct static_timer
+{
+  typedef Implementation                    implementation;
+  typedef typename implementation::duration duration;
+  
+  // Constructors
+private:
+  
+  static_timer()
+  {}
+
+  static_timer(const static_timer& ) = delete;
+  
+  static_timer(static_timer&& ) = delete;
+
+public:
+
+  // Operators
+
+  template<typename Function = periodic> 
+  static bool poll(duration   p_delta     = duration(),
+                   Function   p_function  = Function())
+  {
+    bool result = implementation::proceed(p_delta);
+    
+    if (result)
+    {
+      if (p_function())
+      {
+        implementation::stop();
+      }
+    }
+    
+    return result;
+  }
+
+  // Methods
+  
+  static void set(duration p_value)
+  {
+    implementation::load(p_value);
+    implementation::reset();
+    implementation::start();
+  }
+  
+  static bool is_running()
+  {
+    return implementation::is_running();
+  }
 
 };
 

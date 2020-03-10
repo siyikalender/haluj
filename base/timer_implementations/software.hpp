@@ -96,7 +96,7 @@ struct forward : base<DurationType>
     elapsed_ = duration(0);
   }
   
-  duration    elapsed_;
+  duration    elapsed_ = duration(0);
 };
 
 template<typename DurationType>
@@ -120,7 +120,7 @@ struct backward : base<DurationType>
     remaining_ = base_t::timeout_;
   }
   
-  duration    remaining_;
+  duration    remaining_ = duration(0);
 };
 
 template<typename DirectionType>

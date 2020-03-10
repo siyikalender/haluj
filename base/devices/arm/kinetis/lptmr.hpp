@@ -54,12 +54,38 @@ namespace kinetis
 template <typename Specifier>
 struct lptmr : peripheral<Specifier>
 {
+  typedef uint16_t duration;
+
   static constexpr LPTMR_Type* lptmr_addr()  {return reinterpret_cast<LPTMR_Type*>(Specifier::lptmr_base);}
 
-  static void start()
+  static inline bool proceed(const uint32_t)
+  {
+    return predicate();
+  }
+
+  static inline bool predicate()
+  {
+    bool result       = bit_test(lptmr_addr()->CSR, LPTMR_CSR_TCF_SHIFT);
+    lptmr_addr()->CSR = bit_set(lptmr_addr()->CSR, LPTMR_CSR_TCF_SHIFT);
+    return result;
+  }
+
+  static inline void load(const uint16_t p_value) 
+  {
+    lptmr_addr()->CMR = LPTMR_CMR_COMPARE(p_value);
+  }
+
+  static inline void reset()
+  {
+    // clear_interrupt();
+    lptmr_addr()->CSR = bit_set(lptmr_addr()->CSR, LPTMR_CSR_TCF_SHIFT);
+    lptmr_addr()->CNR = 0;
+  }
+
+  static inline void start()
   {
     uint32_t  v = 0;
-    v = bit_set(v, LPTMR_CSR_TIE_SHIFT);
+    // v = bit_set(v, LPTMR_CSR_TIE_SHIFT);
     v = bit_set(v, LPTMR_CSR_TEN_SHIFT);
     lptmr_addr()->CSR = v;
   }
@@ -69,46 +95,11 @@ struct lptmr : peripheral<Specifier>
     lptmr_addr()->CSR = bit_clear(lptmr_addr()->CSR, LPTMR_CSR_TEN_SHIFT);
   }
   
-  static inline void clear()
-  {
-    clear_interrupt();
-  }
-
-  static inline  bool test_interrupt()
-  {
-    return bit_test(lptmr_addr()->CSR, LPTMR_CSR_TCF_SHIFT);
-  }
-
-  static inline  void clear_interrupt()
-  {
-    lptmr_addr()->CSR |= LPTMR_CSR_TCF_MASK;
-  }
-
-  // template<typename Options>
-  static inline void configure(/*Options p_opts*/)
-  {
-    stop();
-    clear();
-    // p_opts.template accept<uint32_t>(lptmr<Specifier>(), null_op());
-    lptmr_addr()->PSR = LPTMR_PSR_PRESCALE(5);
-    start();
-  }  
-  
   static inline bool is_running()
   {
     return bit_test(lptmr_addr()->CSR, LPTMR_CSR_TEN_SHIFT); 
   }
   
-  static inline unsigned get_count()
-  {
-    return lptmr_addr()->CNR;
-  }
-  
-  static inline void set_compare(const unsigned p_value)
-  {
-    lptmr_addr()->CMR = LPTMR_CMR_COMPARE(p_value);
-  }
-
   static inline void set_prescale(const unsigned p_value)
   {
     lptmr_addr()->PSR = LPTMR_PSR_PRESCALE(p_value);

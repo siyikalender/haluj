@@ -1,5 +1,5 @@
-/// \file systick.hpp
-/// timer complaint ARM systick implementation
+/// \file pit.hpp
+/// timer complaint Kimetis PIT peripheral implementation
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -47,49 +47,35 @@ namespace devices
 namespace arm
 {
 
-struct systick
+struct pit
 {
   typedef uint32_t duration;
   
-  static inline bool proceed(const duration)
+  static bool operator()(const uint32_t)
   {
     return predicate();
   }
 
-  static inline bool predicate()
+  static bool predicate() const
   {
-    return bit_test(SysTick->CTRL, SysTick_CTRL_COUNTFLAG_Pos);
+    return false;
   }
 
-  static inline void reset()
-  {
-    SysTick->VAL   = 0UL;
-  }
+  static void reset()
+  {}
 
-  static inline void load(const duration p_value) 
-  {
-    SysTick->LOAD  = p_value - 1U;
-  }
+  static void load(const uint32_t p_value) 
+  {}
 
-  static inline void start()
-  {
-    SysTick->CTRL = 
-      bit_set(SysTick->CTRL, 
-              SysTick_CTRL_CLKSOURCE_Pos, 
-              SysTick_CTRL_ENABLE_Pos);
-  }
+  static void start()
+  {}
   
-  static inline void stop()
-  {
-    SysTick->CTRL = 
-      bit_clear(SysTick->CTRL, 
-                SysTick_CTRL_CLKSOURCE_Pos, 
-                SysTick_CTRL_ENABLE_Pos);
-  }
+  static void stop()
+  {}
   
-  static inline bool is_running()
+  static bool is_running() const
   {
-    return bit_test(SysTick->CTRL, SysTick_CTRL_ENABLE_Pos);
+    return false;
   }
   
 };
