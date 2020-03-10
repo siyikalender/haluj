@@ -94,6 +94,12 @@ struct pin
   {
     if (p_value) set(); else clear();
   }
+  
+  template<typename Options>
+  static void configure(Options opts)
+  {
+    port::configure(index, opts);
+  }
 
 };
 
