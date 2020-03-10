@@ -55,6 +55,8 @@ void reset_isr(void)
 
   disable_watchdog();
 
+  #ifndef USE_RAM_LD
+
   #ifndef DONT_USE_RAM_VECTOR
   /* Copy the vector table from ROM to RAM */
   source = (unsigned char *) &__VECTOR_TABLE;
@@ -89,6 +91,21 @@ void reset_isr(void)
   while (source < destination ) {
     *source++ = 0;
   }
+
+  /* USE_RAM_LD */
+  #else
+
+  SCB->VTOR = (uint32_t) &__VECTOR_TABLE;
+
+  /* clear bss section */
+  source = (unsigned char *)&__bss_start__;
+  destination = (unsigned char *)&__bss_end__;
+  while (source < destination ) {
+    *source++ = 0;
+  }
+  
+  /* USE_RAM_LD */
+  #endif 
 
   system_init();
 
