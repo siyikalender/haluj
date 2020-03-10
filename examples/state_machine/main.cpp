@@ -73,20 +73,20 @@ using red_light_pin     = pin<port_c, 0>;
 using yellow_light_pin  = pin<port_c, 1>;
 using green_light_pin   = pin<port_c, 2>;
 
-using fwd_int_one_shot_timer    = timer<software::implementation<software::forward<uint32_t>>,  one_shot>;
-using systick_periodic_timer    = timer<systick, periodic>;
+using fwd_int_timer    = timer<software::implementation<software::forward<uint32_t>>>;
+using systick_timer    = static_timer<systick>;
 
-constexpr uint32_t    c_systick_hz = 40000;
+constexpr uint32_t    c_systick_hz = 1000; // 1000Hz -> 1ms period
 
 int main()
 {
   open<port_c>();
-  
+
   // Set GPIO
   port_c::configure(red_light_pin::index,     options(port_c::mux::_1));
   port_c::configure(yellow_light_pin::index,  options(port_c::mux::_1));
   port_c::configure(green_light_pin::index,   options(port_c::mux::_1));
-  
+
   port_c::set_direction(
     mask(
       red_light_pin::index, 
@@ -94,25 +94,23 @@ int main()
       green_light_pin::index
     )
   );
+
+  fwd_int_timer      transition_timer;
   
-  
-  systick_periodic_timer      tmr_0;
-  fwd_int_one_shot_timer      transition_timer;
-  
-  tmr_0.set(system_core_clock() / 40000); // 40kHz -> 25uS
+  systick_timer::set(system_core_clock() / c_systick_hz); 
   
   // lambda functions for guards.
   // Note that, g_always guard is predefined
   auto g_timeout = [&]() -> bool 
   {
-    return transition_timer(1);
+    return transition_timer(1, one_shot());
   };
   
   // lambda functions for state actions
   auto e_red     = [&]()
   {
     // start the timer
-    transition_timer.set(5 * c_systick_hz);
+    transition_timer.set(5000); // 5 secs
     // turn on the light
     red_light_pin::set();
   };
@@ -125,7 +123,7 @@ int main()
 
   auto e_yellow  = [&]()
   {
-    transition_timer.set(2 * c_systick_hz);
+    transition_timer.set(2000); // 2 secs
     yellow_light_pin::set();
   };
 
@@ -136,7 +134,7 @@ int main()
 
   auto e_green   = [&]()
   {
-    transition_timer.set(8 * c_systick_hz);
+    transition_timer.set(8000); // 8 secs
     green_light_pin::set();
   };
 
@@ -168,7 +166,7 @@ int main()
   
   for (;;)
   {
-    tmr_0(
+    systick_timer::poll(
       0, // omit this parameter for systick or other hardware timers
       [&]() 
       {
@@ -208,6 +206,8 @@ int main()
           }
           break;
         }*/
+        
+        return false;
       }
     );
   }

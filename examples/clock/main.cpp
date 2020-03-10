@@ -48,12 +48,12 @@ using red     = pin<port_b, 22>;
 // counter based software timer special type definitions
 // software timer implementation can be forward (up counting) or backward (down counting) in direction.
 // the duration type can be based on int, double, chrono clock duration. Use of signed types is recommended.
-using fwd_int_periodic_timer    = timer<software::implementation<software::forward<int>>,  periodic>;
+using fwd_int_timer    = timer<software::implementation<software::forward<int>>>;
 // using bwd_int_periodic_timer    = timer<software::implementation<software::backward<int>>, periodic>;
 // using fwd_chrono_one_shot_timer = timer<software::implementation<software::forward<std::chrono::system_clock::duration>>,  one_shot>;
 
 // ARM architecture systick based periodic timer definition
-using systick_periodic_timer    = timer<systick, periodic>;
+using systick_timer    = static_timer<systick>;
 
 int main()
 {
@@ -67,29 +67,32 @@ int main()
   red::set();
   blue::set();
   
-  // declaration of timers
-  systick_periodic_timer    tmr_0;
-  fwd_int_periodic_timer    tmr_1;
+  // Instantiate software timers
+  fwd_int_timer    tmr_1;
   
   // load and start the timers
-  tmr_0.set(system_core_clock() / 10);
+  // systick is a hardware timer. So the interface is based on static methods.
+  systick_timer::set(system_core_clock() / 10); // sets ans starts timer
+  // set software timer count value
   tmr_1.set(5);
 
   for (;;)
   {
     // process timers
-    tmr_0(
+    systick_timer::poll(
       0, // this value is omitted for systick or other hardware timers. Just give a zero value
       // lambda for tmr_0 timeout
       [&]() {
         red::toggle();
         tmr_1(
-          1, // delta 1 increase/decrease count value by 1
+          1, // delta 1, increase (for forward implementation) count value by 1
           // lambda from tmr_1 timeout
           [&] {
             blue::toggle();
+            return false; // return false for periodic operation 
           }
         );
+        return false; // return false for periodic operation
       }
     );
   }

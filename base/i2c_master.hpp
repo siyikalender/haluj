@@ -58,7 +58,7 @@ struct i2c_master
 {
   typedef Duration    duration;
   
-  using bwd_int_one_shot_timer    = timer<timer_implementations::software::implementation<timer_implementations::software::backward<int>>,  one_shot>;
+  using bwd_int_timer    = timer<timer_implementations::software::implementation<timer_implementations::software::backward<int>>>;
   
   static constexpr unsigned c_tx_buffer_size  = TxBufferSize;
   static constexpr unsigned c_rx_buffer_size  = RxBufferSize;
@@ -82,8 +82,7 @@ struct i2c_master
   
   i2c_master()
   : m_state(states::idle),
-    m_read_count(0),
-    m_timer()
+    m_read_count(0)
   {
     static_assert(TxBufferSize > 0, "Tx Buffer Size must be greater than 0");
     static_assert(RxBufferSize > 0, "Rx Buffer Size must be greater than 0");
@@ -156,7 +155,7 @@ struct i2c_master
       [&]() -> bool // Test Function
       {
         bool result = false;
-        bool timeout = m_timer(p_delta);
+        bool timeout = m_timer(p_delta, one_shot());
         switch(m_state)
         {
         case states::wait_busy:
@@ -306,7 +305,7 @@ struct i2c_master
   unsigned                                            m_read_count;
   ring_buffer<std::array<uint8_t, c_tx_buffer_size>>  m_tx_buffer;
   ring_buffer<std::array<uint8_t, c_rx_buffer_size>>  m_rx_buffer;
-  bwd_int_one_shot_timer                              m_timer;
+  bwd_int_timer                                       m_timer;
   uint8_t                                             m_slave_address;
 };
 

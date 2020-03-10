@@ -40,7 +40,7 @@ using namespace haluj::base::devices::arm;
 using namespace haluj::base::devices::arm::kinetis;
 using namespace haluj::base::devices::arm::kinetis::specific;
 
-using systick_periodic_timer    = timer<systick, periodic>;
+using systick_timer    = static_timer<systick>;
 
 int main()
 {
@@ -62,8 +62,6 @@ int main()
     )
   );
   
-  systick_periodic_timer      tmr_0;
-  
   i2c_master<i2c_0, 8, 8,  int, 2, 6, 2> master;
   i2c_slave<i2c_1,  8, 8,  int, 80> slave;
 
@@ -73,11 +71,11 @@ int main()
   unsigned        current_index         = 0U;
   uint8_t         rx_buf[8];
 
-  tmr_0.set(system_core_clock() / 40000); // 40kHz -> 25uS
+  systick_timer::set(system_core_clock() / 40000); // 40kHz -> 25uS
 
   for (;;)
   {
-    tmr_0(
+    systick_timer::poll(
       0, // omit this parameter for systick or other hardware timers
       [&]() 
       {
@@ -125,6 +123,7 @@ int main()
             break;
           }
         }
+        return false; // return false for periodic operation
       }
     );
   }

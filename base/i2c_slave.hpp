@@ -54,7 +54,7 @@ struct i2c_slave
 {
   typedef Duration        duration;
 
-  using bwd_int_one_shot_timer    = timer<timer_implementations::software::implementation<timer_implementations::software::backward<int>>,  one_shot>;
+  using bwd_int_timer    = timer<timer_implementations::software::implementation<timer_implementations::software::backward<int>>>;
   
   static constexpr unsigned c_tx_buffer_size  = TxBufferSize;
   static constexpr unsigned c_rx_buffer_size  = RxBufferSize;
@@ -66,8 +66,7 @@ struct i2c_slave
   };
 
   i2c_slave() 
-  : m_timer(),
-    m_read_mode(false)
+  : m_read_mode(false)
   {
     static_assert(TxBufferSize > 0, "Tx Buffer Size must be greater than 0");
     static_assert(RxBufferSize > 0, "Rx Buffer Size must be greater than 0");    
@@ -201,6 +200,7 @@ struct i2c_slave
         tof();
         // slave_device.enable_ack(); NOTE ! May be required (When stuck in NACK)
         // slave_device.read();       NOTE ! May be required (When stuck in NACK)
+        return true;
       }    
     );    
     
@@ -251,7 +251,7 @@ struct i2c_slave
     return false; // TBD
   }
 
-  bwd_int_one_shot_timer                              m_timer;
+  bwd_int_timer                                       m_timer;
   strategy::blackboard<events>                        m_event;
   bool                                                m_read_mode;
   ring_buffer<std::array<uint8_t, c_tx_buffer_size>>  m_tx_buffer;
