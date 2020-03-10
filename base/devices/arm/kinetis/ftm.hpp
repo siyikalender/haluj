@@ -304,7 +304,7 @@ struct ftm : peripheral<Specifier>
 
   static inline uint32_t get_mod()
   {
-    return (ftm_addr()->MOD & FTM_MOD_MOD_MASK) & FTM_MOD_MOD_SHIFT;
+    return (ftm_addr()->MOD & FTM_MOD_MOD_MASK) >> FTM_MOD_MOD_SHIFT;
   }
 
 };
