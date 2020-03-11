@@ -27,7 +27,7 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 /// \author Selcuk Iyikalender
-/// \date   2018
+/// \date   2020
 
 #ifndef HALUJ_BASE_PROTOCOL_MODBUS_MODBUS_RTU_HPP
 #define HALUJ_BASE_PROTOCOL_MODBUS_MODBUS_RTU_HPP
