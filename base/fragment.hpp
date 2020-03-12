@@ -29,104 +29,99 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef FRAGMENT_HPP
-#define FRAGMENT_HPP
+#ifndef HALUJ_BASE_FRAGMENT_HPP
+#define HALUJ_BASE_FRAGMENT_HPP
 
 #include <cstdint>
 #include <utility>
 
-namespace haluj
-{
-
-namespace base
-{
-
+template<typename Iterator>
 struct fragment
 {
-  fragment(const std::size_t p_current = 0u, 
-           const std::size_t p_size    = 0u)
-  : current(p_current),
-    size(p_size)
+    
+  typedef Iterator iterator;
+    
+  fragment(iterator p_first, 
+           iterator p_last)
+  : first_(p_first),
+    last_(p_last)
   {}
 
   fragment(const fragment& p_other)
-  : current(p_other.current),
-    size(p_other.size)
+  : first_(p_other.first_),
+    last_(p_other.last_)
   {}
+
+  fragment& operator=(const fragment& p_other)
+  {
+    first_ = p_other.first_;
+    last_  = p_other.last_;
+    return *this;
+  }
+
+  ~fragment() {}
 
   operator bool () const
   {
-    return (size > 0);
+    return (first_ != last_);
   }
   
-  void clear()
+  std::size_t size() const
   {
-    current = 0u;
-    size    = 0u;
+    std::distance(first_, last_);    
   }
 
-  std::size_t   current;
-  std::size_t   size;
+  iterator begin() const
+  {
+    return first_;
+  }
+
+  iterator end() const
+  {
+    return last_;
+  }
+
+  iterator first_;
+  iterator last_;
 };
 
-inline std::size_t 
-calculate_fragment_size(const std::size_t total_size,
-                        const std::size_t fragment_size,
-                        const std::size_t current)
+
+template<typename Container, typename Iterator = typename Container::const_iterator>
+inline Iterator 
+get_fragment_end_(const Container&   p_container,
+                  Iterator           p_current,
+                  const std::size_t  p_fragment_size)
 {
-  std::size_t remaining = total_size - current;
-  return (remaining > fragment_size) ? fragment_size : remaining;
+  std::size_t remaining = std::distance(p_current, p_container.end());
+  std::size_t f_size    = (remaining > p_fragment_size) ? p_fragment_size : remaining;
+  return p_current + f_size;
 }                                  
 
-inline fragment 
-make_fragment(const std::size_t p_total_size,
+template<typename Container, typename Iterator = typename Container::const_iterator>
+inline fragment<Iterator> 
+make_fragment(const Container&  p_container,
               const std::size_t p_fragment_size)
 {
-  return
-    fragment(0u, 
-             calculate_fragment_size(p_total_size, 
-                                     p_fragment_size, 
-                                     0u));
+  auto end = 
+    get_fragment_end_(p_container, 
+                      p_container.begin(), 
+                      p_fragment_size) ;
+  return fragment<Iterator>(p_container.begin(), end);
 }
 
-inline fragment 
-make_fragment(const std::size_t p_total_size,
-              const std::size_t p_fragment_size,
-              const fragment&   p_f)
+
+template<typename Container, typename Iterator = typename Container::const_iterator>
+inline fragment<Iterator> 
+make_fragment(const Container&            p_container,
+              const std::size_t           p_fragment_size,
+              const fragment<Iterator>&   p_f)
 {
-  std::size_t next = p_f.current + p_f.size;
-  return 
-    fragment(next, 
-             calculate_fragment_size(p_total_size, 
-                                     p_fragment_size, 
-                                     next));
+  auto end = 
+    get_fragment_end_(p_container, 
+                      p_f.end(), 
+                      p_fragment_size) ;
+  return fragment<Iterator>(p_f.end(), end);
 }
 
-template<typename Iterator>
-inline std::pair<Iterator, Iterator>
-make_iterator_range(Iterator base, const fragment& f)
-{
-  auto first = base + f.current;
-  return std::make_pair(first, first + f.size);
-}
 
-/* Sample Code
-
-auto f = make_fragment(container.size(), c_fragment_size);
-
-do
-{
-  f = make_fragment(container.size(), c_fragment_size, f);
-  if (f)
-  {
-    send (&container[f.current], &container[f.current + f.size]);
-  }
-} while(f);
-*/
-
-} // namespace base
-
-} // namespace haluj
-
-#endif // FRAGMENT_HPP
-
+#endif // HALUJ_BASE_FRAGMENT_HPP
