@@ -64,8 +64,8 @@ struct vector
     return m_size;
   }
 
-  template <typename Iterator>
-  void assign(Iterator first, Iterator last)
+  template <typename InputIterator>
+  void assign(InputIterator first, InputIterator last)
   {
     resize(std::distance(first, last));
     std::copy (first, last, begin());
@@ -165,7 +165,8 @@ struct vector
   std::size_t   m_size = 0U;
 };
 
-template<typename T, std::size_t Capacity>
+template<typename     T, 
+         std::size_t  Capacity>
 inline bool push_back(vector<T, Capacity>& c, const T& v)
 {
   bool result = false;
@@ -179,7 +180,26 @@ inline bool push_back(vector<T, Capacity>& c, const T& v)
   return result;
 }
 
-template<typename T, std::size_t Capacity>
+template<typename     T, 
+         std::size_t  Capacity, 
+         typename     InputIterator>
+inline bool assign(vector<T, Capacity>& p_c, 
+                   InputIterator        p_first, 
+                   InputIterator        p_last)
+{
+  bool result = false;
+  
+  if (p_c.size() < p_c.capacity())
+  {
+    p_c.assign(p_first, p_last);
+    result = true;
+  }
+  
+  return result;
+}
+
+template<typename     T, 
+         std::size_t  Capacity>
 bool resize(vector<T, Capacity>&  c,
             const std::size_t     p_size)
 {
