@@ -37,6 +37,11 @@ For more information, please refer to <http://unlicense.org>
 #include <algorithm>
 #include <cstring>
 
+namespace haluj
+{
+
+namespace base
+{
 
 struct c_str_equal_to
 {
@@ -185,5 +190,9 @@ to_first(const S                  &p_second,
                                 std::begin(p_container), 
                                 std::end(p_container));
 }
+
+} // namespace base
+
+} // namespace haluj
 
 #endif // BIDIRECTIONAL_MAP_HPP
