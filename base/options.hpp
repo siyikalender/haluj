@@ -38,8 +38,8 @@ namespace haluj
 namespace base
 {
 
-template<typename ... Types>
-struct options_t
+template<typename ... Options>
+struct options
 {
   template<typename R, typename T, typename Operation>
   R accept(T, Operation op)
@@ -49,12 +49,11 @@ struct options_t
 };
 
 template<typename OptionType, typename ... Options>
-struct options_t<OptionType, Options...>
+struct options<OptionType, Options...>
 {
-  typedef options_t<Options...> next;
+  typedef options<Options...> next;
 
-  options_t(const OptionType& p_option, Options... opts)
-  : option_(p_option), next_(opts...)
+  options()
   {}
 
   template<typename R, 
@@ -72,20 +71,6 @@ struct options_t<OptionType, Options...>
   OptionType    option_;
   next          next_;
 };
-
-template<typename OptionType>
-options_t<OptionType>
-options(const OptionType& p_a)
-{
-  return options_t<OptionType>(p_a);
-}
-
-template<typename OptionType, typename ... Types>
-options_t<OptionType, Types...>
-options(const OptionType& p_a, Types... args)
-{
-  return options_t<OptionType, Types...>(p_a, args...);
-}
 
 // Operations can be used 
 

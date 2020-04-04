@@ -46,9 +46,9 @@ int main()
   // open<port_e>();
   
   // configure port zero to appropriate function
-  port_a::configure(2, options(port_a::mux::_1, 
+  port_a::configure(2, options<port_a::mux::_1, 
                                port_a::pull::down, 
-                               port_a::slew_rate::slow));
+                               port_a::slew_rate::slow>());
 
   // create mask for bits 1, 2, 3 that makes 0xE
   uint32_t m = mask(1U, 2U, 3U);

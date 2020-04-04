@@ -92,13 +92,6 @@ struct uart : peripheral<Specifier>
     }
   };
 
-  struct bits
-  {
-    static bits_option<8>   _8;
-    static bits_option<9>   _9;
-    static bits_option<10>  _10;
-  };
-
   template<uint32_t Value> 
   struct parity_option
   {
@@ -110,13 +103,6 @@ struct uart : peripheral<Specifier>
       specific::set_parity(*uart<T>::uart_addr(), value);
       return  0;
     }
-  };
-
-  struct parity
-  {
-    static parity_option<0>   none;
-    static parity_option<1>   even;
-    static parity_option<2>   odd ;
   };
 
   template<uint32_t Value> 
@@ -132,10 +118,24 @@ struct uart : peripheral<Specifier>
     }
   };
 
+  struct bits
+  {
+    typedef bits_option<8>   _8;
+    typedef bits_option<9>   _9;
+    typedef bits_option<10>  _10;
+  };
+  
+  struct parity
+  {
+    typedef parity_option<0>   none;
+    typedef parity_option<1>   even;
+    typedef parity_option<2>   odd ;
+  };
+  
   struct stop_bits
   {
-    static stop_bits_option<0>    one;
-    static stop_bits_option<1>    two;
+    typedef stop_bits_option<0>    one;
+    typedef stop_bits_option<1>    two;
   };
   
   // Static Methods  
@@ -190,21 +190,6 @@ struct uart : peripheral<Specifier>
   }
 
 };
-
-// ugly and cumbersome instantiation of static members.
-// A compiler with good optimizer is expected to get rid off them
-// So it may not complain even if they are missing.
-// However it is defined to conform the standart
-template<typename T> typename uart<T>::template bits_option<8>      uart<T>::bits::_8;
-template<typename T> typename uart<T>::template bits_option<9>      uart<T>::bits::_9;
-template<typename T> typename uart<T>::template bits_option<10>     uart<T>::bits::_10;
-
-template<typename T> typename uart<T>::template parity_option<0>    uart<T>::parity::none;
-template<typename T> typename uart<T>::template parity_option<1>    uart<T>::parity::even;
-template<typename T> typename uart<T>::template parity_option<2>    uart<T>::parity::odd;
-
-template<typename T> typename uart<T>::template stop_bits_option<0> uart<T>::stop_bits::one;
-template<typename T> typename uart<T>::template stop_bits_option<1> uart<T>::stop_bits::two;
 
 } // namespace kinetis
 

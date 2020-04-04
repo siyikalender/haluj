@@ -149,31 +149,31 @@ struct spi : peripheral<Specifier>
 
   struct mode
   {
-    static mode_option<false>   slave;
-    static mode_option<true>    master;
+    typedef mode_option<false>   slave;
+    typedef mode_option<true>    master;
   };
 
   struct frame_size
   {
-    static frame_size_option<3>   _4;
-    static frame_size_option<4>   _5;
-    static frame_size_option<5>   _6;
-    static frame_size_option<6>   _7;
-    static frame_size_option<7>   _8;
-    static frame_size_option<8>   _9;
-    static frame_size_option<9>   _10;
-    static frame_size_option<10>  _11;
-    static frame_size_option<11>  _12;
-    static frame_size_option<12>  _13;
-    static frame_size_option<13>  _14;
-    static frame_size_option<14>  _15;
-    static frame_size_option<15>  _16;
+    typedef frame_size_option<3>   _4;
+    typedef frame_size_option<4>   _5;
+    typedef frame_size_option<5>   _6;
+    typedef frame_size_option<6>   _7;
+    typedef frame_size_option<7>   _8;
+    typedef frame_size_option<8>   _9;
+    typedef frame_size_option<9>   _10;
+    typedef frame_size_option<10>  _11;
+    typedef frame_size_option<11>  _12;
+    typedef frame_size_option<12>  _13;
+    typedef frame_size_option<13>  _14;
+    typedef frame_size_option<14>  _15;
+    typedef frame_size_option<15>  _16;
   };
 
   struct phase
   {
-    static phase_option<false>    tx_on_rising_edge;
-    static phase_option<true>     tx_on_falling_edge;
+    typedef phase_option<false>    tx_on_rising_edge;
+    typedef phase_option<true>     tx_on_falling_edge;
   };
 
   static constexpr void start()
@@ -286,31 +286,6 @@ struct spi : peripheral<Specifier>
   }
 
 };
-
-
-// ugly and cumbersome instantiation of static members.
-// A compiler with good optimizer is expected to get rid off them
-// So it may not complain even if they are missing.
-// However it is defined to conform the standart
-template<typename T> typename spi<T>::template  mode_option<false>      spi<T>::mode::slave;
-template<typename T> typename spi<T>::template  mode_option<true>       spi<T>::mode::master;
-
-template<typename T> typename spi<T>::template  frame_size_option<3>    spi<T>::frame_size::_4;
-template<typename T> typename spi<T>::template  frame_size_option<4>    spi<T>::frame_size::_5;
-template<typename T> typename spi<T>::template  frame_size_option<5>    spi<T>::frame_size::_6;
-template<typename T> typename spi<T>::template  frame_size_option<6>    spi<T>::frame_size::_7;
-template<typename T> typename spi<T>::template  frame_size_option<7>    spi<T>::frame_size::_8;
-template<typename T> typename spi<T>::template  frame_size_option<8>    spi<T>::frame_size::_9;
-template<typename T> typename spi<T>::template  frame_size_option<9>    spi<T>::frame_size::_10;
-template<typename T> typename spi<T>::template  frame_size_option<10>   spi<T>::frame_size::_11;
-template<typename T> typename spi<T>::template  frame_size_option<11>   spi<T>::frame_size::_12;
-template<typename T> typename spi<T>::template  frame_size_option<12>   spi<T>::frame_size::_13;
-template<typename T> typename spi<T>::template  frame_size_option<13>   spi<T>::frame_size::_14;
-template<typename T> typename spi<T>::template  frame_size_option<14>   spi<T>::frame_size::_15;
-template<typename T> typename spi<T>::template  frame_size_option<15>   spi<T>::frame_size::_16;
-
-template<typename T> typename spi<T>::template  phase_option<false>     spi<T>::phase::tx_on_rising_edge;
-template<typename T> typename spi<T>::template  phase_option<true>      spi<T>::phase::tx_on_falling_edge;
 
 } // namespace kinetis
 

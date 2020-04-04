@@ -83,9 +83,9 @@ int main()
   open<port_c>();
 
   // Set GPIO
-  port_c::configure(red_light_pin::index,     options(port_c::mux::_1));
-  port_c::configure(yellow_light_pin::index,  options(port_c::mux::_1));
-  port_c::configure(green_light_pin::index,   options(port_c::mux::_1));
+  red_light_pin::configure(options<port_c::mux::_1>());
+  yellow_light_pin::configure(options<port_c::mux::_1>());
+  green_light_pin::configure(options<port_c::mux::_1>());
 
   port_c::set_direction(
     mask(

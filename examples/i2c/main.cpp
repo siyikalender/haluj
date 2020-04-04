@@ -49,17 +49,17 @@ int main()
   open<i2c_1>(); // depending on the device other uarts may be available
 
   i2c_0::configure(
-    options(
-      i2c_0::address<0x53>(),
-      i2c_0::baud_rate<400000>()
-    )
+    options<
+      i2c_0::address<0x53>,
+      i2c_0::baud_rate<400000>
+    >()
   );
 
   i2c_1::configure(
-    options(
-      i2c_1::address<0x54>(),
-      i2c_1::baud_rate<400000>()
-    )
+    options<
+      i2c_1::address<0x54>,
+      i2c_1::baud_rate<400000>
+    >()
   );
   
   i2c_master<i2c_0, 8, 8,  int, 2, 6, 2> master;

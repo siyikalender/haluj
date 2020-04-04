@@ -32,10 +32,16 @@ For more information, please refer to <http://unlicense.org>
 
 #include "bitops.hpp"
 #include "peripherals.hpp"
+#include "pin.hpp"
 
 using namespace haluj::base;
 using namespace haluj::base::devices::arm::kinetis;
 using namespace haluj::base::devices::arm::kinetis::specific;
+
+// UART pins are specified for MK60D100 100 pin devices
+// Please modify for the intended device
+using uart_0_rx = pin<port_d, 6>;
+using uart_0_tx = pin<port_d, 7>;
 
 int main()
 {
@@ -44,21 +50,19 @@ int main()
   open<port_d>(); // pin 6 and 7 of port d is used for uart
   
   // configure port zero to uart function. 
-  // Configuration is MK60D100 100 pin devices specific
-  // Please modify for the intended device
-  port_d::configure(6, options(port_d::mux::_3,     // uart 0 rx
-                               port_d::pull::up));
+  uart_0_rx::configure(options<port_d::mux::_3,     // uart 0 rx
+                               port_d::pull::up>());
 
-  port_d::configure(7, options(port_d::mux::_3));   // uart 0 tx
+  uart_0_tx::configure(options<port_d::mux::_3>());   // uart 0 tx
 
   // configure function, disables transmit and receive, 
   // then applies options, 
   // finally enables transmit and receive
   uart_0::configure( 
-    options(uart_0::baud_rate<9600>(), 
+    options<uart_0::baud_rate<9600>, 
             uart_0::bits::_8, 
             uart_0::parity::none,  
-            uart_0::stop_bits::one)); // all  default: 9600, 8 bits, No partiy, 1 stop bits;
+            uart_0::stop_bits::one>()); // all  default: 9600, 8 bits, No partiy, 1 stop bits;
 
   uint8_t d = 0;
 

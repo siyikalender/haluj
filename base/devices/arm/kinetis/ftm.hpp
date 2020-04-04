@@ -90,26 +90,26 @@ struct ftm : peripheral<Specifier>
     
     struct interrupt
     {
-      static configuration_option<0>                    disabled;
-      static configuration_option<FTM_CnSC_CHIE_MASK>   enable;
+      typedef configuration_option<0>                    disabled;
+      typedef configuration_option<FTM_CnSC_CHIE_MASK>   enable;
     };
     
     struct modes
     {
       // check all values
-      static configuration_option<0b000000000> disable;
-      static configuration_option<0b000000100> input_compare_re; // raising edge
-      static configuration_option<0b000001000> input_compare_fe; // falling edge
-      static configuration_option<0b000001100> input_compare_be; // rising or falling edges
-      static configuration_option<0b000010100> output_compare_tom;
-      static configuration_option<0b000011000> output_compare_com;
-      static configuration_option<0b000011100> output_compare_som;
-      static configuration_option<0b000101000> edge_pwm_htp;
-      static configuration_option<0b000100100> edge_pwm_ltp;
-      static configuration_option<0b000001000> center_pwm_htp;
-      static configuration_option<0b000000100> center_pwm_ltp;
-      static configuration_option<0b010001000> combine_pwm_htp;
-      static configuration_option<0b010000100> combine_pwm_ltp;
+      typedef configuration_option<0b000000000> disable;
+      typedef configuration_option<0b000000100> input_compare_re; // raising edge
+      typedef configuration_option<0b000001000> input_compare_fe; // falling edge
+      typedef configuration_option<0b000001100> input_compare_be; // rising or falling edges
+      typedef configuration_option<0b000010100> output_compare_tom;
+      typedef configuration_option<0b000011000> output_compare_com;
+      typedef configuration_option<0b000011100> output_compare_som;
+      typedef configuration_option<0b000101000> edge_pwm_htp;
+      typedef configuration_option<0b000100100> edge_pwm_ltp;
+      typedef configuration_option<0b000001000> center_pwm_htp;
+      typedef configuration_option<0b000000100> center_pwm_ltp;
+      typedef configuration_option<0b010001000> combine_pwm_htp;
+      typedef configuration_option<0b010000100> combine_pwm_ltp;
     };
     
     template<typename Options>
@@ -185,34 +185,34 @@ struct ftm : peripheral<Specifier>
 
   struct interrupt
   {
-    static configuration_option<0>                  disabled;
-    static configuration_option<FTM_SC_TOIE_MASK>   enable;
+    typedef configuration_option<0>                  disabled;
+    typedef configuration_option<FTM_SC_TOIE_MASK>   enable;
   };
 
   struct counter_modes
   {
-    static configuration_option<0>                  edge;
-    static configuration_option<FTM_SC_CPWMS_MASK>  center;
+    typedef configuration_option<0>                  edge;
+    typedef configuration_option<FTM_SC_CPWMS_MASK>  center;
   };
 
   struct clock_modes
   {
-    static configuration_option<FTM_SC_CLKS(0)>   disable;
-    static configuration_option<FTM_SC_CLKS(1)>   internal;
-    static configuration_option<FTM_SC_CLKS(2)>   fixed;
-    static configuration_option<FTM_SC_CLKS(3)>   external;
+    typedef configuration_option<FTM_SC_CLKS(0)>   disable;
+    typedef configuration_option<FTM_SC_CLKS(1)>   internal;
+    typedef configuration_option<FTM_SC_CLKS(2)>   fixed;
+    typedef configuration_option<FTM_SC_CLKS(3)>   external;
   };
 
   struct prescalers
   {
-    static configuration_option<FTM_SC_PS(0)>    _1;
-    static configuration_option<FTM_SC_PS(1)>    _2;
-    static configuration_option<FTM_SC_PS(2)>    _4;
-    static configuration_option<FTM_SC_PS(3)>    _8;
-    static configuration_option<FTM_SC_PS(4)>    _16;
-    static configuration_option<FTM_SC_PS(5)>    _32;
-    static configuration_option<FTM_SC_PS(6)>    _64;
-    static configuration_option<FTM_SC_PS(7)>    _128;
+    typedef configuration_option<FTM_SC_PS(0)>    _1;
+    typedef configuration_option<FTM_SC_PS(1)>    _2;
+    typedef configuration_option<FTM_SC_PS(2)>    _4;
+    typedef configuration_option<FTM_SC_PS(3)>    _8;
+    typedef configuration_option<FTM_SC_PS(4)>    _16;
+    typedef configuration_option<FTM_SC_PS(5)>    _32;
+    typedef configuration_option<FTM_SC_PS(6)>    _64;
+    typedef configuration_option<FTM_SC_PS(7)>    _128;
   };  
   
   static void start()

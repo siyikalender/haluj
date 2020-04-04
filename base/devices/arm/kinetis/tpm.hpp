@@ -90,24 +90,24 @@ struct tpm : peripheral<Specifier>
     
     struct interrupt
     {
-      static configuration_option<0>                    disabled;
-      static configuration_option<TPM_CnSC_CHIE_MASK>   enable;
+      typedef configuration_option<0>                    disabled;
+      typedef configuration_option<TPM_CnSC_CHIE_MASK>   enable;
     };
     
     struct modes
     {
-      static configuration_option<0b00000000> disable;
-      static configuration_option<0b00010000> software_compare;
-      static configuration_option<0b00000100> input_compare_re; // raising edge
-      static configuration_option<0b00001000> input_compare_fe; // falling edge
-      static configuration_option<0b00001100> input_compare_be; // rising or falling edges
-      static configuration_option<0b00010100> output_compare_tom;
-      static configuration_option<0b00011000> output_compare_com;
-      static configuration_option<0b00011100> output_compare_som;
-      static configuration_option<0b00101000> pwm_htp;
-      static configuration_option<0b00100100> pwm_ltp;
-      static configuration_option<0b00111000> output_compare_polm;
-      static configuration_option<0b00110100> output_compare_pohm;
+      typedef configuration_option<0b00000000> disable;
+      typedef configuration_option<0b00010000> software_compare;
+      typedef configuration_option<0b00000100> input_compare_re; // raising edge
+      typedef configuration_option<0b00001000> input_compare_fe; // falling edge
+      typedef configuration_option<0b00001100> input_compare_be; // rising or falling edges
+      typedef configuration_option<0b00010100> output_compare_tom;
+      typedef configuration_option<0b00011000> output_compare_com;
+      typedef configuration_option<0b00011100> output_compare_som;
+      typedef configuration_option<0b00101000> pwm_htp;
+      typedef configuration_option<0b00100100> pwm_ltp;
+      typedef configuration_option<0b00111000> output_compare_polm;
+      typedef configuration_option<0b00110100> output_compare_pohm;
     };
     
     template<typename Options>
@@ -177,33 +177,33 @@ struct tpm : peripheral<Specifier>
 
   struct interrupt
   {
-    static configuration_option<0>                  disabled;
-    static configuration_option<TPM_SC_TOIE_MASK>   enable;
+    typedef configuration_option<0>                  disabled;
+    typedef configuration_option<TPM_SC_TOIE_MASK>   enable;
   };
 
   struct counter_modes
   {
-    static configuration_option<0>                  edge;
-    static configuration_option<TPM_SC_CPWMS_MASK>  center;
+    typedef configuration_option<0>                  edge;
+    typedef configuration_option<TPM_SC_CPWMS_MASK>  center;
   };
 
   struct clock_modes
   {
-    static configuration_option<TPM_SC_CMOD(0)>   disable;
-    static configuration_option<TPM_SC_CMOD(1)>   internal;
-    static configuration_option<TPM_SC_CMOD(2)>   external;
+    typedef configuration_option<TPM_SC_CMOD(0)>   disable;
+    typedef configuration_option<TPM_SC_CMOD(1)>   internal;
+    typedef configuration_option<TPM_SC_CMOD(2)>   external;
   };
 
   struct prescalers
   {
-    static configuration_option<TPM_SC_PS(0)>    _1;
-    static configuration_option<TPM_SC_PS(1)>    _2;
-    static configuration_option<TPM_SC_PS(2)>    _4;
-    static configuration_option<TPM_SC_PS(3)>    _8;
-    static configuration_option<TPM_SC_PS(4)>    _16;
-    static configuration_option<TPM_SC_PS(5)>    _32;
-    static configuration_option<TPM_SC_PS(6)>    _64;
-    static configuration_option<TPM_SC_PS(7)>    _128;
+    typedef configuration_option<TPM_SC_PS(0)>    _1;
+    typedef configuration_option<TPM_SC_PS(1)>    _2;
+    typedef configuration_option<TPM_SC_PS(2)>    _4;
+    typedef configuration_option<TPM_SC_PS(3)>    _8;
+    typedef configuration_option<TPM_SC_PS(4)>    _16;
+    typedef configuration_option<TPM_SC_PS(5)>    _32;
+    typedef configuration_option<TPM_SC_PS(6)>    _64;
+    typedef configuration_option<TPM_SC_PS(7)>    _128;
   };  
   
   static void start()

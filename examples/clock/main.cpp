@@ -59,8 +59,8 @@ int main()
 {
   open<port_b>();
   
-  port_b::configure(red::index,  options(port_b::mux::_1));
-  port_b::configure(blue::index, options(port_b::mux::_1));
+  red::configure(options<port_b::mux::_1>());
+  red::configure(options<port_b::mux::_1>());
   
   port_b::set_direction(mask(red::index, blue::index));
   

@@ -73,59 +73,59 @@ struct port : peripheral<Specifier>
 
   struct pull
   {
-    static port_option<0> none;
-    static port_option<2> down;
-    static port_option<3> up;
+    typedef port_option<0> none;
+    typedef port_option<2> down;
+    typedef port_option<3> up;
   };
 
   // Note: slew_rate may not be supported by all devices
   struct slew_rate
   {
-    static port_option<0>                  fast;
-    static port_option<PORT_PCR_SRE_MASK>  slow;
+    typedef port_option<0>                  fast;
+    typedef port_option<PORT_PCR_SRE_MASK>  slow;
   };
 
   // Note: drive_strength may not be supported by all devices
   struct drive_strength
   {
-    static port_option<0>                  low;
-    static port_option<PORT_PCR_DSE_MASK>  high;
+    typedef port_option<0>                  low;
+    typedef port_option<PORT_PCR_DSE_MASK>  high;
   };
 
   // Note: open_drain may not be supported by all devices
   struct open_drain
   {
-    static port_option<0>                  disable;
-    static port_option<PORT_PCR_ODE_MASK>  enable;
+    typedef port_option<0>                  disable;
+    typedef port_option<PORT_PCR_ODE_MASK>  enable;
   };
 
   struct interrupts
   {
-    static port_option<PORT_PCR_IRQC(0)>  none;
-    static port_option<PORT_PCR_IRQC(8)>  on_logic_0;
-    static port_option<PORT_PCR_IRQC(9)>  on_rising_edge;
-    static port_option<PORT_PCR_IRQC(10)> on_falling_edge;
-    static port_option<PORT_PCR_IRQC(11)> on_both_edges;
-    static port_option<PORT_PCR_IRQC(12)> on_logic_1;
+    typedef port_option<PORT_PCR_IRQC(0)>  none;
+    typedef port_option<PORT_PCR_IRQC(8)>  on_logic_0;
+    typedef port_option<PORT_PCR_IRQC(9)>  on_rising_edge;
+    typedef port_option<PORT_PCR_IRQC(10)> on_falling_edge;
+    typedef port_option<PORT_PCR_IRQC(11)> on_both_edges;
+    typedef port_option<PORT_PCR_IRQC(12)> on_logic_1;
   };
 
   // Note: passive_filter may not be supported by all devices
   struct passive_filter
   {
-    static port_option<0>                   disable;
-    static port_option<PORT_PCR_PFE_MASK>   enable;
+    typedef port_option<0>                   disable;
+    typedef port_option<PORT_PCR_PFE_MASK>   enable;
   };
 
   struct mux
   {
-    static port_option<PORT_PCR_MUX(0)> _0;
-    static port_option<PORT_PCR_MUX(1)> _1;  
-    static port_option<PORT_PCR_MUX(2)> _2;  
-    static port_option<PORT_PCR_MUX(3)> _3;  
-    static port_option<PORT_PCR_MUX(4)> _4;  
-    static port_option<PORT_PCR_MUX(5)> _5;  
-    static port_option<PORT_PCR_MUX(6)> _6;  
-    static port_option<PORT_PCR_MUX(7)> _7;  
+    typedef port_option<PORT_PCR_MUX(0)> _0;
+    typedef port_option<PORT_PCR_MUX(1)> _1;  
+    typedef port_option<PORT_PCR_MUX(2)> _2;  
+    typedef port_option<PORT_PCR_MUX(3)> _3;  
+    typedef port_option<PORT_PCR_MUX(4)> _4;  
+    typedef port_option<PORT_PCR_MUX(5)> _5;  
+    typedef port_option<PORT_PCR_MUX(6)> _6;  
+    typedef port_option<PORT_PCR_MUX(7)> _7;  
   };
 
   enum class directions
@@ -195,42 +195,6 @@ struct port : peripheral<Specifier>
   }
 
 };
-
-// ugly and cumbersome instantiation of static members.
-// A compiler with good optimizer is expected to get rid off them
-// So it may not complain even if they are missing.
-// However it is defined to conform the standart
-template<typename T> typename port<T>::template port_option<0>                  port<T>::pull::none;
-template<typename T> typename port<T>::template port_option<2>                  port<T>::pull::down;
-template<typename T> typename port<T>::template port_option<3>                  port<T>::pull::up;
-
-template<typename T> typename port<T>::template port_option<0>                  port<T>::slew_rate::fast;
-template<typename T> typename port<T>::template port_option<PORT_PCR_SRE_MASK>  port<T>::slew_rate::slow;
-
-template<typename T> typename port<T>::template port_option<0>                  port<T>::drive_strength::low;
-template<typename T> typename port<T>::template port_option<PORT_PCR_DSE_MASK>  port<T>::drive_strength::high;
-
-template<typename T> typename port<T>::template port_option<0>                  port<T>::open_drain::disable;
-template<typename T> typename port<T>::template port_option<PORT_PCR_ODE_MASK>  port<T>::open_drain::enable;
-
-template<typename T> typename port<T>::template port_option<PORT_PCR_IRQC(0)>   port<T>::interrupts::none;
-template<typename T> typename port<T>::template port_option<PORT_PCR_IRQC(8)>   port<T>::interrupts::on_logic_0;
-template<typename T> typename port<T>::template port_option<PORT_PCR_IRQC(9)>   port<T>::interrupts::on_rising_edge;
-template<typename T> typename port<T>::template port_option<PORT_PCR_IRQC(10)>  port<T>::interrupts::on_falling_edge;
-template<typename T> typename port<T>::template port_option<PORT_PCR_IRQC(11)>  port<T>::interrupts::on_both_edges;
-template<typename T> typename port<T>::template port_option<PORT_PCR_IRQC(12)>  port<T>::interrupts::on_logic_1;
-
-template<typename T> typename port<T>::template port_option<0>                  port<T>::passive_filter::disable;
-template<typename T> typename port<T>::template port_option<PORT_PCR_PFE_MASK>  port<T>::passive_filter::enable;
-
-template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(0)>    port<T>::mux::_0;
-template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(1)>    port<T>::mux::_1;
-template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(2)>    port<T>::mux::_2;
-template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(3)>    port<T>::mux::_3;
-template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(4)>    port<T>::mux::_4;
-template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(5)>    port<T>::mux::_5;
-template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(6)>    port<T>::mux::_6;
-template<typename T> typename port<T>::template port_option<PORT_PCR_MUX(7)>    port<T>::mux::_7;
 
 } // namespace kinetis
 

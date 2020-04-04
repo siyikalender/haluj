@@ -42,12 +42,12 @@ int main()
   open<spi_0>(); // depending on the device other uarts may be available
 
   spi_0::configure(
-    options(
+    options<
       spi_0::mode::master, 
-      spi_0::active_cs<1>(), 
+      spi_0::active_cs<1>, 
       spi_0::frame_size::_8,
       spi_0::phase::tx_on_falling_edge
-    )
+    >()
   );
 
   // close function disables the clock gating
