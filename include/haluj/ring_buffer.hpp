@@ -1,4 +1,4 @@
-/// \file bitops.hpp
+/// \file ring_buffer.hpp
 /// A Ring Buffer implementation
 /*
 This is free and unencumbered software released into the public domain.
@@ -38,14 +38,12 @@ For more information, please refer to <http://unlicense.org>
 #include "bitops.hpp"
 #include "optional.hpp"
 #include "cyclic_index.hpp"
-#include "null_lock.hpp"
 
 namespace haluj
 {
 
-template< typename      RandomAccessContainerType, 
-          typename      FlagsType  = uint8_t,
-          typename      ScopedLock = null_lock>
+template< typename  RandomAccessContainerType, 
+          typename  FlagsType  = uint8_t>
 struct ring_buffer
 {
   typedef RandomAccessContainerType             container_type;
@@ -63,6 +61,7 @@ struct ring_buffer
     clear(true);
   }
 
+  /// clear: clear the buffer
   void clear(const bool p_zero = false)
   {
     m_flags   = mask(c_empty); // non atomic due to store
@@ -70,6 +69,7 @@ struct ring_buffer
     m_head    = 0;
   }
 
+  /// size: how many elements are written/available to read
   constexpr std::size_t capacity() const
   {
     return m_container.size();
@@ -104,19 +104,21 @@ struct ring_buffer
     return capacity() - size();
   }  
 
+  /// full: returns true if buffer is full
   bool full() const
   {
     return bit_test(uint8_t(m_flags), c_full); 
   }
 
+  /// full: returns true if buffer is empty
   bool empty() const
   {
     return bit_test(uint8_t(m_flags), c_empty);
   }
   
+  /// push: Add a new element to head
   void push(const base_type &p_data)
   {
-    ScopedLock lock;
     m_container[m_head] = p_data;
     m_head      =   cyclic_increment(m_head, capacity());
     m_flags     &=  ~mask(c_empty); // atomic, depending on flags_type
@@ -126,9 +128,9 @@ struct ring_buffer
     }
   }
 
+  /// push: remove element from the tail
   void pop()
   {
-    ScopedLock lock;
     m_tail       = cyclic_increment(m_tail, capacity());
     m_flags     &= ~mask(c_full); // atomic, depending on flags_type
     if (m_head == m_tail)

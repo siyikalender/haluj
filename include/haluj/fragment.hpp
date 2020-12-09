@@ -29,6 +29,18 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
+/*! Basic usage:
+* \code {.cpp}
+* // Suppose we have random access container c. We can create fragments of 256 elements
+* for(auto f = make_fragment(c, 256); f; f = make_fragment(c, 256))
+* {
+*   // process fragment
+* }
+* \endcode
+* Note that fragment is not a container. It is just an iterator range
+* 
+*/
+
 #ifndef HALUJ_FRAGMENT_HPP
 #define HALUJ_FRAGMENT_HPP
 
@@ -87,7 +99,6 @@ struct fragment
   iterator first_;
   iterator last_;
 };
-
 
 template<typename Container, typename Iterator = typename Container::const_iterator>
 inline Iterator 

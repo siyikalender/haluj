@@ -62,7 +62,6 @@ struct in_range
   }
 };
 
-
 template<typename     T,
          typename     Iterator,
          typename     CompFunc = std::equal_to<T> >
