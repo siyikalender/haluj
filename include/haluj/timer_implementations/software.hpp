@@ -31,13 +31,10 @@ For more information, please refer to <http://unlicense.org>
 /// \date   2019
 
 
-#ifndef HALUJ_BASE_TIMER_IMPLEMENTATIONS_SOFTWARE_HPP
-#define HALUJ_BASE_TIMER_IMPLEMENTATIONS_SOFTWARE_HPP
+#ifndef HALUJ_TIMER_IMPLEMENTATIONS_SOFTWARE_HPP
+#define HALUJ_TIMER_IMPLEMENTATIONS_SOFTWARE_HPP
 
 namespace haluj
-{
-
-namespace base
 {
 
 namespace timer_implementations
@@ -151,8 +148,6 @@ struct implementation : DirectionType
 
 } // namespace timer_implementations
 
-} // namespace base
-
 } // namespace haluj
 
-#endif // HALUJ_BASE_TIMER_IMPLEMENTATIONS_SOFTWARE_HPP
+#endif // HALUJ_TIMER_IMPLEMENTATIONS_SOFTWARE_HPP
