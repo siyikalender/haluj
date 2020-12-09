@@ -30,15 +30,12 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_STATE_MACHINE_HPP
-#define HALUJ_BASE_STATE_MACHINE_HPP
+#ifndef HALUJ_STATE_MACHINE_HPP
+#define HALUJ_STATE_MACHINE_HPP
 
 #include <utility>
 
 namespace haluj
-{
-
-namespace base
 {
 
 struct null_action_t
@@ -377,8 +374,6 @@ machine(const GraphType   &p_graph,
     
 }
 
-} // namespace base
-
 } // namespace haluj
 
-#endif //  HALUJ_BASE_STATE_MACHINE_HPP
+#endif //  HALUJ_STATE_MACHINE_HPP

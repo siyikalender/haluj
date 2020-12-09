@@ -30,13 +30,10 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_TIMER_HPP
-#define HALUJ_BASE_TIMER_HPP
+#ifndef HALUJ_TIMER_HPP
+#define HALUJ_TIMER_HPP
 
 namespace haluj
-{
-
-namespace base
 {
 
 struct periodic
@@ -177,9 +174,7 @@ struct delta
   T     previous_;
 };
 
-} // namespace base
-
 } // namespace haluj
 
-// HALUJ_BASE_TIMER_HPP
+// HALUJ_TIMER_HPP
 #endif

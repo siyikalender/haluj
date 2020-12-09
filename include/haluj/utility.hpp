@@ -1,12 +1,9 @@
-#ifndef HALUJ_BASE_UTILITY_HPP
-#define HALUJ_BASE_UTILITY_HPP
+#ifndef HALUJ_UTILITY_HPP
+#define HALUJ_UTILITY_HPP
 
 #include <cstdint>
 
 namespace haluj
-{
-
-namespace base
 {
 
 template<typename T, std::size_t N>
@@ -56,8 +53,7 @@ struct async_loop
   value_t   value_;
 };
 
-} // namespace base
-
 } // namespace haluj
 
+// HALUJ_UTILITY_HPP
 #endif

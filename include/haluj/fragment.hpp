@@ -29,11 +29,14 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_FRAGMENT_HPP
-#define HALUJ_BASE_FRAGMENT_HPP
+#ifndef HALUJ_FRAGMENT_HPP
+#define HALUJ_FRAGMENT_HPP
 
 #include <cstdint>
 #include <utility>
+
+namespace haluj
+{
 
 template<typename Iterator>
 struct fragment
@@ -68,7 +71,7 @@ struct fragment
   
   std::size_t size() const
   {
-    std::distance(first_, last_);    
+    return std::distance(first_, last_);    
   }
 
   iterator begin() const
@@ -123,5 +126,7 @@ make_fragment(const Container&            p_container,
   return fragment<Iterator>(p_f.end(), end);
 }
 
+} // namespace haluj
 
-#endif // HALUJ_BASE_FRAGMENT_HPP
+// HALUJ_FRAGMENT_HPP
+#endif

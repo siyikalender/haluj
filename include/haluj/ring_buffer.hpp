@@ -29,8 +29,8 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_RING_BUFFER_HPP
-#define HALUJ_BASE_RING_BUFFER_HPP
+#ifndef HALUJ_RING_BUFFER_HPP
+#define HALUJ_RING_BUFFER_HPP
 
 #include <cstdint>
 #include <algorithm>
@@ -41,9 +41,6 @@ For more information, please refer to <http://unlicense.org>
 #include "null_lock.hpp"
 
 namespace haluj
-{
-
-namespace base
 {
 
 template< typename      RandomAccessContainerType, 
@@ -151,8 +148,6 @@ struct ring_buffer
   flags_type          m_flags; // <--- should be atomic
 };
 
-} // namespace base
-
 } // namespace haluj
 
-#endif // HALUJ_BASE_RING_BUFFER_HPP
+#endif // HALUJ_RING_BUFFER_HPP

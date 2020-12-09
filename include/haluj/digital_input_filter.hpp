@@ -1,5 +1,5 @@
-/// \file optional.hpp
-/// A lightweight std optional implementation
+/// \file digital_input_filter.hpp
+/// software based dijital input filter
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -29,94 +29,68 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_OPTIONAL_HPP
-#define HALUJ_BASE_OPTIONAL_HPP
+#ifndef HALUJ_DIGITAL_INPUT_FILTER_HPP
+#define HALUJ_DIGITAL_INPUT_FILTER_HPP
 
-#include <utility>
+#include <algorithm>
 
-namespace haluj
+template<typename T, unsigned BufferSize>
+struct digital_input_filter
 {
+  static constexpr unsigned c_buffer_size = BufferSize;
 
-namespace base
-{
-
-struct nullopt_t
-{
-  explicit constexpr nullopt_t(int) {}
-};
-
-constexpr nullopt_t nullopt = nullopt_t(0);
-
-template<typename T>
-struct optional
-{
-  optional()
-  : m_initialized(false), 
-    m_value()
-  {}
-  
-  optional(const optional& p_other)
-  : m_initialized(p_other.m_initialized), 
-    m_value(p_other.m_value)
-  {}
-  
-  optional(const T& p_value)
-  : m_initialized(true), 
-    m_value(p_value)
-  {}
-  
-  explicit operator bool() const
+  digital_input_filter(const T p_mask = 0U)
+  : m_mask(p_mask),
+    m_value(0U),
+    m_edge(0U)
   {
-    return has_value();
-  }
-  
-  bool has_value() const
-  {
-    return m_initialized;
+    std::fill_n(&m_input[0], c_buffer_size, 0U);
   }
 
-  void reset() 
+  T operator()(const T      p_input)
   {
-    m_initialized = false;
+    for (unsigned i = (c_buffer_size - 1U); i > 0U; i--)
+    {
+      m_input[i]  =   m_input[i - 1U];
+    }
+
+    T result = m_input[0U] = p_input & m_mask;
+
+    for (unsigned i = 1U; i < c_buffer_size; i++)
+    {
+      result      &=  m_input[i];
+    }
+
+    m_edge              = result ^ m_value;
+
+    if (m_edge != 0)
+    {
+      m_value             = result;
+    }
+    
+    return m_value;
   }
-  
-  T& operator *() &
+
+  T      value() const
   {
     return m_value;
   }
 
-  const T& operator *() const&
+  T      edge() const
   {
-    return m_value;
-  }
-
-  template<typename U>
-  optional& operator=(U&& p_value)
-  {
-    m_initialized = true;
-    m_value       = std::forward<U>(p_value);
-    return *this;
+    return m_edge;
   }
   
-  optional& operator=(const optional& p_other)
+  T mask() const
   {
-    m_initialized = p_other.m_initialized;
-    m_value       = p_other.m_value;
-    return *this;
-  }
-  
-  optional& operator=(nullopt_t)
-  {
-    reset();
-    return *this;
+    return m_mask;
   }
 
-  bool  m_initialized;
-  T     m_value;
+  T      m_input[c_buffer_size];
+  T      m_mask;
+  T      m_value;
+  T      m_edge;
 };
 
-} // namespace base
-
-} // namespace haluj
-
-#endif // HALUJ_BASE_OPTIONAL_HPP
+// HALUJ_DIGITAL_INPUT_FILTER_HPP
+#endif

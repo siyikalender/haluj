@@ -28,8 +28,8 @@ For more information, please refer to <http://unlicense.org>
 */
 /// \author Selcuk Iyikalender
 /// \date   2018
-#ifndef BIDIRECTIONAL_MAP_HPP
-#define BIDIRECTIONAL_MAP_HPP
+#ifndef HALUJ_BIDIRECTIONAL_MAP_HPP
+#define HALUJ_BIDIRECTIONAL_MAP_HPP
 
 #include <utility>
 #include <iterator>
@@ -38,9 +38,6 @@ For more information, please refer to <http://unlicense.org>
 #include <cstring>
 
 namespace haluj
-{
-
-namespace base
 {
 
 struct c_str_equal_to
@@ -191,8 +188,6 @@ to_first(const S                  &p_second,
                                 std::end(p_container));
 }
 
-} // namespace base
-
 } // namespace haluj
 
-#endif // BIDIRECTIONAL_MAP_HPP
+#endif // HALUJ_BIDIRECTIONAL_MAP_HPP

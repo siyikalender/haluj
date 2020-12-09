@@ -29,13 +29,10 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_PARSER_HPP
-#define HALUJ_BASE_PARSER_HPP
+#ifndef HALUJ_PARSER_HPP
+#define HALUJ_PARSER_HPP
 
 namespace haluj
-{
-
-namespace base
 {
 
 struct rule
@@ -560,9 +557,7 @@ info(const ExprType   &p_expr, const std::string& p_name)
 }
 */
 
-} // namespace base
-
 } // namespace haluj
 
-// HALUJ_BASE_PARSER_HPP
+// HALUJ_PARSER_HPP
 #endif

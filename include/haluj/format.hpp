@@ -29,15 +29,12 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_FORMAT_HPP
-#define HALUJ_BASE_FORMAT_HPP
+#ifndef HALUJ_FORMAT_HPP
+#define HALUJ_FORMAT_HPP
 
 #include <cstdint>
 
 namespace haluj
-{
-
-namespace base
 {
   
 template<typename Iterator>
@@ -131,8 +128,6 @@ Iterator format(float n, Iterator first, Iterator last, std::size_t precision)
   return first;
 }
 
-} // namespace base
-
 } // namespace haluj
 
-#endif  // HALUJ_BASE_FORMAT_HPP
+#endif  // HALUJ_FORMAT_HPP

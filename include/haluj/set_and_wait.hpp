@@ -30,13 +30,10 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_SET_AND_WAIT_HPP
-#define HALUJ_BASE_SET_AND_WAIT_HPP
+#ifndef HALUJ_SET_AND_WAIT_HPP
+#define HALUJ_SET_AND_WAIT_HPP
 
 namespace haluj
-{
-
-namespace base
 {
 
 struct set_and_wait
@@ -87,8 +84,6 @@ struct set_and_wait
   states state_;
 };
 
-} // namespace base
-
 } // namespace haluj
 
-#endif // HALUJ_BASE_SET_AND_WAIT_HPP
+#endif // HALUJ_SET_AND_WAIT_HPP

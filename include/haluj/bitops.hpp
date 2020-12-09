@@ -29,13 +29,10 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_BITOPS_HPP
-#define HALUJ_BASE_BITOPS_HPP
+#ifndef HALUJ_BITOPS_HPP
+#define HALUJ_BITOPS_HPP
 
 namespace haluj
-{
-
-namespace base
 {
 
 template<typename T>
@@ -198,9 +195,7 @@ wait_mask(T&      p_ref,
   for (unsigned u = 0; (u < Count) && !mask_test(p_ref, p_mask); u++);
 }
 
-} // namespace base
-
 } // namespace haluj
 
-// HALUJ_BASE_BITOPS_HPP
+// HALUJ_BITOPS_HPP
 #endif

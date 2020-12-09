@@ -29,8 +29,11 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_CYCLIC_INDEX_HPP
-#define HALUJ_BASE_CYCLIC_INDEX_HPP
+#ifndef HALUJ_CYCLIC_INDEX_HPP
+#define HALUJ_CYCLIC_INDEX_HPP
+
+namespace haluj
+{
 
 template<typename T>
 inline T cyclic_increment(const T v, const T N)
@@ -146,4 +149,6 @@ inline bool operator>=(cyclic_index<T, N> A, cyclic_index<T, N> B)
   return A.value >= B.value;
 }
 
-#endif // HALUJ_BASE_CYCLIC_INDEX_HPP
+} // namespace haluj
+
+#endif // HALUJ_CYCLIC_INDEX_HPP

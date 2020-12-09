@@ -1,5 +1,5 @@
-/// \file digital_input_filter.hpp
-/// software based dijital input filter
+/// \file null_lock.hpp
+/// An empty scoped lock can be used as indication of critical sections
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -29,68 +29,19 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_DIGITAL_INPUT_FILTER_HPP
-#define HALUJ_BASE_DIGITAL_INPUT_FILTER_HPP
+#ifndef HALUJ_NULL_LOCK_HPP
+#define HALUJ_NULL_LOCK_HPP
 
-#include <algorithm>
-
-template<typename T, unsigned BufferSize>
-struct digital_input_filter
+namespace haluj
 {
-  static constexpr unsigned c_buffer_size = BufferSize;
 
-  digital_input_filter(const T p_mask = 0U)
-  : m_mask(p_mask),
-    m_value(0U),
-    m_edge(0U)
-  {
-    std::fill_n(&m_input[0], c_buffer_size, 0U);
-  }
+struct null_lock
+{
+  null_lock() {}
 
-  T operator()(const T      p_input)
-  {
-    for (unsigned i = (c_buffer_size - 1U); i > 0U; i--)
-    {
-      m_input[i]  =   m_input[i - 1U];
-    }
-
-    T result = m_input[0U] = p_input & m_mask;
-
-    for (unsigned i = 1U; i < c_buffer_size; i++)
-    {
-      result      &=  m_input[i];
-    }
-
-    m_edge              = result ^ m_value;
-
-    if (m_edge != 0)
-    {
-      m_value             = result;
-    }
-    
-    return m_value;
-  }
-
-  T      value() const
-  {
-    return m_value;
-  }
-
-  T      edge() const
-  {
-    return m_edge;
-  }
-  
-  T mask() const
-  {
-    return m_mask;
-  }
-
-  T      m_input[c_buffer_size];
-  T      m_mask;
-  T      m_value;
-  T      m_edge;
+  ~null_lock() {}
 };
 
-// HALUJ_BASE_DIGITAL_INPUT_FILTER_HPP
-#endif
+} // namespace haluj
+
+#endif // HALUJ_NULL_LOCK_HPP

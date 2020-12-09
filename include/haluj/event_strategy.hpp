@@ -29,13 +29,10 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2018
 
-#ifndef HALUJ_BASE_EVENT_STRATEGY_HPP
-#define HALUJ_BASE_EVENT_STRATEGY_HPP
+#ifndef HALUJ_EVENT_STRATEGY_HPP
+#define HALUJ_EVENT_STRATEGY_HPP
 
 namespace haluj
-{
-  
-namespace base
 {
 
 template <typename EventType, 
@@ -117,8 +114,6 @@ struct blackboard
 
 } // namespace strategy
 
-} // namespace base
-
 } // namespace haluj
 
-#endif // HALUJ_BASE_EVENT_STRATEGY_HPP
+#endif // HALUJ_EVENT_STRATEGY_HPP
