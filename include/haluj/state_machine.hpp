@@ -351,7 +351,7 @@ struct machine_t
   {}
 
   template<typename StateType, typename... Args>
-  StateType operator()(const StateType p_current, Args&&... args) 
+  StateType operator()(const StateType p_current, Args&&... args) const
   {
     map_.do_(p_current, args...);
     return graph_(p_current, map_, std::forward<Args>(args)...);
