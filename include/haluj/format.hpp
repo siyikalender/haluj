@@ -33,6 +33,7 @@ For more information, please refer to <http://unlicense.org>
 #define HALUJ_FORMAT_HPP
 
 #include <cstdint>
+#include <algorithm>
 
 namespace haluj
 {
@@ -86,7 +87,6 @@ Iterator format(int n, Iterator first, Iterator last)
   
   return first;
 }
-
 
 template<typename Iterator>
 Iterator format(float n, Iterator first, Iterator last, std::size_t precision)
