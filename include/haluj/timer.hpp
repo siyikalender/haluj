@@ -39,13 +39,18 @@ namespace haluj
 struct periodic
 {
   bool operator()() { return false; };
+
+  template<typename Function> 
+  bool operator()(Function f) { f(); return false; };
 };
 
 struct one_shot
 {
   bool operator()() { return true; };
-};
 
+  template<typename Function> 
+  bool operator()(Function f) { f(); return true; };
+};
 
 template<typename Implementation>
 struct timer
@@ -64,7 +69,7 @@ struct timer
 
   // Operators
 
-  template<typename Function = periodic> 
+  template<typename Function = periodic>
   bool operator()(duration  p_delta,
                   Function  p_function = Function())
   {
@@ -155,23 +160,6 @@ public:
     return implementation::is_running();
   }
 
-};
-
-// helpers
-template<typename T, typename D = T>
-struct delta
-{
-  delta(T p_initial)
-  : previous_(p_initial)
-  {}
-  
-  D operator()(T current)
-  {
-    D result  = current - previous_;  
-    previous_ = current;
-    return result;
-  }
-  T     previous_;
 };
 
 } // namespace haluj
