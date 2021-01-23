@@ -35,36 +35,50 @@ For more information, please refer to <http://unlicense.org>
 #include <cstdint>
 #include <algorithm>
 
-#include "bitops.hpp"
+#include "bit/field.hpp"
+#include "bit/pack.hpp"
+#include "bit/storage.hpp"
 #include "optional.hpp"
 #include "cyclic_index.hpp"
 
 namespace haluj
 {
+/// This is a ring buffer implementation.
 
 template< typename  RandomAccessContainerType, 
-          typename  FlagsType  = uint8_t>
+          typename  FlagsBaseType  = uint8_t>
 struct ring_buffer
 {
   typedef RandomAccessContainerType             container_type;
   typedef typename container_type::value_type   base_type;
   typedef base_type*                            iterator;
   typedef std::size_t                           index_type;
-  typedef FlagsType                             flags_type;
+  typedef FlagsBaseType                         flags_base_type;
 
-
-  static constexpr uint8_t c_empty = 0U;
-  static constexpr uint8_t c_full  = 1U;
+  struct empty_bit  : bit::field<0> {};
+  struct full_bit   : bit::field<1> {};
+  
+  using flags_type =
+    bit::storage
+    <
+      bit::pack
+      <
+        flags_base_type, 
+        empty_bit, 
+        full_bit
+      >
+    >;
 
   ring_buffer()
   {
     clear(true);
   }
 
-  /// clear: clear the buffer
+  /// clear the buffer
   void clear(const bool p_zero = false)
   {
-    m_flags   = mask(c_empty); // non atomic due to store
+    m_flags.template set<empty_bit>();
+    m_flags.template clear<full_bit>();
     m_tail    = 0;
     m_head    = 0;
   }
@@ -107,13 +121,13 @@ struct ring_buffer
   /// full: returns true if buffer is full
   bool full() const
   {
-    return bit_test(uint8_t(m_flags), c_full); 
+    return m_flags.template test<full_bit>(); 
   }
 
   /// full: returns true if buffer is empty
   bool empty() const
   {
-    return bit_test(uint8_t(m_flags), c_empty);
+    return m_flags.template test<empty_bit>(); 
   }
   
   /// push: Add a new element to head
@@ -121,10 +135,10 @@ struct ring_buffer
   {
     m_container[m_head] = p_data;
     m_head      =   cyclic_increment(m_head, capacity());
-    m_flags     &=  ~mask(c_empty); // atomic, depending on flags_type
+    m_flags.template clear<empty_bit>();
     if (m_head == m_tail)
     {
-      m_flags |= mask(c_full);      // atomic, depending on flags_type
+      m_flags.template set<full_bit>();
     }
   }
 
@@ -132,10 +146,10 @@ struct ring_buffer
   void pop()
   {
     m_tail       = cyclic_increment(m_tail, capacity());
-    m_flags     &= ~mask(c_full); // atomic, depending on flags_type
+    m_flags.template clear<full_bit>();
     if (m_head == m_tail)
     {
-      m_flags |= mask(c_empty);   // atomic, depending on flags_type
+      m_flags.template set<empty_bit>();
     }
   }
   
@@ -147,7 +161,7 @@ struct ring_buffer
   container_type      m_container;
   index_type          m_tail;
   index_type          m_head;
-  flags_type          m_flags; // <--- should be atomic
+  flags_type          m_flags;
 };
 
 } // namespace haluj
