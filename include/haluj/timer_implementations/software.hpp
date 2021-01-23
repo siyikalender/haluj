@@ -144,6 +144,12 @@ struct implementation : DirectionType
   }
 };
 
+template<typename DurationType>
+using fwd = implementation<forward<DurationType>>;
+
+template<typename DurationType>
+using bwd = implementation<backward<DurationType>>;
+
 } // namespace software
 
 } // namespace timer_implementations
