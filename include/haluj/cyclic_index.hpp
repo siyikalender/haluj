@@ -47,6 +47,45 @@ inline T cyclic_decrement(const T v, const T N)
   return (v == 0) ? (N - 1) : (v - 1);
 }
 
+template<typename T>
+inline T cyclic_increment(const T v, T size, const T N)
+{
+  auto result = v + size;
+  if (result > N)
+    result -= N;
+  return result;
+}
+
+template<typename T>
+inline T cyclic_decrement(const T v, T size, const T N)
+{
+  auto result = v;
+  if (v < size)
+  {
+    result += N;
+  }
+  result -= size;
+  return result;
+}
+
+template<typename T>
+inline T cyclic_distance(const T f, T t, const T N)
+{
+  T result;
+  
+  if (f <= t)
+  {
+    result = f - t;
+  }
+  else
+  {
+    result = N + f - t;
+  }
+  
+  return result;
+}
+
+
 template<typename T, T N>
 struct cyclic_index
 {
