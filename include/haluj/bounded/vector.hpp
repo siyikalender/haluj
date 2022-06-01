@@ -62,6 +62,12 @@ struct vector
   vector()
   {}
 
+  vector(const vector& other)
+  : m_size(other.m_size)
+  {
+    std::copy(other.begin(), other.end(), begin());
+  }
+
   void push_back(const T& p_value)
   {
     m_data[m_size] = p_value;
@@ -146,7 +152,7 @@ struct vector
 
   reference back()
   {
-    return *end();
+    return m_data[m_size - 1];
   }
 
   const_reference front() const
@@ -156,7 +162,7 @@ struct vector
 
   const_reference back() const
   {
-    return *end();
+    return m_data[m_size - 1];
   }
 
   void clear()
@@ -172,6 +178,11 @@ struct vector
   const_reference operator[](size_type p_index) const
   {
     return m_data[p_index];
+  }
+
+  vector& operator =(const vector& other)
+  {
+    assign(other);
   }
 
   pointer data()
@@ -212,7 +223,9 @@ inline bool assign(vector<T, Capacity>& p_c,
 {
   bool result = false;
   
-  if (p_c.size() < p_c.capacity())
+  auto d = std::distance(p_first, p_last);
+  
+  if (d > 0 && d < static_cast<decltype(d)>(p_c.capacity()))
   {
     p_c.assign(p_first, p_last);
     result = true;
