@@ -71,11 +71,11 @@ struct ring_buffer
 
   ring_buffer()
   {
-    clear(true);
+    clear();
   }
 
   /// clear the buffer
-  void clear(const bool p_zero = false)
+  void clear()
   {
     m_flags.template set<empty_bit>();
     m_flags.template clear<full_bit>();
@@ -156,6 +156,11 @@ struct ring_buffer
   base_type& front() 
   {
     return m_container[m_tail];
+  }
+
+  base_type& back() 
+  {
+    return m_container[m_head - 1];
   }
 
   container_type      m_container;
