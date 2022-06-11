@@ -93,6 +93,11 @@ struct timer
     impl_.reset();
     impl_.start();
   }
+
+  void load(duration p_value)
+  {
+    impl_.load(p_value);
+  }
   
   void stop()
   {
@@ -153,6 +158,11 @@ public:
     implementation::load(p_value);
     implementation::reset();
     implementation::start();
+  }
+  
+  static void stop()
+  {
+    implementation::stop();
   }
   
   static bool is_running()
