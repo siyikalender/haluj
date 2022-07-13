@@ -142,7 +142,7 @@ struct ring_buffer
     }
   }
 
-  /// push: remove element from the tail
+  /// pop: remove element from the tail
   void pop()
   {
     m_tail       = cyclic_increment(m_tail, capacity());
