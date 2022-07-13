@@ -33,6 +33,7 @@ For more information, please refer to <http://unlicense.org>
 #define HALUJ_FORMAT_HPP
 
 #include <cstdint>
+#include <cmath>
 #include <algorithm>
 
 namespace haluj
@@ -91,6 +92,16 @@ Iterator format(int n, Iterator first, Iterator last)
 template<typename Iterator>
 Iterator format(float n, Iterator first, Iterator last, std::size_t precision)
 {
+  static const float multipliers[] =
+  {
+    1,
+    10,
+    100,
+    1000,
+    10000,
+    100000
+  };
+  
   if ((first != last))
   {
     if (n < 0) 
@@ -99,30 +110,60 @@ Iterator format(float n, Iterator first, Iterator last, std::size_t precision)
       *first++ = '-';
     }
 
-    // to-do round here
-
-    // Iterator initial = first;
-
-    int i_n = int(n);
-
-    first = format(i_n, first, last);
-
-    n -= float(i_n);
+    precision = 
+      std::max
+      (
+        std::size_t(0U), 
+        std::min
+        (
+          std::size_t(5U), 
+          precision
+        )
+      );
     
-    if (precision)
+    n *= multipliers[precision];
+    
+    n = std::round(n);
+    
+    int  i_n = int(n);
+
+    auto it   = format(i_n, first, last); // Leading 0 conversion may simplify the code 
+    
+    auto d    = std::distance(first, it);
+    
+    auto nit  = it;
+    
+    if (precision < d)
     {
-      if (first != last) 
+      nit++;
+      
+      while (precision--)
       {
-        *first++ = '.';
-        while(precision-- && (first != last))
-        {
-          n *= 10.0;
-          int d =  n;
-          *first++ = ('0' + d);
-          n -= d;
-        }
+        *it = *(it - 1);
+        it--;
       }
+      
+      *it = '.';
+
     }
+    else
+    {
+      auto r    =   precision + 2 - d;
+      nit +=  r;
+      
+      while (d--)
+      {
+        it--;
+        *(it + r) = *it;
+      }
+
+      *first++ = '0';
+      *first++ = '.';
+      std::fill(first, it + r, '0');
+
+    }
+    
+    first = nit;
   }
 
   return first;
