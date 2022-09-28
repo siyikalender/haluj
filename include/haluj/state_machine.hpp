@@ -47,7 +47,7 @@ struct null_action_t
 
 };
 
-null_action_t  a_null;
+constexpr null_action_t  a_null;
 
 struct g_always_t
 {
@@ -58,64 +58,28 @@ struct g_always_t
   }
 };
 
-g_always_t g_always;
-
-template <typename    EnterActionType = null_action_t,
-          typename    DoActionType    = null_action_t,
-          typename    ExitActionType  = null_action_t>
-struct state_actions_t
-{
-  typedef EnterActionType   enter_action_type;
-  typedef DoActionType      do_action_type;
-  typedef ExitActionType    exit_action_type;
-  
-  state_actions_t(enter_action_type  p_enter_action = EnterActionType(),
-                  do_action_type     p_do_action    = DoActionType(),
-                  exit_action_type   p_exit_action  = ExitActionType())
-  : enter_action(p_enter_action),
-    do_action(p_do_action),
-    exit_action(p_exit_action)
-  {}
-  
-  const enter_action_type   enter_action;
-  const do_action_type      do_action;
-  const exit_action_type    exit_action;
-};
-
-template <typename    EnterActionType = null_action_t,
-          typename    DoActionType    = null_action_t,
-          typename    ExitActionType  = null_action_t>
-constexpr state_actions_t<EnterActionType,
-                          DoActionType,
-                          ExitActionType> 
-state_actions(const EnterActionType   p_enter_action  = EnterActionType(),
-              const DoActionType      p_do_action     = DoActionType(),
-              const ExitActionType    p_exit_action   = ExitActionType())
-{
-  return state_actions_t<EnterActionType, 
-                         DoActionType, 
-                         ExitActionType>(p_enter_action, 
-                                         p_do_action, 
-                                         p_exit_action);
-}
+constexpr g_always_t g_always;
 
 /// generic transition template
-template <typename    TriggerType,
-          typename    StateType,
-          typename    ActionType>
+template 
+< 
+  auto            From,
+  decltype(From)  To,
+  typename        TriggerType,
+  typename        ActionType
+>
 struct transition_t
 {
-  typedef TriggerType trigger_type;
-  typedef StateType   state_type;
-  typedef ActionType  action_type;
+  typedef TriggerType     trigger_type;
+  typedef decltype(From)  state_type;
+  typedef ActionType      action_type;
+  
+  static constexpr state_type from = From;
+  static constexpr state_type to   = To;
 
-  transition_t( trigger_type p_trigger  = trigger_type(), 
-                state_type   p_from     = state_type(), 
-                state_type   p_to       = state_type(),
+  transition_t( trigger_type p_trigger, 
                 action_type  p_action   = action_type())
   : trigger(p_trigger),
-    from(p_from),
-    to(p_to),
     action(p_action)
   {}
   
@@ -133,7 +97,7 @@ struct transition_t
   {
     p_map.exit_(from, std::forward<Args>(args)...);
 
-    action(args...);
+    action(std::forward<Args>(args)...);
 
     p_map.enter_(to, std::forward<Args>(args)...);
     
@@ -141,24 +105,24 @@ struct transition_t
   }
 
   const trigger_type  trigger;
-  const state_type    from; 
-  const state_type    to;
   const action_type   action;
 };
 
 
-template <typename    TriggerType,
-          typename    StateType,
-          typename    ActionType  = null_action_t>
-constexpr transition_t<TriggerType, StateType, ActionType>
+template 
+<
+  auto            From,
+  decltype(From)  To,
+  typename        TriggerType,
+  typename        ActionType  = null_action_t
+>
+constexpr transition_t<From, To, TriggerType, ActionType>
 transition(TriggerType  trigger, 
-           StateType    from, 
-           StateType    to, 
            ActionType   action = ActionType())
 {
   return 
-    transition_t<TriggerType, StateType, ActionType>
-      (trigger, from, to, action);
+    transition_t<From, To, TriggerType, ActionType>
+      (trigger, action);
 }
 
 /// generic empty graph template for variadic template final nesting
@@ -222,29 +186,28 @@ graph(const EdgeType& p_a, Entries... args)
   return graph_t<EdgeType, Entries...>(p_a, args...);
 }
 
-template <typename    KeyType,
+template <auto        Key,
           typename    ValueType>
 struct entry_t
 {
-  typedef KeyType     key_type;
-  typedef ValueType   value_type;
+  typedef decltype(Key)       key_type;
+  typedef ValueType           value_type;
+  
+  static constexpr key_type   key = Key;
 
-  entry_t(const key_type&    p_key,
-          const value_type&  p_value)
-  : key (p_key),
-    value (p_value)
+  entry_t(const value_type&  p_value)
+  : value (p_value)
   {}
 
-  const key_type    key;
   const value_type  value;
 };
 
-template <typename    KeyType,
+template <auto        Key,
           typename    ValueType>
-constexpr entry_t<KeyType, ValueType> 
-entry(const KeyType& p_key, const ValueType& p_value)
+constexpr entry_t<Key, ValueType> 
+entry(const ValueType& p_value)
 {
-  return entry_t<KeyType, ValueType>(p_key, p_value);
+  return entry_t<Key, ValueType>(p_value);
 }
 
 /// generic empty map template for variadic template final nesting
@@ -282,9 +245,9 @@ struct map_t<EntryType, Entries...>
   template <typename KeyType, typename... Args>  
   void enter_(const KeyType& p_key, Args&&... args) const
   {
-    if (p_key == pair_.key)
+    if (p_key == entry_type::key)
     {
-      pair_.value.enter_action(std::forward<Args>(args)...);
+      std::get<0>(pair_.value)(std::forward<Args>(args)...);
     }
     else
     {
@@ -295,9 +258,9 @@ struct map_t<EntryType, Entries...>
   template <typename KeyType, typename... Args>  
   void do_(const KeyType& p_key, Args&&... args) const
   {
-    if (p_key == pair_.key)
+    if (p_key == entry_type::key)
     {
-      pair_.value.do_action(std::forward<Args>(args)...);
+      std::get<1>(pair_.value)(std::forward<Args>(args)...);
     }
     else
     {
@@ -308,9 +271,9 @@ struct map_t<EntryType, Entries...>
   template <typename KeyType, typename... Args>  
   void exit_(const KeyType& p_key, Args&&... args) const
   {
-    if (p_key == pair_.key)
+    if (p_key == entry_type::key)
     {
-      pair_.value.exit_action(std::forward<Args>(args)...);
+      std::get<2>(pair_.value)(std::forward<Args>(args)...);
     }
     else
     {
