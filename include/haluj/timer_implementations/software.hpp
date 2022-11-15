@@ -120,11 +120,13 @@ struct backward : base<DurationType>
   duration    remaining_ = duration(0);
 };
 
-template<typename DirectionType>
+template<typename DirectionType, bool AutoReset = true>
 struct implementation : DirectionType
 {
   typedef DirectionType                 direction;
   typedef typename direction::duration  duration;
+  
+  static constexpr bool auto_reset = AutoReset;
 
   bool operator ()(duration p_delta)
   {
@@ -133,10 +135,12 @@ struct implementation : DirectionType
     if (direction::is_running())
     {
       direction::iterate(p_delta);
-      if (direction::predicate())
+      
+      result = direction::predicate();
+
+      if(auto_reset && result)
       {
         direction::reset();
-        result = true;
       }
     }
     

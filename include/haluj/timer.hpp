@@ -76,30 +76,23 @@ struct timer
 
   // Operators
 
-  template<typename Function /* = null_function */>
+  template
+  <
+    typename Function /* = null_function */
+    , typename DurationType = int
+  >
   bool operator()
   (
-    Function  p_function,
-    duration  p_delta = duration()
+    Function      p_function,
+    DurationType  p_delta = DurationType(1)
   )
   {
-    bool result = impl_(p_delta);
+    bool result = impl_(duration(p_delta));
     
-    if (result)
+    if (result && behaviour_(p_function))
     {
-      if (behaviour_(p_function))
-      {
-        // stop timer for one or N shot behaviour
-        impl_.stop();
-      }
-      else
-      {
-        // reset timer for periodic behaviour
-        if constexpr (!implementation::auto_reset) 
-        {
-          impl_.reset();
-        }
-      }
+      // stop timer for one or N shot behaviour
+      impl_.stop();
     }
     return result;
   }
