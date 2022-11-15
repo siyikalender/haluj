@@ -1,5 +1,5 @@
 /// \file timer.hpp
-/// abstract timer implementation
+/// abstract timer. Use implementations for specialization 
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -36,28 +36,35 @@ For more information, please refer to <http://unlicense.org>
 namespace haluj
 {
 
+// Timer behaviours
+
 struct periodic
 {
-  bool operator()() { return false; };
-
   template<typename Function> 
   bool operator()(Function f) { f(); return false; };
 };
 
 struct one_shot
 {
-  bool operator()() { return true; };
-
   template<typename Function> 
   bool operator()(Function f) { f(); return true; };
 };
 
-template<typename Implementation>
+// Timer 
+
+template
+<
+  typename Implementation,
+  typename Behaviour = periodic
+>
 struct timer
 {
+  // Types
+
   typedef Implementation                    implementation;
   typedef typename implementation::duration duration;
-  
+  typedef Behaviour                         behaviour;
+
   // Constructors
 
   timer()
@@ -69,18 +76,30 @@ struct timer
 
   // Operators
 
-  template<typename Function = periodic>
-  bool operator()(duration  p_delta,
-                  Function  p_function = Function())
+  template<typename Function /* = null_function */>
+  bool operator()
+  (
+    Function  p_function,
+    duration  p_delta = duration()
+  )
   {
     bool result = impl_(p_delta);
     
     if (result)
     {
-      if (p_function())
+      if (behaviour_(p_function))
       {
+        // stop timer for one or N shot behaviour
         impl_.stop();
-      }      
+      }
+      else
+      {
+        // reset timer for periodic behaviour
+        if constexpr (!implementation::auto_reset) 
+        {
+          impl_.reset();
+        }
+      }
     }
     return result;
   }
@@ -112,64 +131,7 @@ struct timer
 // private:
 
   implementation  impl_;
-};
-
-template<typename Implementation>
-struct static_timer
-{
-  typedef Implementation                    implementation;
-  typedef typename implementation::duration duration;
-  
-  // Constructors
-private:
-  
-  static_timer()
-  {}
-
-  static_timer(const static_timer& ) = delete;
-  
-  static_timer(static_timer&& ) = delete;
-
-public:
-
-  // Operators
-
-  template<typename Function = periodic> 
-  static bool poll(duration   p_delta     = duration(),
-                   Function   p_function  = Function())
-  {
-    bool result = implementation::proceed(p_delta);
-    
-    if (result)
-    {
-      if (p_function())
-      {
-        implementation::stop();
-      }
-    }
-    
-    return result;
-  }
-
-  // Methods
-  
-  static void set(duration p_value)
-  {
-    implementation::load(p_value);
-    implementation::reset();
-    implementation::start();
-  }
-  
-  static void stop()
-  {
-    implementation::stop();
-  }
-  
-  static bool is_running()
-  {
-    return implementation::is_running();
-  }
-
+  behaviour       behaviour_;
 };
 
 } // namespace haluj
