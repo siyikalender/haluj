@@ -113,7 +113,7 @@ template
   auto            From,
   decltype(From)  To,
   typename        TriggerType,
-  typename        ActionType  = empty_functor
+  typename        ActionType  = std::nullptr_t
 >
 constexpr transition_t<From, To, TriggerType, ActionType>
 transition(TriggerType  trigger, 

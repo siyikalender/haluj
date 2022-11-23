@@ -33,6 +33,8 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_TIMER_HPP
 #define HALUJ_TIMER_HPP
 
+#include <cstddef>
+
 namespace haluj
 {
 
@@ -40,14 +42,26 @@ namespace haluj
 
 struct periodic
 {
+  bool operator()(std::nullptr_t) { return false; };
+
   template<typename Function> 
   bool operator()(Function f) { f(); return false; };
 };
 
 struct one_shot
 {
+  bool operator()(std::nullptr_t) { return true; };
+
   template<typename Function> 
   bool operator()(Function f) { f(); return true; };
+};
+
+struct user
+{
+  bool operator()(std::nullptr_t) { return true; };
+
+  template<typename Function> 
+  bool operator()(Function f) { return f(); };
 };
 
 // Timer 
@@ -78,13 +92,13 @@ struct timer
 
   template
   <
-    typename Function /* = null_function */
-    , typename DurationType = int
+    typename Function     = std::nullptr_t,
+    typename DurationType = int
   >
   bool operator()
   (
-    Function      p_function,
-    DurationType  p_delta = DurationType(1)
+    Function      p_function  = Function(),
+    DurationType  p_delta     = DurationType(1)
   )
   {
     bool result = impl_(duration(p_delta));
