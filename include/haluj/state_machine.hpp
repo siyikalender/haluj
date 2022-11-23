@@ -38,17 +38,7 @@ For more information, please refer to <http://unlicense.org>
 namespace haluj
 {
 
-struct null_action_t
-{
-
-  template<typename... Args>
-  void operator()(Args...) const
-  {}
-
-};
-
-constexpr null_action_t  a_null;
-
+/// Always true guard
 struct g_always_t
 {
   template<typename... Args>
@@ -58,6 +48,16 @@ struct g_always_t
   }
 };
 
+template < typename... Args >
+inline void _invoke_a(std::nullptr_t np, Args&&...  args)
+{}
+
+template < typename Action, typename... Args >
+inline void _invoke_a(Action&& action, Args&&... args)
+{
+  action(std::forward<Args>(args)...);
+}
+
 constexpr g_always_t g_always;
 
 /// generic transition template
@@ -66,7 +66,7 @@ template
   auto            From,
   decltype(From)  To,
   typename        TriggerType,
-  typename        ActionType
+  typename        ActionType = std::nullptr_t
 >
 struct transition_t
 {
@@ -78,7 +78,7 @@ struct transition_t
   static constexpr state_type to   = To;
 
   transition_t( trigger_type p_trigger, 
-                action_type  p_action   = action_type())
+                action_type  p_action   = nullptr)
   : trigger(p_trigger),
     action(p_action)
   {}
@@ -97,7 +97,7 @@ struct transition_t
   {
     p_map.exit_(from, std::forward<Args>(args)...);
 
-    action(std::forward<Args>(args)...);
+    _invoke_a(action, std::forward<Args>(args)...);
 
     p_map.enter_(to, std::forward<Args>(args)...);
     
@@ -108,13 +108,12 @@ struct transition_t
   const action_type   action;
 };
 
-
 template 
 <
   auto            From,
   decltype(From)  To,
   typename        TriggerType,
-  typename        ActionType  = null_action_t
+  typename        ActionType  = empty_functor
 >
 constexpr transition_t<From, To, TriggerType, ActionType>
 transition(TriggerType  trigger, 
@@ -170,7 +169,6 @@ struct graph_t<EdgeType, Entries...>
   const edge_type     edge_;
   const next          next_;
 };
-
 
 template<typename EdgeType>
 constexpr graph_t<EdgeType>
@@ -247,7 +245,7 @@ struct map_t<EntryType, Entries...>
   {
     if (p_key == entry_type::key)
     {
-      std::get<0>(pair_.value)(std::forward<Args>(args)...);
+      _invoke_a(std::get<0>(pair_.value), std::forward<Args>(args)...);
     }
     else
     {
@@ -260,7 +258,7 @@ struct map_t<EntryType, Entries...>
   {
     if (p_key == entry_type::key)
     {
-      std::get<1>(pair_.value)(std::forward<Args>(args)...);
+      _invoke_a(std::get<1>(pair_.value), std::forward<Args>(args)...);
     }
     else
     {
@@ -273,7 +271,7 @@ struct map_t<EntryType, Entries...>
   {
     if (p_key == entry_type::key)
     {
-      std::get<2>(pair_.value)(std::forward<Args>(args)...);
+      _invoke_a(std::get<2>(pair_.value), std::forward<Args>(args)...);
     }
     else
     {
@@ -323,7 +321,6 @@ struct machine_t
   const graph_type        graph_;
   const map_type          map_;
 };
-
 
 template <typename GraphType,
           typename MapType>
