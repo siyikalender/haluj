@@ -121,6 +121,69 @@ static void test_ring_buffer()
   HALUJ_CHECK(r.size() == 0);
 }
 
+// The documented contract: push() only when !full(), pop() and front() only
+// when !empty(). A caller that keeps to it never loses or reorders elements.
+static void test_ring_buffer_contract()
+{
+  haluj::ring_buffer<std::array<int, 4>> r;
+
+  // A producer offers more than fits: the guard turns away the excess
+  int accepted = 0;
+  for (int i = 0; i < 10; ++i)
+  {
+    if (!r.full())
+    {
+      r.push(i);
+      ++accepted;
+    }
+    HALUJ_CHECK(r.size() + r.remaining() == r.capacity());
+  }
+  HALUJ_CHECK(accepted == 4);
+  HALUJ_CHECK(r.full());
+  HALUJ_CHECK(r.remaining() == 0);
+
+  // A consumer drains it in order and stops at empty
+  int expected = 0;
+  while (!r.empty())
+  {
+    HALUJ_CHECK(r.front() == expected);
+    r.pop();
+    ++expected;
+  }
+  HALUJ_CHECK(expected == 4);
+  HALUJ_CHECK(r.size() == 0);
+  HALUJ_CHECK(r.remaining() == 4);
+
+  // Producer and consumer at different rates, many times around the storage:
+  // every accepted value comes out once, in order
+  int next_in  = 0;
+  int next_out = 0;
+  for (int round = 0; round < 50; ++round)
+  {
+    for (int k = 0; k < 3; ++k)
+    {
+      if (r.remaining() > 0)
+        r.push(next_in++);
+    }
+
+    for (int k = 0; k < 2 && r.size() > 0; ++k)
+    {
+      HALUJ_CHECK(r.front() == next_out);
+      r.pop();
+      ++next_out;
+    }
+
+    HALUJ_CHECK(r.size() == static_cast<std::size_t>(next_in - next_out));
+  }
+
+  while (!r.empty())
+  {
+    HALUJ_CHECK(r.front() == next_out++);
+    r.pop();
+  }
+  HALUJ_CHECK(next_out == next_in);
+}
+
 static void test_cyclic_index()
 {
   HALUJ_CHECK(haluj::cyclic_increment(2u, 3u) == 0u);
@@ -172,6 +235,7 @@ int main()
 {
   test_bounded_vector();
   test_ring_buffer();
+  test_ring_buffer_contract();
   test_cyclic_index();
   test_fragment();
   return haluj_test::report("test_containers");

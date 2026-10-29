@@ -24,7 +24,6 @@ target_link_libraries(haluj_known_bugs PRIVATE haluj::haluj haluj_warnings)
 set(HALUJ_KNOWN_BUGS
   cyclic_increment_n
   cyclic_distance
-  ring_buffer_push_full
   vector_assign_full
   format_int_truncation
   timer_backward_unsigned

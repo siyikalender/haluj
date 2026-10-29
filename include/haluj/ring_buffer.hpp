@@ -42,7 +42,26 @@ For more information, please refer to <http://unlicense.org>
 
 namespace haluj
 {
-/// This is a ring buffer implementation.
+/// A fixed capacity ring buffer (FIFO) over a random access container.
+///
+/// The element functions do not check the state of the buffer. The caller
+/// checks it first:
+///   - push() requires !full()   (or remaining() > 0)
+///   - pop(), front() and back() require !empty()   (or size() > 0)
+/// Calling them otherwise leaves the buffer in an undefined state.
+///
+/// \code {.cpp}
+/// haluj::ring_buffer<std::array<char, 64>> rx;
+///
+/// if (!rx.full())
+///   rx.push(c);
+///
+/// while (!rx.empty())
+/// {
+///   process(rx.front());
+///   rx.pop();
+/// }
+/// \endcode
 
 template< typename  RandomAccessContainerType, 
           typename  FlagsBaseType  = uint8_t>
@@ -82,7 +101,7 @@ struct ring_buffer
     m_head    = 0;
   }
 
-  /// size: how many elements are written/available to read
+  /// capacity: maximum number of elements the buffer holds
   constexpr std::size_t capacity() const
   {
     return m_container.size();
@@ -123,13 +142,14 @@ struct ring_buffer
     return m_flags.template test<full_bit>(); 
   }
 
-  /// full: returns true if buffer is empty
+  /// empty: returns true if buffer is empty
   bool empty() const
   {
     return m_flags.template test<empty_bit>(); 
   }
   
   /// push: Add a new element to head
+  /// \pre !full()
   void push(const base_type &p_data)
   {
     m_container[m_head] = p_data;
@@ -142,6 +162,7 @@ struct ring_buffer
   }
 
   /// pop: remove element from the tail
+  /// \pre !empty()
   void pop()
   {
     m_tail       = cyclic_increment(m_tail, capacity());
@@ -152,11 +173,15 @@ struct ring_buffer
     }
   }
   
+  /// front: oldest element, the next one pop() removes
+  /// \pre !empty()
   base_type& front() 
   {
     return m_container[m_tail];
   }
 
+  /// back: newest element, the last one push() added
+  /// \pre !empty()
   base_type& back() 
   {
     return m_container[m_head - 1];

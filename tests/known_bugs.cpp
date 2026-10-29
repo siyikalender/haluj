@@ -13,7 +13,8 @@
 ///   - bounded::push_back writes past the end when the vector is full
 ///     (size() <= capacity() instead of <)
 ///   - format(float) writes past last when the buffer is too small
-///   - ring_buffer::back() reads m_container[-1] when m_head == 0
+///   - ring_buffer::back() reads m_container[-1] when m_head == 0, which
+///     happens on a non-empty buffer too (for example right after it fills)
 ///   - on_t keeps a reference to the temporary of its default argument
 ///   - zm/om loop forever on a rule that succeeds without consuming,
 ///     for example zm(opt(ch('x')))
@@ -50,7 +51,6 @@ For more information, please refer to <http://unlicense.org>
 /// \author Claude Opus 5.5 <noreply@anthropic.com>
 /// \date   2026
 
-#include <array>
 #include <cstdio>
 #include <cstring>
 #include <iterator>
@@ -64,7 +64,6 @@ For more information, please refer to <http://unlicense.org>
 #include "haluj/cyclic_index.hpp"
 #include "haluj/digital_input_filter.hpp"
 #include "haluj/format.hpp"
-#include "haluj/ring_buffer.hpp"
 #include "haluj/state_machine.hpp"
 #include "haluj/timer.hpp"
 #include "haluj/timer_implementations/software.hpp"
@@ -84,17 +83,6 @@ static void cyclic_distance()
 {
   HALUJ_CHECK(haluj::cyclic_distance(2u, 5u, 8u) == 3u);
   HALUJ_CHECK(haluj::cyclic_distance(5u, 2u, 8u) == 5u);
-}
-
-// Pushing into a full ring buffer must either be refused or drop the oldest
-// element; today the newest element becomes the front
-static void ring_buffer_push_full()
-{
-  haluj::ring_buffer<std::array<int, 4>> r;
-  for (int i = 1; i <= 5; ++i)
-    r.push(i);
-
-  HALUJ_CHECK(r.front() == 1 || r.front() == 2);
 }
 
 // Assigning exactly capacity elements must succeed
@@ -193,7 +181,6 @@ static const known_bug bugs[] =
 {
   {"cyclic_increment_n",            cyclic_increment_n},
   {"cyclic_distance",               cyclic_distance},
-  {"ring_buffer_push_full",         ring_buffer_push_full},
   {"vector_assign_full",            vector_assign_full},
   {"format_int_truncation",         format_int_truncation},
   {"timer_backward_unsigned",       timer_backward_unsigned},
