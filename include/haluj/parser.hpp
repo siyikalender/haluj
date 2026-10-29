@@ -32,6 +32,8 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_PARSER_HPP
 #define HALUJ_PARSER_HPP
 
+#include <cctype>
+
 namespace haluj
 {
 
@@ -39,7 +41,7 @@ struct rule
 {};
 
 /// Specific character parser rule
-/// parses a single alphabethic character defined in C locale
+/// parses the specified character
 
 struct ch_p : rule
 {
@@ -60,6 +62,7 @@ struct ch_p : rule
   char c_;
 };
 
+/// Creates a specific character parser rule
 inline ch_p ch(const char c)
 {
   return ch_p(c);
@@ -67,7 +70,6 @@ inline ch_p ch(const char c)
 
 /// Alphabetic parser rule
 /// parses a single alphabethic character defined in C locale
-
 struct alpha_p : rule
 {
   alpha_p()
@@ -83,14 +85,14 @@ struct alpha_p : rule
 
 };
 
+/// Creates an alphabetic parser rule
 inline alpha_p alpha()
 {
   return alpha_p();
 }
 
-/// Alphabetic parser rule
-/// parses a single alphabethic character defined in C locale
-
+/// Alphanumeric parser rule
+/// parses a single alphanumeric character defined in C locale
 struct alnum_p : rule
 {
   alnum_p()
@@ -106,13 +108,13 @@ struct alnum_p : rule
 
 };
 
+/// Creates an alphanumeric parser rule
 inline alnum_p alnum()
 {
   return alnum_p();
 }
 
 /// Whitespace parser rule (including eol)
-
 struct space_p : rule
 {
   space_p()
@@ -131,6 +133,7 @@ struct space_p : rule
 
 };
 
+/// Creates a whitespace parser rule
 inline space_p space()
 {
   return space_p();
@@ -138,7 +141,6 @@ inline space_p space()
 
 /// Single digit parser rule
 /// parses a single digit
-
 struct digit_p : rule
 {
   digit_p()
@@ -157,14 +159,14 @@ struct digit_p : rule
 
 };
 
+/// Creates a single digit parser rule
 inline digit_p digit()
 {
   return digit_p();
 }
 
-/// Single hex digit parser rule
+/// Single hexadecimal digit parser rule
 /// parses a single digit
-
 struct hex_digit_p : rule
 {
   hex_digit_p()
@@ -183,14 +185,68 @@ struct hex_digit_p : rule
 
 };
 
+/// Creates a single hexadecimal digit parser rule
 inline hex_digit_p hex_digit()
 {
   return hex_digit_p();
 }
 
+/// Single octal digit parser rule
+/// parses a single octal digit
+
+struct oct_digit_p : rule
+{
+  oct_digit_p()
+  {}
+
+  template<typename Iterator>
+  bool accept(Iterator &first, Iterator last) const
+  {
+    bool result = (first != last && (*first) >= '0' && (*first) <='7');
+    if (result)
+    {
+      first++;
+    }
+    return result;
+  }
+
+};
+
+/// Creates a single octal parser rule
+inline oct_digit_p oct_digit()
+{
+  return oct_digit_p();
+}
+
+/// Single binary digit parser rule
+/// parses a single binary digit
+
+struct bin_digit_p : rule
+{
+  bin_digit_p()
+  {}
+
+  template<typename Iterator>
+  bool accept(Iterator &first, Iterator last) const
+  {
+    bool result = (first != last && (*first) >= '0' && (*first) <='1');
+    if (result)
+    {
+      first++;
+    }
+    return result;
+  }
+
+};
+
+/// Creates a single binary parser rule
+inline bin_digit_p bin_digit()
+{
+  return bin_digit_p();
+}
+
 /// Upper case parser rule
 /// parses a single upper case alpha character defined in C locale
-
 struct upper_p : rule
 {
   upper_p()
@@ -206,15 +262,15 @@ struct upper_p : rule
 
 };
 
+/// Creates an upper case parser rule
 inline upper_p upper()
 {
   return upper_p();
 }
 
-/// rest parser
-/// consumes all remaining characters to end of the buffer
+/// rest parser rule
+/// consumes all remaining characters to end of the range
 /// typical this rule is useful for parsing line comments
-
 struct rest_p : rule
 {
   rest_p()
@@ -229,12 +285,14 @@ struct rest_p : rule
 
 };
 
+/// Creates a rest parser rule
 inline rest_p rest()
 {
   return rest_p();
 }
 
-
+/// optional expression parser rule
+/// Always true regardless the return value of accept method of the expr
 template<typename ExprType>
 struct opt_p : rule
 {
@@ -252,12 +310,15 @@ struct opt_p : rule
   ExprType    expr_;
 };
 
+/// Creates and oprional expression parser rule
 template<typename ExprType>
 opt_p<ExprType> opt(const ExprType& expr)
 {
   return opt_p<ExprType>(expr);
 }
 
+/// One and more expression parser rule
+/// At least one times the 
 template<typename ExprType>
 struct om_p : rule
 {
@@ -414,9 +475,19 @@ struct except_p : rule
   template<typename Iterator>
   bool accept(Iterator &first, Iterator last) const
   {
-    Iterator initial = first;
-    while((first != last) && !expr_.accept(first, last)) first++;
-    return (first != last) && (first != initial);
+    while(first != last) 
+    {
+      Iterator tmp = first;
+      if (expr_.accept(tmp, last)) 
+      {
+        break;
+      }
+      else
+      {
+        ++first;
+      }
+    }
+    return true; // except is not a strict parsing rule, so it always returns true;
   }
 
   ExprType    expr_;
