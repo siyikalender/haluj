@@ -1,0 +1,132 @@
+# Continuous integration of the haluj library
+#
+# This is free and unencumbered software released into the public domain.
+# For more information, please refer to <http://unlicense.org> and the
+# LICENSE file in the root of this repository.
+#
+# Author: Claude Opus 5.5 <noreply@anthropic.com>
+# Date:   2026
+
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Keep in step with the GIT_TAG in CMakeLists.txt
+  BIT_COMMIT: a6a60919b1a0d82aef380d40ca995380433de68d
+
+jobs:
+  # Tests, known bug checks and header checks on GCC and Clang
+  test:
+    name: ${{ matrix.compiler }} ${{ matrix.build_type }} C++${{ matrix.std }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [g++, clang++]
+        build_type: [Debug, Release]
+        std: [17, 20]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Warnings are not errors yet: the headers still have some (unused
+      # parameters, extra semicolons). Turn HALUJ_WARNINGS_AS_ERRORS on once
+      # they are gone.
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+          -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+          -DCMAKE_CXX_STANDARD=${{ matrix.std }}
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure --parallel 4
+
+  # Address and undefined behaviour sanitizers
+  sanitizers:
+    name: ${{ matrix.compiler }} sanitizers
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        compiler: [g++, clang++]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: >
+          cmake -S . -B build
+          -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
+          -DCMAKE_BUILD_TYPE=Debug
+          "-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer"
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        working-directory: build
+        run: ctest --output-on-failure --parallel 4
+
+  # Bare metal ARM Cortex-M: the library must compile without exceptions,
+  # RTTI or an operating system, and must not pull in the heap
+  arm:
+    name: arm-none-eabi ${{ matrix.cpu }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        cpu: [cortex-m0plus, cortex-m4, cortex-m7]
+    env:
+      XPACK_VERSION: 13.3.1-1.1
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch the bit library
+        run: |
+          git init -q "$RUNNER_TEMP/bit"
+          git -C "$RUNNER_TEMP/bit" fetch -q --depth 1 https://github.com/siyikalender/bit.git "$BIT_COMMIT"
+          git -C "$RUNNER_TEMP/bit" checkout -q FETCH_HEAD
+
+      - name: Install xPack GNU Arm Embedded GCC
+        run: |
+          cd "$RUNNER_TEMP"
+          curl -sSfL -o arm-gcc.tar.gz \
+            "https://github.com/xpack-dev-tools/arm-none-eabi-gcc-xpack/releases/download/v${XPACK_VERSION}/xpack-arm-none-eabi-gcc-${XPACK_VERSION}-linux-x64.tar.gz"
+          tar xzf arm-gcc.tar.gz
+          echo "$RUNNER_TEMP/xpack-arm-none-eabi-gcc-${XPACK_VERSION}/bin" >> "$GITHUB_PATH"
+
+      - name: Compile
+        run: |
+          arm-none-eabi-g++ --version
+          for std in 17 20; do
+            arm-none-eabi-g++ -std=c++${std} -mcpu=${{ matrix.cpu }} -mthumb -Os \
+              -fno-exceptions -fno-rtti -Wall -Wextra \
+              -Iinclude -I"$RUNNER_TEMP/bit/include" \
+              -c tests/target/cortex_m.cpp -o cortex_m_cxx${std}.o
+            arm-none-eabi-size cortex_m_cxx${std}.o
+          done
+
+      - name: No heap, no exceptions
+        run: |
+          forbidden='malloc|calloc|realloc|free|operator new|operator delete|__cxa_allocate_exception|__cxa_throw|__cxa_begin_catch'
+          for obj in cortex_m_cxx*.o; do
+            echo "Undefined symbols of $obj:"
+            arm-none-eabi-nm -C --undefined-only "$obj"
+            if arm-none-eabi-nm -C --undefined-only "$obj" | grep -E " ($forbidden)\b"; then
+              echo "::error::$obj needs the heap or exception support"
+              exit 1
+            fi
+          done
