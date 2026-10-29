@@ -38,7 +38,6 @@ For more information, please refer to <http://unlicense.org>
 #include "bit/field.hpp"
 #include "bit/pack.hpp"
 #include "bit/storage.hpp"
-#include "optional.hpp"
 #include "cyclic_index.hpp"
 
 namespace haluj
