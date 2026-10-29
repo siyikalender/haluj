@@ -47,7 +47,7 @@ struct c_str_equal_to
     return strcmp(a, b) == 0;
   }
 
-  constexpr bool operator ()(const char* a, const char* b) const
+  bool operator ()(const char* a, const char* b) const
   {
     return strcmp(a, b) == 0;
   }
