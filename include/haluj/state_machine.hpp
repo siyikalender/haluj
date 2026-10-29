@@ -34,6 +34,7 @@ For more information, please refer to <http://unlicense.org>
 #define HALUJ_STATE_MACHINE_HPP
 
 #include <utility>
+#include <tuple>
 
 namespace haluj
 {
