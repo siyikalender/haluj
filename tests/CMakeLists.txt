@@ -44,7 +44,6 @@ add_executable(haluj_known_bugs known_bugs.cpp)
 target_link_libraries(haluj_known_bugs PRIVATE haluj::haluj haluj_warnings)
 
 set(HALUJ_KNOWN_BUGS
-  cyclic_distance
   vector_assign_full
   format_int_truncation
   timer_backward_unsigned

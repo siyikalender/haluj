@@ -52,7 +52,6 @@ For more information, please refer to <http://unlicense.org>
 
 #include "haluj/bidirectional_map.hpp"
 #include "haluj/bounded/vector.hpp"
-#include "haluj/cyclic_index.hpp"
 #include "haluj/digital_input_filter.hpp"
 #include "haluj/format.hpp"
 #include "haluj/state_machine.hpp"
@@ -62,13 +61,6 @@ For more information, please refer to <http://unlicense.org>
 #include "check.hpp"
 
 namespace sw = haluj::timer_implementations::software;
-
-// cyclic_distance from 2 to 5 in a ring of 8 is 3
-static void cyclic_distance()
-{
-  HALUJ_CHECK(haluj::cyclic_distance(2u, 5u, 8u) == 3u);
-  HALUJ_CHECK(haluj::cyclic_distance(5u, 2u, 8u) == 5u);
-}
 
 // Assigning exactly capacity elements must succeed
 static void vector_assign_full()
@@ -164,7 +156,6 @@ struct known_bug
 
 static const known_bug bugs[] =
 {
-  {"cyclic_distance",               cyclic_distance},
   {"vector_assign_full",            vector_assign_full},
   {"format_int_truncation",         format_int_truncation},
   {"timer_backward_unsigned",       timer_backward_unsigned},

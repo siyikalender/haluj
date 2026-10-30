@@ -267,6 +267,49 @@ static void test_cyclic_steps()
   HALUJ_CHECK(haluj::cyclic_increment(6u, 2u, 8u) == 0u);
 }
 
+template<typename T>
+static void check_cyclic_distance(unsigned n)
+{
+  const T N = static_cast<T>(n);
+
+  for (unsigned a = 0; a < n; ++a)
+  {
+    for (unsigned b = 0; b < n; ++b)
+    {
+      const T forward  = haluj::cyclic_distance_forward(T(a), T(b), N);
+      const T backward = haluj::cyclic_distance_backward(T(a), T(b), N);
+
+      HALUJ_CHECK(forward  == T((b + n - a) % n));
+      HALUJ_CHECK(backward == T((a + n - b) % n));
+
+      // Walking the distance gets there
+      HALUJ_CHECK(haluj::cyclic_increment(T(a), forward,  N) == T(b));
+      HALUJ_CHECK(haluj::cyclic_decrement(T(a), backward, N) == T(b));
+
+      // The two directions are mirror images and go round the ring together
+      HALUJ_CHECK(backward == haluj::cyclic_distance_forward(T(b), T(a), N));
+      HALUJ_CHECK(unsigned(forward) + unsigned(backward) == (a == b ? 0u : n));
+    }
+  }
+}
+
+static void test_cyclic_distance()
+{
+  for (unsigned n = 1; n <= 12; ++n)
+  {
+    check_cyclic_distance<unsigned>(n);
+    check_cyclic_distance<std::uint8_t>(n);
+  }
+
+  for (unsigned n = 250; n <= 255; ++n)
+    check_cyclic_distance<std::uint8_t>(n);
+
+  HALUJ_CHECK(haluj::cyclic_distance_forward(2u, 5u, 8u) == 3u);
+  HALUJ_CHECK(haluj::cyclic_distance_forward(5u, 2u, 8u) == 5u);
+  HALUJ_CHECK(haluj::cyclic_distance_backward(2u, 5u, 8u) == 5u);
+  HALUJ_CHECK(haluj::cyclic_distance_backward(5u, 2u, 8u) == 3u);
+}
+
 static void test_cyclic_index()
 {
   HALUJ_CHECK(haluj::cyclic_increment(2u, 3u) == 0u);
@@ -322,6 +365,7 @@ int main()
   test_ring_buffer_back();
   test_ring_buffer_contract();
   test_cyclic_steps();
+  test_cyclic_distance();
   test_cyclic_index();
   test_fragment();
   return haluj_test::report("test_containers");

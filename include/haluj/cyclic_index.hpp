@@ -62,21 +62,25 @@ inline T cyclic_decrement(const T v, T size, const T N)
   return (v >= size) ? T(v - size) : T(v + (N - size));
 }
 
+/// Number of cyclic_increment steps that take from to to in a ring of N,
+/// that is (to - from) mod N. Requires from < N and to < N.
+///
+/// For example the number of elements between the tail and the head of a
+/// ring buffer is cyclic_distance_forward(tail, head, N).
 template<typename T>
-inline T cyclic_distance(const T f, T t, const T N)
+inline T cyclic_distance_forward(const T from, const T to, const T N)
 {
-  T result;
-  
-  if (f <= t)
-  {
-    result = f - t;
-  }
-  else
-  {
-    result = N + f - t;
-  }
-  
-  return result;
+  return (to >= from) ? T(to - from) : T(N - (from - to));
+}
+
+/// Number of cyclic_decrement steps that take from to to in a ring of N,
+/// that is (from - to) mod N. Requires from < N and to < N.
+///
+/// cyclic_distance_backward(a, b, N) == cyclic_distance_forward(b, a, N)
+template<typename T>
+inline T cyclic_distance_backward(const T from, const T to, const T N)
+{
+  return cyclic_distance_forward(to, from, N);
 }
 
 
