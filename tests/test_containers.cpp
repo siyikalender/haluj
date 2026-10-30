@@ -34,6 +34,7 @@ For more information, please refer to <http://unlicense.org>
 #include <cstdint>
 #include <iterator> // fragment.hpp does not include it yet
 #include <numeric>
+#include <type_traits>
 #include <vector>
 
 #include "haluj/bounded/vector.hpp"
@@ -338,6 +339,53 @@ static void test_cyclic_index()
   HALUJ_CHECK(*i == 0);
 }
 
+// cyclic_index is a plain value: copyable and assignable in every way, and
+// usable at compile time
+namespace
+{
+
+using index3 = haluj::cyclic_index<std::uint8_t, 3>;
+
+static_assert(std::is_trivially_copyable<index3>::value, "trivially copyable");
+static_assert(sizeof(index3) == sizeof(std::uint8_t), "no overhead");
+
+constexpr index3 advanced(int steps)
+{
+  index3 i;
+  for (int k = 0; k < steps; ++k)
+    ++i;
+  return i;
+}
+
+static_assert(*advanced(0) == 0, "starts at 0");
+static_assert(*advanced(4) == 1, "wraps at compile time");
+static_assert(haluj::cyclic_increment(6u, 2u, 8u) == 0u, "constexpr steps");
+static_assert(haluj::cyclic_distance_forward(6u, 1u, 8u) == 3u, "constexpr distance");
+
+} // namespace
+
+static void test_cyclic_index_value()
+{
+  index3       i;
+  index3       j;
+  const index3 k = advanced(2);
+
+  i = j++;                // from a temporary
+  HALUJ_CHECK(*i == 0 && *j == 1);
+
+  i = k;                  // from a const object
+  HALUJ_CHECK(*i == 2);
+
+  i = index3();           // from a value initialized temporary
+  HALUJ_CHECK(*i == 0);
+
+  index3 copy(k);
+  HALUJ_CHECK(copy == k);
+
+  i.assign(k);
+  HALUJ_CHECK(*i == 2);
+}
+
 static void test_fragment()
 {
   std::vector<int> c(10);
@@ -367,6 +415,7 @@ int main()
   test_cyclic_steps();
   test_cyclic_distance();
   test_cyclic_index();
+  test_cyclic_index_value();
   test_fragment();
   return haluj_test::report("test_containers");
 }

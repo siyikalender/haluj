@@ -37,6 +37,10 @@ endfunction()
 haluj_compile_fail(on_t_without_strategy "no matching")
 haluj_compile_fail(on_temporary_strategy "deleted")
 
+# cyclic_index rejects index types and ring sizes it cannot work with
+haluj_compile_fail(cyclic_index_not_integral "needs an integral type")
+haluj_compile_fail(cyclic_index_empty_ring   "needs at least one position")
+
 # Known bugs: each case checks the correct behaviour and is expected to fail
 # until the bug is fixed (see known_bugs.cpp). When a case starts to pass,
 # ctest reports it as failing: move it to the ordinary tests.
