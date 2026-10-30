@@ -10,7 +10,6 @@
 /// run here, because they may pass silently, hang or break the build. They
 /// are listed for tracking (headers that do not build on their own are
 /// listed in tests/CMakeLists.txt):
-///   - on_t keeps a reference to the temporary of its default argument
 ///   - zm/om loop forever on a rule that succeeds without consuming,
 ///     for example zm(opt(ch('x')))
 ///   - format(int) negates INT_MIN

@@ -15,6 +15,28 @@ foreach(test test_containers test_format test_parser test_state_machine
   add_test(NAME ${test} COMMAND haluj_${test})
 endforeach()
 
+# Compile failure tests: each source must fail to build with the expected
+# diagnostic. The target is excluded from the normal build and built by the
+# test itself; matching the message makes sure it fails for the right reason.
+function(haluj_compile_fail name expected)
+  add_executable(haluj_cf_${name} EXCLUDE_FROM_ALL compile_fail/${name}.cpp)
+  target_link_libraries(haluj_cf_${name} PRIVATE haluj::haluj)
+
+  add_test(NAME compile_fail.${name}
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR}
+                             --target haluj_cf_${name}
+                             --config $<CONFIG>)
+
+  set_tests_properties(compile_fail.${name} PROPERTIES
+    PASS_REGULAR_EXPRESSION "${expected}"
+    # Builds in the same build tree must not run in parallel
+    RUN_SERIAL TRUE)
+endfunction()
+
+# on_t keeps its strategy by reference: a temporary one must not compile
+haluj_compile_fail(on_t_without_strategy "no matching")
+haluj_compile_fail(on_temporary_strategy "deleted")
+
 # Known bugs: each case checks the correct behaviour and is expected to fail
 # until the bug is fixed (see known_bugs.cpp). When a case starts to pass,
 # ctest reports it as failing: move it to the ordinary tests.

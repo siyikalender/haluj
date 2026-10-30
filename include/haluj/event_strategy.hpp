@@ -42,11 +42,15 @@ struct on_t
   typedef EventType                     event_type;
   typedef EventStrategyType             event_strategy_type;
   
-  on_t(const event_type             p_event = event_type(), 
-       const event_strategy_type&   p_event_strategy = event_strategy_type())
+  /// The strategy is kept by reference, so it must outlive this object
+  on_t(const event_type             p_event,
+       const event_strategy_type&   p_event_strategy)
   : event(p_event),
     event_strategy(p_event_strategy)
   {}
+
+  /// A temporary strategy would be destroyed before operator() runs
+  on_t(const event_type, const event_strategy_type&&) = delete;
   
   bool operator()() const
   {
@@ -67,6 +71,12 @@ on(const EventType p_event,
     on_t<EventType, EventStrategyType>
       (p_event, p_event_strategy);
 }
+
+/// A temporary strategy would be destroyed before the result is used
+template <typename  EventType,
+          typename  EventStrategyType>
+on_t<EventType, EventStrategyType>
+on(const EventType, const EventStrategyType&&) = delete;
 
 namespace strategy
 {
