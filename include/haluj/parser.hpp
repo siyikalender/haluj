@@ -317,6 +317,22 @@ opt_p<ExprType> opt(const ExprType& expr)
   return opt_p<ExprType>(expr);
 }
 
+/// Accepts expr as long as it succeeds and consumes input. Used by om and
+/// zm: a rule that succeeds without consuming anything (opt, zm, rest at the
+/// end of the input) would otherwise be repeated forever.
+template<typename ExprType, typename Iterator>
+inline void repeat_(const ExprType& expr, Iterator& first, Iterator last)
+{
+  for (;;)
+  {
+    Iterator before = first;
+    if (!expr.accept(first, last) || first == before)
+    {
+      break;
+    }
+  }
+}
+
 /// One and more expression parser rule
 /// At least one times the 
 template<typename ExprType>
@@ -333,7 +349,7 @@ struct om_p : rule
     if (expr_.accept(first, last))
     {
       result = true;
-      while(expr_.accept(first, last));
+      repeat_(expr_, first, last);
     }
     return result;
   }
@@ -358,7 +374,7 @@ struct zm_p : rule
   bool accept(Iterator &first, Iterator last) const
   {
     bool result = true;
-    while(expr_.accept(first, last));
+    repeat_(expr_, first, last);
     return result;
   }
 

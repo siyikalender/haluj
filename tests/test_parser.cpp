@@ -88,6 +88,21 @@ static void test_combinators()
   HALUJ_CHECK(parse(except(ch(';')), "abc;def", n) && n == 3);
 }
 
+// Repeating a rule that can succeed without consuming input stops instead of
+// looping forever
+static void test_repeat_empty_match()
+{
+  using namespace haluj;
+  std::size_t n = 0;
+
+  HALUJ_CHECK(parse(zm(opt(ch('x'))), "abc", n) && n == 0);
+  HALUJ_CHECK(parse(om(opt(ch('x'))), "abc", n) && n == 0);
+  HALUJ_CHECK(parse(zm(zm(digit())), "12a", n) && n == 2);
+  HALUJ_CHECK(parse(om(opt(ch('a'))), "aab", n) && n == 2);
+  HALUJ_CHECK(parse(zm(rest()), "abc", n) && n == 3);
+  HALUJ_CHECK(parse(seq(zm(opt(space())), ch('k')), "  k", n) && n == 3);
+}
+
 static void test_command_line()
 {
   using namespace haluj;
@@ -118,6 +133,7 @@ int main()
 {
   test_primitives();
   test_combinators();
+  test_repeat_empty_match();
   test_command_line();
   return haluj_test::report("test_parser");
 }

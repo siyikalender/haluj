@@ -127,3 +127,8 @@ list(APPEND HALUJ_HEADER_CHECK_SOURCES ${source})
 
 add_library(haluj_header_check OBJECT ${HALUJ_HEADER_CHECK_SOURCES})
 target_link_libraries(haluj_header_check PRIVATE haluj::haluj haluj_warnings)
+
+# A test that hangs (an endless loop is a typical parser bug) fails instead of
+# blocking the run
+get_property(HALUJ_TESTS DIRECTORY PROPERTY TESTS)
+set_tests_properties(${HALUJ_TESTS} PROPERTIES TIMEOUT 60)
