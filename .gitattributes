@@ -1,0 +1,3 @@
+# Line endings: LF in the repository and in every checkout, on every
+# platform, so that patches and diffs do not depend on core.autocrlf
+* text=auto eol=lf
