@@ -205,7 +205,7 @@ inline bool push_back(vector<T, Capacity>& c, const T& v)
 {
   bool result = false;
   
-  if (c.size() <= c.capacity())
+  if (c.size() < c.capacity())
   {
     c.push_back(v);
     result = true;

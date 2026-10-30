@@ -81,6 +81,24 @@ static void test_bounded_vector()
   HALUJ_CHECK(v.empty());
 }
 
+// The checked push_back refuses an element once the vector is full and
+// leaves the storage around it alone
+static void test_bounded_vector_push_back_full()
+{
+  struct guarded
+  {
+    haluj::bounded::vector<int, 2> v;
+    int                            guard = 42;
+  } g;
+
+  HALUJ_CHECK(haluj::bounded::push_back(g.v, 1));
+  HALUJ_CHECK(haluj::bounded::push_back(g.v, 2));
+  HALUJ_CHECK(!haluj::bounded::push_back(g.v, 3));
+  HALUJ_CHECK(g.v.size() == 2);
+  HALUJ_CHECK(g.v[0] == 1 && g.v[1] == 2);
+  HALUJ_CHECK(g.guard == 42);
+}
+
 static void test_ring_buffer()
 {
   haluj::ring_buffer<std::array<int, 4>> r;
@@ -234,6 +252,7 @@ static void test_fragment()
 int main()
 {
   test_bounded_vector();
+  test_bounded_vector_push_back_full();
   test_ring_buffer();
   test_ring_buffer_contract();
   test_cyclic_index();

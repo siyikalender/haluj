@@ -10,8 +10,6 @@
 /// run here, because they may pass silently, hang or break the build. They
 /// are listed for tracking (headers that do not build on their own are
 /// listed in tests/CMakeLists.txt):
-///   - bounded::push_back writes past the end when the vector is full
-///     (size() <= capacity() instead of <)
 ///   - format(float) writes past last when the buffer is too small
 ///   - ring_buffer::back() reads m_container[-1] when m_head == 0, which
 ///     happens on a non-empty buffer too (for example right after it fills)
