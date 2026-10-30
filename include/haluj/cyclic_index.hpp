@@ -47,25 +47,19 @@ inline T cyclic_decrement(const T v, const T N)
   return (v == 0) ? (N - 1) : (v - 1);
 }
 
+/// Advances v by size steps in a ring of N. Requires v < N and size <= N.
+/// v + size is never formed, so it cannot overflow T.
 template<typename T>
 inline T cyclic_increment(const T v, T size, const T N)
 {
-  auto result = v + size;
-  if (result > N)
-    result -= N;
-  return result;
+  return (v >= T(N - size)) ? T(v - (N - size)) : T(v + size);
 }
 
+/// Moves v back by size steps in a ring of N. Requires v < N and size <= N.
 template<typename T>
 inline T cyclic_decrement(const T v, T size, const T N)
 {
-  auto result = v;
-  if (v < size)
-  {
-    result += N;
-  }
-  result -= size;
-  return result;
+  return (v >= size) ? T(v - size) : T(v + (N - size));
 }
 
 template<typename T>

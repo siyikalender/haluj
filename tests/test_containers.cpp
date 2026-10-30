@@ -224,6 +224,49 @@ static void test_ring_buffer_contract()
   HALUJ_CHECK(next_out == next_in);
 }
 
+// Every position and step count of small rings and of rings at the top of
+// uint8_t, against arithmetic done in a wider type
+template<typename T>
+static void check_cyclic_steps(unsigned n)
+{
+  const T N = static_cast<T>(n);
+
+  for (unsigned v = 0; v < n; ++v)
+  {
+    for (unsigned size = 0; size <= n; ++size)
+    {
+      const T up   = haluj::cyclic_increment(T(v), T(size), N);
+      const T down = haluj::cyclic_decrement(T(v), T(size), N);
+
+      HALUJ_CHECK(up   == T((v + size) % n));
+      HALUJ_CHECK(down == T((v + n - size) % n));
+    }
+
+    // size steps at once equals size single steps
+    T step = T(v);
+    for (unsigned size = 0; size <= n; ++size)
+    {
+      HALUJ_CHECK(haluj::cyclic_increment(T(v), T(size), N) == step);
+      step = haluj::cyclic_increment(step, N);
+    }
+  }
+}
+
+static void test_cyclic_steps()
+{
+  for (unsigned n = 1; n <= 12; ++n)
+  {
+    check_cyclic_steps<unsigned>(n);
+    check_cyclic_steps<std::uint8_t>(n);
+  }
+
+  for (unsigned n = 250; n <= 255; ++n)
+    check_cyclic_steps<std::uint8_t>(n);
+
+  // The case that used to return N instead of wrapping to 0
+  HALUJ_CHECK(haluj::cyclic_increment(6u, 2u, 8u) == 0u);
+}
+
 static void test_cyclic_index()
 {
   HALUJ_CHECK(haluj::cyclic_increment(2u, 3u) == 0u);
@@ -278,6 +321,7 @@ int main()
   test_ring_buffer();
   test_ring_buffer_back();
   test_ring_buffer_contract();
+  test_cyclic_steps();
   test_cyclic_index();
   test_fragment();
   return haluj_test::report("test_containers");

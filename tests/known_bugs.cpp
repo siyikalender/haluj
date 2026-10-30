@@ -63,12 +63,6 @@ For more information, please refer to <http://unlicense.org>
 
 namespace sw = haluj::timer_implementations::software;
 
-// cyclic_increment(v, size, N) must wrap when v + size == N
-static void cyclic_increment_n()
-{
-  HALUJ_CHECK(haluj::cyclic_increment(6u, 2u, 8u) == 0u);
-}
-
 // cyclic_distance from 2 to 5 in a ring of 8 is 3
 static void cyclic_distance()
 {
@@ -170,7 +164,6 @@ struct known_bug
 
 static const known_bug bugs[] =
 {
-  {"cyclic_increment_n",            cyclic_increment_n},
   {"cyclic_distance",               cyclic_distance},
   {"vector_assign_full",            vector_assign_full},
   {"format_int_truncation",         format_int_truncation},
