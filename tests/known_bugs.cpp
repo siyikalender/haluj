@@ -15,7 +15,6 @@
 ///     for example zm(opt(ch('x')))
 ///   - format(int) negates INT_MIN
 ///   - timer_implementations/chrono.hpp and proxy.hpp share an include guard
-/// build mode, so the tests also run in release (NDEBUG) builds.
 /*
 This is free and unencumbered software released into the public domain.
 

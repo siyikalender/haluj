@@ -1,7 +1,6 @@
 /// \file test_utilities.cpp
 /// Tests of bidirectional_map, digital_input_filter, event_strategy,
 /// set_and_wait and utility.
-/// build mode, so the tests also run in release (NDEBUG) builds.
 /*
 This is free and unencumbered software released into the public domain.
 

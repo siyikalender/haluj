@@ -2,7 +2,6 @@
 /// Bare metal build check: a typical firmware use of haluj, compiled with
 /// arm-none-eabi-g++ -fno-exceptions -fno-rtti. Nothing here may need a heap,
 /// exceptions, RTTI or an operating system.
-/// build mode, so the tests also run in release (NDEBUG) builds.
 /*
 This is free and unencumbered software released into the public domain.
 

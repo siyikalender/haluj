@@ -1,6 +1,5 @@
 /// \file test_containers.cpp
 /// Tests of bounded::vector, ring_buffer, cyclic_index and fragment.
-/// build mode, so the tests also run in release (NDEBUG) builds.
 /*
 This is free and unencumbered software released into the public domain.
 

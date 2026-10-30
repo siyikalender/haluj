@@ -1,6 +1,5 @@
 /// \file test_parser.cpp
 /// Tests of the parser combinators.
-/// build mode, so the tests also run in release (NDEBUG) builds.
 /*
 This is free and unencumbered software released into the public domain.
 

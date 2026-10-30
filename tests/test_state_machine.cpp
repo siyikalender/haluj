@@ -1,6 +1,5 @@
 /// \file test_state_machine.cpp
 /// Tests of the compile time state machine.
-/// build mode, so the tests also run in release (NDEBUG) builds.
 /*
 This is free and unencumbered software released into the public domain.
 
