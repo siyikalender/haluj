@@ -184,7 +184,7 @@ struct ring_buffer
   /// \pre !empty()
   base_type& back() 
   {
-    return m_container[m_head - 1];
+    return m_container[cyclic_decrement(m_head, capacity())];
   }
 
   container_type      m_container;

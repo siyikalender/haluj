@@ -139,6 +139,29 @@ static void test_ring_buffer()
   HALUJ_CHECK(r.size() == 0);
 }
 
+// back() is the newest element at every position of the head, including
+// the moment it wraps to the start of the storage
+static void test_ring_buffer_back()
+{
+  haluj::ring_buffer<std::array<int, 4>> r;
+
+  for (int i = 1; i <= 4; ++i)
+  {
+    r.push(i);
+    HALUJ_CHECK(r.back() == i);
+  }
+  HALUJ_CHECK(r.full());
+  HALUJ_CHECK(r.back() == 4); // the head has wrapped to 0
+
+  for (int i = 5; i <= 12; ++i)
+  {
+    r.pop();
+    r.push(i);
+    HALUJ_CHECK(r.back() == i);
+    HALUJ_CHECK(r.front() == i - 3);
+  }
+}
+
 // The documented contract: push() only when !full(), pop() and front() only
 // when !empty(). A caller that keeps to it never loses or reorders elements.
 static void test_ring_buffer_contract()
@@ -254,6 +277,7 @@ int main()
   test_bounded_vector();
   test_bounded_vector_push_back_full();
   test_ring_buffer();
+  test_ring_buffer_back();
   test_ring_buffer_contract();
   test_cyclic_index();
   test_fragment();
