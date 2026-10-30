@@ -91,10 +91,41 @@ static void test_format_float()
   HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(-1.5f, f, l, 1); }), "-1.5"));
 }
 
+// A float that does not fit writes nothing and returns first
+static void test_format_float_bounds()
+{
+  struct guarded
+  {
+    char text[4];
+    char guard[4] = {'#', '#', '#', '#'};
+  } g;
+
+  // "0.500" needs 5 characters
+  char* end = haluj::format(0.5f, g.text, g.text + 2, 3);
+  HALUJ_CHECK(end == g.text);
+  HALUJ_CHECK(std::memcmp(g.guard, "####", 4) == 0);
+
+  // "1.50" fits exactly
+  end = haluj::format(1.5f, g.text, g.text + 4, 2);
+  HALUJ_CHECK(end == g.text + 4);
+  HALUJ_CHECK(std::memcmp(g.text, "1.50", 4) == 0);
+  HALUJ_CHECK(std::memcmp(g.guard, "####", 4) == 0);
+
+  // "-1.50" is one character too long
+  end = haluj::format(-1.5f, g.text, g.text + 4, 2);
+  HALUJ_CHECK(end == g.text);
+  HALUJ_CHECK(std::memcmp(g.guard, "####", 4) == 0);
+
+  buffer b;
+  HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(7.0f, f, l, 0); }), "7."));
+  HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(0.0f, f, l, 2); }), "0.00"));
+}
+
 int main()
 {
   test_format_int();
   test_format_hex();
   test_format_float();
+  test_format_float_bounds();
   return haluj_test::report("test_format");
 }

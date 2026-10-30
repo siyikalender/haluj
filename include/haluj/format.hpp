@@ -35,6 +35,7 @@ For more information, please refer to <http://unlicense.org>
 #include <cstdint>
 #include <cmath>
 #include <algorithm>
+#include <iterator>
 
 namespace haluj
 {
@@ -89,6 +90,12 @@ Iterator format(int n, Iterator first, Iterator last)
   return first;
 }
 
+/// Formats n with a fixed number of decimals (at most 5), for example
+/// 3.14159f with precision 2 gives "3.14" and 0.05f with precision 3 gives
+/// "0.050". Returns the end of the written text.
+///
+/// Nothing is written when the text does not fit in [first, last); first is
+/// returned then. n times 10^precision must fit in an int.
 template<typename Iterator>
 Iterator format(float n, Iterator first, Iterator last, std::size_t precision)
 {
@@ -101,69 +108,67 @@ Iterator format(float n, Iterator first, Iterator last, std::size_t precision)
     10000,
     100000
   };
-  
-  if ((first != last))
+
+  const bool negative = (n < 0);
+
+  if (negative)
   {
-    if (n < 0) 
-    {
-      n = -n; // clear sign 
-      *first++ = '-';
-    }
+    n = -n; // clear sign
+  }
 
-    precision = 
-      std::max
-      (
-        std::size_t(0U), 
-        std::min
-        (
-          std::size_t(5U), 
-          precision
-        )
-      );
-    
-    n *= multipliers[precision];
-    
-    n = std::round(n);
-    
-    int  i_n = int(n);
+  precision = std::min(std::size_t(5U), precision);
 
-    auto it   = format(i_n, first, last); // Leading 0 conversion may simplify the code 
-    
-    auto d    = std::distance(first, it);
-    
-    auto nit  = it;
-    
-    if (precision < d)
-    {
-      nit++;
-      
-      while (precision--)
-      {
-        *it = *(it - 1);
-        it--;
-      }
-      
-      *it = '.';
+  n *= multipliers[precision];
 
-    }
-    else
-    {
-      auto r    =   precision + 2 - d;
-      nit +=  r;
-      
-      while (d--)
-      {
-        it--;
-        *(it + r) = *it;
-      }
+  n = std::round(n);
 
-      *first++ = '0';
-      *first++ = '.';
-      std::fill(first, it + r, '0');
+  // Digits of the scaled value, without any decimal point
+  char        digits[16];
+  char* const digits_end = format(int(n), digits, digits + sizeof(digits));
+  const auto  d = static_cast<std::size_t>(digits_end - digits);
 
-    }
-    
-    first = nit;
+  // A value below 1 gets a leading "0" and zeros after the point
+  const std::size_t integer_digits = (d > precision) ? (d - precision) : 0U;
+  const std::size_t leading_zeros  = (d > precision) ? 0U : (precision - d);
+
+  const std::size_t length =
+    (negative ? 1U : 0U) +
+    (integer_digits > 0U ? integer_digits : 1U) +
+    1U +            // decimal point
+    precision;
+
+  if (static_cast<std::size_t>(std::distance(first, last)) < length)
+  {
+    return first;
+  }
+
+  const char* digit = digits;
+
+  if (negative)
+  {
+    *first++ = '-';
+  }
+
+  if (integer_digits == 0U)
+  {
+    *first++ = '0';
+  }
+
+  for (std::size_t i = 0; i < integer_digits; ++i)
+  {
+    *first++ = *digit++;
+  }
+
+  *first++ = '.';
+
+  for (std::size_t i = 0; i < leading_zeros; ++i)
+  {
+    *first++ = '0';
+  }
+
+  while (digit != digits_end)
+  {
+    *first++ = *digit++;
   }
 
   return first;
