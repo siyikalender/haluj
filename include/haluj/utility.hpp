@@ -1,13 +1,13 @@
 #ifndef HALUJ_UTILITY_HPP
 #define HALUJ_UTILITY_HPP
 
-#include <cstdint>
+#include <cstddef>
 
 namespace haluj
 {
 
 template<typename T, std::size_t N>
-constexpr std::size_t array_size(const T (&arr)[N])
+constexpr std::size_t array_size(const T (&)[N])
 {
   return N;
 }

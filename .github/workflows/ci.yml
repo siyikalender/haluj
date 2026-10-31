@@ -32,15 +32,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Warnings are not errors yet: the headers still have some (unused
-      # parameters, extra semicolons). Turn HALUJ_WARNINGS_AS_ERRORS on once
-      # they are gone.
       - name: Configure
         run: >
           cmake -S . -B build
           -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
           -DCMAKE_CXX_STANDARD=${{ matrix.std }}
+          -DHALUJ_WARNINGS_AS_ERRORS=ON
 
       - name: Build
         run: cmake --build build --parallel
@@ -73,6 +71,7 @@ jobs:
           cmake -S . -B build
           -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
           -DCMAKE_BUILD_TYPE=Debug
+          -DHALUJ_WARNINGS_AS_ERRORS=ON
           "-DCMAKE_CXX_FLAGS=${{ matrix.flags }} -fno-omit-frame-pointer"
 
       - name: Build
@@ -110,7 +109,7 @@ jobs:
           arm-none-eabi-g++ --version
           for std in 17 20; do
             arm-none-eabi-g++ -std=c++${std} -mcpu=${{ matrix.cpu }} -mthumb -Os \
-              -fno-exceptions -fno-rtti -Wall -Wextra \
+              -fno-exceptions -fno-rtti -Wall -Wextra -Wpedantic -Werror \
               -Iinclude \
               -c tests/target/cortex_m.cpp -o cortex_m_cxx${std}.o
             arm-none-eabi-size cortex_m_cxx${std}.o
