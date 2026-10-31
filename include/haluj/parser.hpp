@@ -32,10 +32,32 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_PARSER_HPP
 #define HALUJ_PARSER_HPP
 
-#include <cctype>
-
 namespace haluj
 {
+
+namespace parser_detail
+{
+
+// Character classes of the "C" locale, as in <cctype>, but constexpr and
+// defined for every char value: <cctype> takes an int that must be an
+// unsigned char value or EOF, so a char above 127 on a target where char is
+// signed, a byte received from a serial line for example, was undefined.
+
+constexpr bool is_upper(char c)  { return c >= 'A' && c <= 'Z'; }
+constexpr bool is_lower(char c)  { return c >= 'a' && c <= 'z'; }
+constexpr bool is_digit(char c)  { return c >= '0' && c <= '9'; }
+constexpr bool is_alpha(char c)  { return is_upper(c) || is_lower(c); }
+constexpr bool is_alnum(char c)  { return is_alpha(c) || is_digit(c); }
+
+constexpr bool is_xdigit(char c)
+{
+  return is_digit(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+}
+
+/// space, \t, \n, \v, \f and \r
+constexpr bool is_space(char c)  { return c == ' ' || (c >= '\t' && c <= '\r'); }
+
+} // namespace parser_detail
 
 struct rule
 {};
@@ -78,7 +100,7 @@ struct alpha_p : rule
   template<typename Iterator>
   bool accept(Iterator &first, Iterator last) const
   {
-    bool result = (first != last && (isalpha(*first) != 0));
+    bool result = (first != last && parser_detail::is_alpha(*first));
     if (result) first++;
     return result;
   }
@@ -101,7 +123,7 @@ struct alnum_p : rule
   template<typename Iterator>
   bool accept(Iterator &first, Iterator last) const
   {
-    bool result = (first != last && (isalnum(*first) != 0));
+    bool result = (first != last && parser_detail::is_alnum(*first));
     if (result) first++;
     return result;
   }
@@ -123,7 +145,7 @@ struct space_p : rule
   template<typename Iterator>
   bool accept(Iterator &first, Iterator last) const
   {
-    bool result = (first != last && (isspace(*first) != 0));
+    bool result = (first != last && parser_detail::is_space(*first));
     if (result)
     {
       first++;
@@ -149,7 +171,7 @@ struct digit_p : rule
   template<typename Iterator>
   bool accept(Iterator &first, Iterator last) const
   {
-    bool result = (first != last && (isdigit(*first) != 0));
+    bool result = (first != last && parser_detail::is_digit(*first));
     if (result)
     {
       first++;
@@ -175,7 +197,7 @@ struct hex_digit_p : rule
   template<typename Iterator>
   bool accept(Iterator &first, Iterator last) const
   {
-    bool result = (first != last && (isxdigit(*first) != 0));
+    bool result = (first != last && parser_detail::is_xdigit(*first));
     if (result)
     {
       first++;
@@ -255,7 +277,7 @@ struct upper_p : rule
   template<typename Iterator>
   bool accept(Iterator &first, Iterator last) const
   {
-    bool result = (first != last && (isupper(*first) != 0));
+    bool result = (first != last && parser_detail::is_upper(*first));
     if (result) first++;
     return result;
   }

@@ -30,6 +30,7 @@ For more information, please refer to <http://unlicense.org>
 /// \author Claude Opus 5.5 <noreply@anthropic.com>
 /// \date   2026
 
+#include <cctype>
 #include <cstring>
 
 #include "haluj/parser.hpp"
@@ -66,6 +67,34 @@ static void test_primitives()
   HALUJ_CHECK(!parse(bin_digit(), "2", n));
   HALUJ_CHECK(parse(upper(), "Q", n) && !parse(upper(), "q", n));
   HALUJ_CHECK(parse(rest(), "anything", n) && n == 8);
+}
+
+// The character rules match exactly the "C" locale classes of <cctype> for
+// every byte, and reject the bytes above 127, whatever the sign of char
+static void test_character_classes()
+{
+  using namespace haluj;
+
+  for (int byte = 0; byte < 256; ++byte)
+  {
+    const char  text[2] = {static_cast<char>(byte), '\0'};
+    const char* first   = text;
+    const char* last    = text + 1;
+
+    auto matches = [&](const auto& rule)
+    {
+      const char* f = first;
+      return rule.accept(f, last);
+    };
+
+    // <cctype> is defined here, as byte is an unsigned char value
+    HALUJ_CHECK(matches(alpha())     == (std::isalpha(byte)  != 0));
+    HALUJ_CHECK(matches(alnum())     == (std::isalnum(byte)  != 0));
+    HALUJ_CHECK(matches(space())     == (std::isspace(byte)  != 0));
+    HALUJ_CHECK(matches(digit())     == (std::isdigit(byte)  != 0));
+    HALUJ_CHECK(matches(hex_digit()) == (std::isxdigit(byte) != 0));
+    HALUJ_CHECK(matches(upper())     == (std::isupper(byte)  != 0));
+  }
 }
 
 static void test_combinators()
@@ -132,6 +161,7 @@ static void test_command_line()
 int main()
 {
   test_primitives();
+  test_character_classes();
   test_combinators();
   test_repeat_empty_match();
   test_command_line();
