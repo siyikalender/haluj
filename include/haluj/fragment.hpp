@@ -36,98 +36,103 @@ For more information, please refer to <http://unlicense.org>
 
 #include <cstddef>
 #include <iterator>
+#include <ranges>
 
 namespace haluj
 {
 
-template<typename Iterator>
-struct fragment
+/// [first_, last_): a part of a container, as a pair of iterators. It is a
+/// range view (std::ranges::view_interface), so besides begin(), end() and
+/// size() it has empty(), front(), an explicit conversion to bool (true when
+/// not empty) and, over a random access container, back() and operator[];
+/// and it works with the std::ranges algorithms and views.
+///
+/// It is a plain value: copied and assigned by the compiler.
+template<std::forward_iterator Iterator>
+struct fragment : std::ranges::view_interface<fragment<Iterator>>
 {
-    
   typedef Iterator iterator;
-    
-  fragment(iterator p_first, 
-           iterator p_last)
+
+  constexpr fragment() = default;
+
+  constexpr fragment(iterator p_first,
+                     iterator p_last)
   : first_(p_first),
     last_(p_last)
   {}
 
-  fragment(const fragment& p_other)
-  : first_(p_other.first_),
-    last_(p_other.last_)
-  {}
-
-  fragment& operator=(const fragment& p_other)
+  constexpr std::size_t size() const
   {
-    first_ = p_other.first_;
-    last_  = p_other.last_;
-    return *this;
+    return static_cast<std::size_t>(std::ranges::distance(first_, last_));
   }
 
-  ~fragment() {}
-
-  operator bool () const
-  {
-    return (first_ != last_);
-  }
-  
-  std::size_t size() const
-  {
-    return std::distance(first_, last_);    
-  }
-
-  iterator begin() const
+  constexpr iterator begin() const
   {
     return first_;
   }
 
-  iterator end() const
+  constexpr iterator end() const
   {
     return last_;
   }
 
-  iterator first_;
-  iterator last_;
+  iterator first_{};
+  iterator last_{};
 };
 
-template<typename Container, typename Iterator = typename Container::const_iterator>
-inline Iterator 
+/// The end of a fragment of at most p_fragment_size elements starting at
+/// p_current, stopping at the end of the container
+template<std::ranges::forward_range Container,
+         typename Iterator = std::ranges::iterator_t<const Container>>
+  requires std::ranges::common_range<const Container>
+constexpr Iterator
 get_fragment_end_(const Container&   p_container,
                   Iterator           p_current,
                   const std::size_t  p_fragment_size)
 {
-  std::size_t remaining = std::distance(p_current, p_container.end());
-  std::size_t f_size    = (remaining > p_fragment_size) ? p_fragment_size : remaining;
-  return p_current + f_size;
-}                                  
+  return std::ranges::next(p_current,
+                           static_cast<std::iter_difference_t<Iterator>>(p_fragment_size),
+                           std::ranges::end(p_container));
+}
 
-template<typename Container, typename Iterator = typename Container::const_iterator>
-inline fragment<Iterator> 
+/// The first fragment of a container: its first p_fragment_size elements,
+/// or all of them if there are fewer
+template<std::ranges::forward_range Container,
+         typename Iterator = std::ranges::iterator_t<const Container>>
+  requires std::ranges::common_range<const Container>
+constexpr fragment<Iterator>
 make_fragment(const Container&  p_container,
               const std::size_t p_fragment_size)
 {
-  auto end = 
-    get_fragment_end_(p_container, 
-                      p_container.begin(), 
-                      p_fragment_size) ;
-  return fragment<Iterator>(p_container.begin(), end);
+  const Iterator first = std::ranges::begin(p_container);
+  return fragment<Iterator>(first,
+                            get_fragment_end_(p_container, first, p_fragment_size));
 }
 
-
-template<typename Container, typename Iterator = typename Container::const_iterator>
-inline fragment<Iterator> 
+/// The fragment after p_f: empty once the container is used up
+///
+/// \code {.cpp}
+/// for (auto f = haluj::make_fragment(data, 64); f; f = haluj::make_fragment(data, 64, f))
+///   send(f.begin(), f.end());
+/// \endcode
+template<std::ranges::forward_range Container,
+         typename Iterator = std::ranges::iterator_t<const Container>>
+  requires std::ranges::common_range<const Container>
+constexpr fragment<Iterator>
 make_fragment(const Container&            p_container,
               const std::size_t           p_fragment_size,
               const fragment<Iterator>&   p_f)
 {
-  auto end = 
-    get_fragment_end_(p_container, 
-                      p_f.end(), 
-                      p_fragment_size) ;
-  return fragment<Iterator>(p_f.end(), end);
+  return fragment<Iterator>(p_f.end(),
+                            get_fragment_end_(p_container, p_f.end(), p_fragment_size));
 }
 
 } // namespace haluj
+
+// A fragment refers to the elements of the container, not to itself: an
+// iterator taken from a temporary fragment stays valid
+template<std::forward_iterator Iterator>
+inline constexpr bool std::ranges::enable_borrowed_range<haluj::fragment<Iterator>> = true;
 
 // HALUJ_FRAGMENT_HPP
 #endif

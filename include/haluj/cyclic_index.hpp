@@ -32,6 +32,7 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_CYCLIC_INDEX_HPP
 #define HALUJ_CYCLIC_INDEX_HPP
 
+#include <compare>
 #include <concepts>
 
 namespace haluj
@@ -87,7 +88,6 @@ constexpr T cyclic_distance_backward(const T from, const T to, const T N)
   return cyclic_distance_forward(to, from, N);
 }
 
-
 /// An index that runs round a ring of N positions: 0, 1, ..., N - 1, 0, ...
 ///
 /// It is a plain value: trivially copyable, and usable in constant
@@ -140,47 +140,14 @@ struct cyclic_index
     value = T(0);
   }
 
+  // The comparisons (==, !=, <, <=, >, >=) compare the raw positions; the
+  // compiler writes them all from this one line. On a ring "less than" is
+  // not an order of the positions in time; use cyclic_distance_forward for
+  // that.
+  friend constexpr auto operator<=>(const cyclic_index&, const cyclic_index&) = default;
+
   T   value = T(0);
 };
-
-// The comparisons compare the raw positions. On a ring "less than" is not an
-// order of the positions in time; use cyclic_distance_forward for that.
-
-template<std::integral T, T N>
-constexpr bool operator<(cyclic_index<T, N> A, cyclic_index<T, N> B)
-{
-  return A.value < B.value;
-}
-
-template<std::integral T, T N>
-constexpr bool operator==(cyclic_index<T, N> A, cyclic_index<T, N> B)
-{
-  return A.value == B.value;
-}
-
-template<std::integral T, T N>
-constexpr bool operator>(cyclic_index<T, N> A, cyclic_index<T, N> B)
-{
-  return A.value > B.value;
-}
-
-template<std::integral T, T N>
-constexpr bool operator!=(cyclic_index<T, N> A, cyclic_index<T, N> B)
-{
-  return A.value != B.value;
-}
-
-template<std::integral T, T N>
-constexpr bool operator<=(cyclic_index<T, N> A, cyclic_index<T, N> B)
-{
-  return A.value <= B.value;
-}
-
-template<std::integral T, T N>
-constexpr bool operator>=(cyclic_index<T, N> A, cyclic_index<T, N> B)
-{
-  return A.value >= B.value;
-}
 
 } // namespace haluj
 

@@ -57,7 +57,7 @@ namespace format_detail
 
 /// The number of characters from first to last
 template<typename Iterator>
-inline std::size_t room(Iterator first, Iterator last)
+constexpr std::size_t room(Iterator first, Iterator last)
 {
   return static_cast<std::size_t>(std::distance(first, last));
 }
@@ -71,7 +71,7 @@ inline std::size_t room(Iterator first, Iterator last)
 /// Nothing is written when the text does not fit in [first, last); first is
 /// returned then.
 template<format_integer Integer, char_output Iterator>
-Iterator format(Integer n, Iterator first, Iterator last)
+constexpr Iterator format(Integer n, Iterator first, Iterator last)
 {
   typedef std::make_unsigned_t<Integer> magnitude_type;
 
@@ -126,7 +126,7 @@ Iterator format(Integer n, Iterator first, Iterator last)
 /// Nothing is written when size characters do not fit in [first, last);
 /// first is returned then.
 template<format_integer Integer, char_output Iterator>
-Iterator format_hex(Integer n, Iterator first, Iterator last, std::size_t size)
+constexpr Iterator format_hex(Integer n, Iterator first, Iterator last, std::size_t size)
 {
   typedef std::make_unsigned_t<Integer> value_type;
 

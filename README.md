@@ -15,6 +15,19 @@ This is a header only lightweight toolbox written in C++. It consists several sm
 No heap, exceptions or RTTI are needed; the library builds with
 `-fno-exceptions -fno-rtti` for bare metal targets such as ARM Cortex-M.
 
+Every type can be built at compile time. Declare globals `constinit`: the
+compiler then checks that they need no code before `main`, so they are
+ready when the first interrupt comes.
+
+```cpp
+constinit haluj::ring_buffer<std::array<char, 64>, haluj::spsc> rx;
+constinit haluj::digital_input_filter<std::uint32_t, 4>          buttons(0x3u);
+```
+
+The interfaces the templates expect (a timer implementation, a parser rule,
+a concurrency policy...) are concepts, so a type that does not fit is
+reported where it is used, by the name of the concept.
+
 ## Using with CMake
 
 ```cmake

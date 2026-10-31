@@ -301,6 +301,53 @@ static void test_format_float_range()
   HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(-0.0f, f, l, 2); }), "0.00"));
 }
 
+// The integer formats run at compile time too: a table of texts can be built
+// by the compiler
+namespace
+{
+
+template<std::size_t N>
+struct text
+{
+  char        chars[N] = {};
+  std::size_t length   = 0;
+
+  constexpr bool is(const char* expected) const
+  {
+    std::size_t i = 0;
+    for (; expected[i] != '\0'; ++i)
+      if (i >= length || chars[i] != expected[i])
+        return false;
+    return i == length;
+  }
+};
+
+template<typename Integer>
+constexpr text<24> decimal(Integer n)
+{
+  text<24> t;
+  t.length = std::size_t(haluj::format(n, t.chars, t.chars + 24) - t.chars);
+  return t;
+}
+
+template<typename Integer>
+constexpr text<24> hex(Integer n, std::size_t size)
+{
+  text<24> t;
+  t.length = std::size_t(haluj::format_hex(n, t.chars, t.chars + 24, size) - t.chars);
+  return t;
+}
+
+static_assert(decimal(0).is("0"), "zero");
+static_assert(decimal(-1250).is("-1250"), "negative");
+static_assert(decimal(std::numeric_limits<std::int64_t>::min()).is("-9223372036854775808"),
+              "most negative");
+static_assert(decimal(std::uint8_t(255)).is("255"), "uint8_t");
+static_assert(hex(0xBEEFu, 4).is("BEEF"), "hex");
+static_assert(hex(std::int8_t(-1), 4).is("00FF"), "hex of a negative value");
+
+} // namespace
+
 int main()
 {
   test_format_float_range();

@@ -30,11 +30,15 @@ For more information, please refer to <http://unlicense.org>
 /// \author Claude Opus 5.5 <noreply@anthropic.com>
 /// \date   2026
 
+#include <algorithm>
 #include <array>
+#include <compare>
 #include <cstdint>
 #include <deque>
 #include <iterator>
 #include <numeric>
+#include <ranges>
+#include <span>
 #include <type_traits>
 #include <vector>
 
@@ -90,6 +94,27 @@ static_assert(std::is_trivially_copyable<haluj::bounded::vector<int, 4>>::value,
               "trivially copyable");
 static_assert(!std::is_aggregate<haluj::bounded::vector<int, 4>>::value,
               "not an aggregate");
+
+// A vector is a contiguous range: it converts to a std::span, so a function
+// can take any run of characters without being a template
+static_assert(std::ranges::contiguous_range<haluj::bounded::vector<char, 8>>, "contiguous");
+
+static std::size_t count_digits(std::span<const char> text)
+{
+  return static_cast<std::size_t>(
+    std::ranges::count_if(text, [](char c) { return c >= '0' && c <= '9'; }));
+}
+
+static void test_bounded_vector_span()
+{
+  haluj::bounded::vector<char, 8> line;
+  for (char c : {'S', 'E', 'T', ' ', '4', '2'})
+    line.push_back(c);
+
+  HALUJ_CHECK(count_digits(line) == 2);
+  const char literal[] = "A1";
+  HALUJ_CHECK(count_digits(std::span<const char>(literal, 2)) == 1);
+}
 
 static void test_bounded_vector_value()
 {
@@ -572,6 +597,13 @@ static_assert(*advanced(4) == 1, "wraps at compile time");
 static_assert(haluj::cyclic_increment(6u, 2u, 8u) == 0u, "constexpr steps");
 static_assert(haluj::cyclic_distance_forward(6u, 1u, 8u) == 3u, "constexpr distance");
 
+// All six comparisons come from the defaulted <=>, on the raw positions
+static_assert(advanced(1) == advanced(4), "==");
+static_assert(advanced(1) != advanced(2), "!=");
+static_assert(advanced(1) <  advanced(2) && advanced(1) <= advanced(1), "< <=");
+static_assert(advanced(2) >  advanced(1) && advanced(2) >= advanced(2), "> >=");
+static_assert((advanced(0) <=> advanced(2)) == std::strong_ordering::less, "<=>");
+
 } // namespace
 
 static void test_cyclic_index_value()
@@ -615,12 +647,50 @@ static void test_fragment()
   HALUJ_CHECK(sizes[0] == 4 && sizes[1] == 4 && sizes[2] == 2);
 }
 
+// A fragment is a range view: it works with the ranges algorithms and views
+// and has the members view_interface adds
+static_assert(std::ranges::view<haluj::fragment<const int*>>, "a view");
+static_assert(std::ranges::borrowed_range<haluj::fragment<const int*>>, "borrowed");
+static_assert(!std::is_convertible<haluj::fragment<const int*>, bool>::value,
+              "the conversion to bool is explicit");
+static_assert(std::is_trivially_copyable<haluj::fragment<const int*>>::value,
+              "trivially copyable");
+
+static void test_fragment_view()
+{
+  const std::deque<int> d = {1, 2, 3, 4, 5};      // not contiguous
+  auto f = haluj::make_fragment(d, 3, haluj::make_fragment(d, 3));
+  HALUJ_CHECK(f.size() == 2);
+  HALUJ_CHECK(f.front() == 4 && f.back() == 5 && f[1] == 5);
+  HALUJ_CHECK(!f.empty());
+  HALUJ_CHECK(std::ranges::count_if(f, [](int v) { return v > 4; }) == 1);
+
+  auto last = haluj::make_fragment(d, 3, f);
+  HALUJ_CHECK(last.empty() && !last);
+}
+
+// Fragments at compile time
+static_assert([]
+{
+  constexpr int data[] = {1, 2, 3, 4, 5, 6, 7};
+  int sum = 0;
+  int parts = 0;
+  for (auto f = haluj::make_fragment(data, 3); f; f = haluj::make_fragment(data, 3, f))
+  {
+    for (int v : f)
+      sum += v;
+    ++parts;
+  }
+  return sum == 28 && parts == 3;
+}(), "fragment at compile time");
+
 int main()
 {
   test_bounded_vector();
   test_bounded_vector_push_back_full();
   test_bounded_vector_assign();
   test_bounded_vector_value();
+  test_bounded_vector_span();
   test_bounded_vector_iterators();
   test_bounded_vector_pop_back_full_resize();
   test_ring_buffer();
@@ -633,5 +703,6 @@ int main()
   test_cyclic_index();
   test_cyclic_index_value();
   test_fragment();
+  test_fragment_view();
   return haluj_test::report("test_containers");
 }

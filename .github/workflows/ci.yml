@@ -114,6 +114,13 @@ jobs:
               -c tests/target/cortex_m.cpp -o cortex_m_cxx${std}.o
             arm-none-eabi-size cortex_m_cxx${std}.o
           done
+          # Every header, also those the target test does not use
+          (cd include && find haluj -name '*.hpp' | sort | sed 's/.*/#include "&"/') > all_headers.cpp
+          for std in 20 23; do
+            arm-none-eabi-g++ -std=c++${std} -mcpu=${{ matrix.cpu }} -mthumb -Os \
+              -fno-exceptions -fno-rtti -Wall -Wextra -Wpedantic -Werror \
+              -Iinclude -c all_headers.cpp -o all_headers_cxx${std}.o
+          done
 
       - name: No start up code
         run: |

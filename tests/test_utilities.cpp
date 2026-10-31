@@ -48,6 +48,24 @@ For more information, please refer to <http://unlicense.org>
 
 #include "check.hpp"
 
+// A table in read only memory, looked up by the compiler
+namespace
+{
+
+constexpr std::pair<int, const char*> commands[] =
+{
+  {1, "on"},
+  {2, "off"},
+  {7, "reset"}
+};
+
+static_assert(*haluj::to_second<std::optional>(7, commands) != nullptr, "found");
+static_assert(!haluj::to_second<std::optional>(3, commands), "not found");
+static_assert(*haluj::to_first<std::optional>("off", commands, haluj::c_str_equal_to()) == 2,
+              "by content, at compile time");
+
+} // namespace
+
 static void test_pair_lookup()
 {
   static const std::pair<int, const char*> table[] =
