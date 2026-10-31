@@ -36,6 +36,7 @@ For more information, please refer to <http://unlicense.org>
 #include <concepts>
 #include <functional>
 #include <iterator>
+#include <optional>
 #include <ranges>
 #include <string_view>
 #include <utility>
@@ -141,19 +142,18 @@ find_in_second(const Key&      p_key,
 }
 
 /// The second element of the first pair whose first element matches p_key,
-/// or an empty OptionalType when there is none
-template<template<class> class OptionalType,
-         typename     Key,
+/// or std::nullopt when there is none
+template<typename     Key,
          pair_iterator Iterator,
          typename     CompFunc = std::equal_to<> >
   requires pair_comparator<CompFunc, pair_lookup_detail::first_t<Iterator>, Key>
-constexpr OptionalType<pair_lookup_detail::second_t<Iterator>>
+constexpr std::optional<pair_lookup_detail::second_t<Iterator>>
 to_second(const Key&      p_key,
           Iterator        p_first_it,
           Iterator        p_last_it,
           const CompFunc  p_comparator = CompFunc())
 {
-  OptionalType<pair_lookup_detail::second_t<Iterator>> result;
+  std::optional<pair_lookup_detail::second_t<Iterator>> result;
 
   auto it = find_in_first(p_key, p_first_it, p_last_it, p_comparator);
 
@@ -166,36 +166,34 @@ to_second(const Key&      p_key,
 }
 
 /// to_second over a whole range
-template<template<class> class OptionalType,
-         typename     Key,
+template<typename     Key,
          std::ranges::common_range Range,
          typename     CompFunc = std::equal_to<> >
   requires pair_iterator<pair_lookup_detail::iterator_t<Range>>
-constexpr OptionalType<pair_lookup_detail::second_t<pair_lookup_detail::iterator_t<Range>>>
+constexpr std::optional<pair_lookup_detail::second_t<pair_lookup_detail::iterator_t<Range>>>
 to_second(const Key&      p_key,
           const Range&    p_range,
           const CompFunc  p_comparator = CompFunc())
 {
-  return to_second<OptionalType>(p_key,
-                                 std::ranges::begin(p_range),
-                                 std::ranges::end(p_range),
-                                 p_comparator);
+  return to_second(p_key,
+                   std::ranges::begin(p_range),
+                   std::ranges::end(p_range),
+                   p_comparator);
 }
 
 /// The first element of the first pair whose second element matches p_key,
-/// or an empty OptionalType when there is none
-template<template<class> class OptionalType,
-         typename     Key,
+/// or std::nullopt when there is none
+template<typename     Key,
          pair_iterator Iterator,
          typename     CompFunc = std::equal_to<> >
   requires pair_comparator<CompFunc, pair_lookup_detail::second_t<Iterator>, Key>
-constexpr OptionalType<pair_lookup_detail::first_t<Iterator>>
+constexpr std::optional<pair_lookup_detail::first_t<Iterator>>
 to_first(const Key&      p_key,
          Iterator        p_first_it,
          Iterator        p_last_it,
          const CompFunc  p_comparator = CompFunc())
 {
-  OptionalType<pair_lookup_detail::first_t<Iterator>> result;
+  std::optional<pair_lookup_detail::first_t<Iterator>> result;
 
   auto it = find_in_second(p_key, p_first_it, p_last_it, p_comparator);
 
@@ -208,20 +206,19 @@ to_first(const Key&      p_key,
 }
 
 /// to_first over a whole range
-template<template<class> class OptionalType,
-         typename     Key,
+template<typename     Key,
          std::ranges::common_range Range,
          typename     CompFunc = std::equal_to<> >
   requires pair_iterator<pair_lookup_detail::iterator_t<Range>>
-constexpr OptionalType<pair_lookup_detail::first_t<pair_lookup_detail::iterator_t<Range>>>
+constexpr std::optional<pair_lookup_detail::first_t<pair_lookup_detail::iterator_t<Range>>>
 to_first(const Key&      p_key,
          const Range&    p_range,
          const CompFunc  p_comparator = CompFunc())
 {
-  return to_first<OptionalType>(p_key,
-                                std::ranges::begin(p_range),
-                                std::ranges::end(p_range),
-                                p_comparator);
+  return to_first(p_key,
+                  std::ranges::begin(p_range),
+                  std::ranges::end(p_range),
+                  p_comparator);
 }
 
 } // namespace haluj

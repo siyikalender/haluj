@@ -203,7 +203,7 @@ extern "C" std::uint32_t tick(std::uint32_t pins, std::uint8_t requested)
 
   auto pressed = buttons(pins);
 
-  auto target = haluj::to_second<std::optional>(requested, modes);
+  auto target = haluj::to_second(requested, modes);
 
   auto m = haluj::machine(
     haluj::graph(

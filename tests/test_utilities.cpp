@@ -59,9 +59,9 @@ constexpr std::pair<int, const char*> commands[] =
   {7, "reset"}
 };
 
-static_assert(*haluj::to_second<std::optional>(7, commands) != nullptr, "found");
-static_assert(!haluj::to_second<std::optional>(3, commands), "not found");
-static_assert(*haluj::to_first<std::optional>("off", commands, haluj::c_str_equal_to()) == 2,
+static_assert(*haluj::to_second(7, commands) != nullptr, "found");
+static_assert(!haluj::to_second(3, commands), "not found");
+static_assert(*haluj::to_first("off", commands, haluj::c_str_equal_to()) == 2,
               "by content, at compile time");
 
 } // namespace
@@ -74,16 +74,16 @@ static void test_pair_lookup()
     {2, "off"}
   };
 
-  auto name = haluj::to_second<std::optional>(2, table);
+  auto name = haluj::to_second(2, table);
   HALUJ_CHECK(name.has_value());
   HALUJ_CHECK(std::strcmp(*name, "off") == 0);
-  HALUJ_CHECK(!haluj::to_second<std::optional>(3, table).has_value());
+  HALUJ_CHECK(!haluj::to_second(3, table).has_value());
 
   // A copy, so that pointer comparison alone would not find it
   char        buffer[] = "on";
   const char* key      = buffer;
 
-  auto code = haluj::to_first<std::optional>(key,
+  auto code = haluj::to_first(key,
                                              std::begin(table),
                                              std::end(table),
                                              haluj::c_str_equal_to());
@@ -100,9 +100,9 @@ static void check_lookups_on(const Range& table)
   using haluj::to_first;
   using haluj::to_second;
 
-  HALUJ_CHECK(std::strcmp(*to_second<std::optional>(1, table), "on") == 0);
-  HALUJ_CHECK(std::strcmp(*to_second<std::optional>(2, table), "off") == 0);
-  HALUJ_CHECK(!to_second<std::optional>(3, table).has_value());
+  HALUJ_CHECK(std::strcmp(*to_second(1, table), "on") == 0);
+  HALUJ_CHECK(std::strcmp(*to_second(2, table), "off") == 0);
+  HALUJ_CHECK(!to_second(3, table).has_value());
 
   // Copies of the strings: only a comparison by content finds them
   char        on[]  = "on";
@@ -110,17 +110,17 @@ static void check_lookups_on(const Range& table)
   const char* key_on  = on;
   const char* key_off = off;
 
-  HALUJ_CHECK(*to_first<std::optional>(key_on,  table, haluj::c_str_equal_to()) == 1);
-  HALUJ_CHECK(*to_first<std::optional>(key_off, table, haluj::c_str_equal_to()) == 2);
-  HALUJ_CHECK(!to_first<std::optional>("x", table, haluj::c_str_equal_to()).has_value());
+  HALUJ_CHECK(*to_first(key_on,  table, haluj::c_str_equal_to()) == 1);
+  HALUJ_CHECK(*to_first(key_off, table, haluj::c_str_equal_to()) == 2);
+  HALUJ_CHECK(!to_first("x", table, haluj::c_str_equal_to()).has_value());
 
   // With the default comparator the pointers are compared
-  HALUJ_CHECK(!to_first<std::optional>(key_off, table).has_value());
+  HALUJ_CHECK(!to_first(key_off, table).has_value());
 
   // The iterator overloads give the same answers
-  HALUJ_CHECK(*to_first<std::optional>(key_off, std::begin(table), std::end(table),
+  HALUJ_CHECK(*to_first(key_off, std::begin(table), std::end(table),
                                        haluj::c_str_equal_to()) == 2);
-  HALUJ_CHECK(std::strcmp(*to_second<std::optional>(2, std::begin(table), std::end(table)),
+  HALUJ_CHECK(std::strcmp(*to_second(2, std::begin(table), std::end(table)),
                           "off") == 0);
 }
 
@@ -150,8 +150,8 @@ static void test_pair_lookup_key_type()
 
   static const std::pair<std::uint8_t, mode> modes[] = {{0, mode::idle}, {1, mode::run}};
 
-  HALUJ_CHECK(*haluj::to_second<std::optional>(1, modes) == mode::run);
-  HALUJ_CHECK(*haluj::to_first<std::optional>(mode::idle, modes) == 0);
+  HALUJ_CHECK(*haluj::to_second(1, modes) == mode::run);
+  HALUJ_CHECK(*haluj::to_first(mode::idle, modes) == 0);
 
   // A table of half open ranges, looked up with in_range
   static const std::pair<std::pair<int, int>, char> grades[] =
@@ -161,10 +161,10 @@ static void test_pair_lookup_key_type()
     {{70, 101}, 'A'}
   };
 
-  HALUJ_CHECK(*haluj::to_second<std::optional>(0,   grades, haluj::in_range()) == 'F');
-  HALUJ_CHECK(*haluj::to_second<std::optional>(69,  grades, haluj::in_range()) == 'C');
-  HALUJ_CHECK(*haluj::to_second<std::optional>(70,  grades, haluj::in_range()) == 'A');
-  HALUJ_CHECK(!haluj::to_second<std::optional>(101, grades, haluj::in_range()).has_value());
+  HALUJ_CHECK(*haluj::to_second(0,   grades, haluj::in_range()) == 'F');
+  HALUJ_CHECK(*haluj::to_second(69,  grades, haluj::in_range()) == 'C');
+  HALUJ_CHECK(*haluj::to_second(70,  grades, haluj::in_range()) == 'A');
+  HALUJ_CHECK(!haluj::to_second(101, grades, haluj::in_range()).has_value());
 }
 
 static void test_digital_input_filter()
