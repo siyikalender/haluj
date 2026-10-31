@@ -40,11 +40,33 @@ For more information, please refer to <http://unlicense.org>
 namespace haluj
 {
 
+// A state machine built at compile time:
+//
+//   auto m = machine(graph(transition<From, To>(guard, action), ...),
+//                    map(entry<State>(std::make_tuple(enter, do, exit)), ...));
+//
+//   state = m(state, arguments...);
+//
+// A call to the machine, with any arguments, runs:
+//   1. the do action of the current state
+//   2. the guards of the transitions leaving the current state, in the
+//      order they are written: the first that returns true is taken
+//   3. if one is taken: the exit action of the current state, the action of
+//      the transition and the entry action of the new state
+// and returns the new state, or the current one if no guard held.
+//
+// A transition to the same state (From == To) runs exit and entry too.
+// nullptr stands for a missing action, and a state without an entry in the
+// map has no actions.
+//
+// Built from captureless lambdas or functions, the machine can be constexpr
+// and placed in read only memory.
+
 /// Always true guard
 struct g_always_t
 {
   template<typename... Args>
-  bool operator()(Args&&...) const
+  constexpr bool operator()(Args&&...) const
   {
     return true;
   }
@@ -58,11 +80,11 @@ struct g_always_t
 // as auto&&, but not as a concrete rvalue reference such as std::string&&.
 
 template < typename... Args >
-inline void _invoke_a(std::nullptr_t, Args&&...)
+constexpr void _invoke_a(std::nullptr_t, Args&&...)
 {}
 
 template < typename Action, typename... Args >
-inline void _invoke_a(const Action& action, Args&&... args)
+constexpr void _invoke_a(const Action& action, Args&&... args)
 {
   action(args...);
 }
@@ -86,14 +108,14 @@ struct transition_t
   static constexpr state_type from = From;
   static constexpr state_type to   = To;
 
-  transition_t( trigger_type p_trigger, 
+  constexpr transition_t( trigger_type p_trigger,
                 action_type  p_action   = nullptr)
   : trigger(p_trigger),
     action(p_action)
   {}
   
   template<typename... Args>
-  bool test(const state_type p_current,
+  constexpr bool test(const state_type p_current,
             Args&&...        args) const
   {
     return (p_current == from) && trigger(args...);
@@ -101,7 +123,7 @@ struct transition_t
   
   template<typename StateActionMap, 
            typename... Args>
-  state_type do_transition(const StateActionMap&  p_map, 
+  constexpr state_type do_transition(const StateActionMap&  p_map,
                            Args&&...              args) const
   {
     p_map.exit_(from, args...);
@@ -141,7 +163,7 @@ struct graph_t
   template <typename StateType, 
             typename StateActionMap,
             typename... Args>
-  StateType operator()(const StateType          p_current, 
+  constexpr StateType operator()(const StateType          p_current,
                        const StateActionMap&,
                        Args&&...) const
   {
@@ -156,14 +178,14 @@ struct graph_t<EdgeType, Entries...>
   typedef   graph_t<Entries...>    next;
   typedef   EdgeType               edge_type;
 
-  graph_t(const EdgeType& p_edge, Entries... args)
+  constexpr graph_t(const EdgeType& p_edge, Entries... args)
   : edge_(p_edge), next_(args...)
   {}
 
   template <typename StateType, 
             typename StateActionMap,
             typename... Args>
-  StateType operator()(const StateType          p_current, 
+  constexpr StateType operator()(const StateType          p_current,
                        const StateActionMap&    p_map,
                        Args&&...                args) const
   {
@@ -202,7 +224,7 @@ struct entry_t
   
   static constexpr key_type   key = Key;
 
-  entry_t(const value_type&  p_value)
+  constexpr entry_t(const value_type&  p_value)
   : value (p_value)
   {}
 
@@ -211,7 +233,7 @@ struct entry_t
 
 template <auto        Key,
           typename    ValueType>
-constexpr entry_t<Key, ValueType> 
+constexpr entry_t<Key, ValueType>
 entry(const ValueType& p_value)
 {
   return entry_t<Key, ValueType>(p_value);
@@ -222,15 +244,15 @@ template <typename... Entries>
 struct map_t
 {
   template <typename    KeyType, typename... Args>  
-  void enter_(const KeyType&, Args&&...) const
+  constexpr void enter_(const KeyType&, Args&&...) const
   {}
 
   template <typename    KeyType, typename... Args>  
-  void do_(const KeyType&, Args&&...) const
+  constexpr void do_(const KeyType&, Args&&...) const
   {}
 
   template <typename    KeyType, typename... Args>  
-  void exit_(const KeyType&, Args&&...) const
+  constexpr void exit_(const KeyType&, Args&&...) const
   {}
 
 };
@@ -243,14 +265,14 @@ struct map_t<EntryType, Entries...>
   typedef map_t<Entries...>                next;
   typedef EntryType                        entry_type;
   
-  map_t(const entry_type& p_pair, Entries... args)
+  constexpr map_t(const entry_type& p_pair, Entries... args)
   : pair_(p_pair), next_(args...)
   {}
 
   // enter_ and exit_ functions are used in transition_t::do_transition 
   // method
   template <typename KeyType, typename... Args>  
-  void enter_(const KeyType& p_key, Args&&... args) const
+  constexpr void enter_(const KeyType& p_key, Args&&... args) const
   {
     if (p_key == entry_type::key)
     {
@@ -263,7 +285,7 @@ struct map_t<EntryType, Entries...>
   }
 
   template <typename KeyType, typename... Args>  
-  void do_(const KeyType& p_key, Args&&... args) const
+  constexpr void do_(const KeyType& p_key, Args&&... args) const
   {
     if (p_key == entry_type::key)
     {
@@ -276,7 +298,7 @@ struct map_t<EntryType, Entries...>
   }
 
   template <typename KeyType, typename... Args>  
-  void exit_(const KeyType& p_key, Args&&... args) const
+  constexpr void exit_(const KeyType& p_key, Args&&... args) const
   {
     if (p_key == entry_type::key)
     {
@@ -300,7 +322,7 @@ map(const EntryType& p_edge)
 }
 
 template<typename EntryType, typename ... Entries>
-map_t<EntryType, Entries...>
+constexpr map_t<EntryType, Entries...>
 map(const EntryType& p_a, Entries... args)
 {
   return map_t<EntryType, Entries...>(p_a, args...);
@@ -314,14 +336,14 @@ struct machine_t
   typedef     GraphType     graph_type;
   typedef     MapType       map_type;
   
-  machine_t(const GraphType&  p_graph, 
+  constexpr machine_t(const GraphType&  p_graph,
             const MapType&    p_map)
   : graph_(p_graph),
     map_(p_map)
   {}
 
   template<typename StateType, typename... Args>
-  StateType operator()(const StateType p_current, Args&&... args) const
+  constexpr StateType operator()(const StateType p_current, Args&&... args) const
   {
     map_.do_(p_current, args...);
     return graph_(p_current, map_, args...);
@@ -333,7 +355,7 @@ struct machine_t
 
 template <typename GraphType,
           typename MapType>
-machine_t<GraphType, MapType>
+constexpr machine_t<GraphType, MapType>
 machine(const GraphType   &p_graph, 
         const MapType     &p_map)
 {

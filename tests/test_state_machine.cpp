@@ -170,8 +170,68 @@ static void test_context_by_reference()
   HALUJ_CHECK(m(s::a, c) == s::a); // the guard now refuses
 }
 
+// A machine of captureless lambdas is a constant: built and run at compile
+// time, it can sit in read only memory
+namespace
+{
+
+enum class light { red, green, yellow };
+
+constexpr auto traffic = haluj::machine(
+  haluj::graph(
+    haluj::transition<light::red,    light::green >([](int tick) { return tick >= 3; }),
+    haluj::transition<light::green,  light::yellow>([](int tick) { return tick >= 2; }),
+    haluj::transition<light::yellow, light::red   >(haluj::g_always)),
+  haluj::map(
+    haluj::entry<light::red>(std::make_tuple(nullptr, nullptr, nullptr))));
+
+static_assert(traffic(light::red, 0)    == light::red,    "guard refuses");
+static_assert(traffic(light::red, 3)    == light::green,  "guard holds");
+static_assert(traffic(light::green, 2)  == light::yellow, "next transition");
+static_assert(traffic(light::yellow, 0) == light::red,    "always");
+
+} // namespace
+
+static void test_constexpr_machine()
+{
+  // The same machine at run time
+  light l = light::red;
+  for (int tick = 0; tick < 4; ++tick)
+    l = traffic(l, tick);
+  HALUJ_CHECK(l == light::green);
+}
+
+// The first transition whose guard holds wins, and a transition to the same
+// state runs exit and entry
+static void test_order_and_self_transition()
+{
+  using namespace haluj;
+  enum class s { a, b };
+
+  static int order = 0;
+  static int exits = 0;
+  static int entries = 0;
+  order = exits = entries = 0;
+
+  auto m = machine(
+    graph(
+      transition<s::a, s::a>([](int e) { return e == 1; }, [](int) { order = 1; }),
+      transition<s::a, s::b>([](int e) { return e >= 1; }, [](int) { order = 2; })),
+    map(
+      entry<s::a>(std::make_tuple([](int) { ++entries; }, nullptr, [](int) { ++exits; }))));
+
+  HALUJ_CHECK(m(s::a, 1) == s::a);
+  HALUJ_CHECK(order == 1);
+  HALUJ_CHECK(exits == 1 && entries == 1);
+
+  HALUJ_CHECK(m(s::a, 2) == s::b);
+  HALUJ_CHECK(order == 2);
+}
+
 int main()
 {
+  test_constexpr_machine();
+  test_order_and_self_transition();
   test_arguments_reach_every_callback();
   test_arguments_not_copied();
   test_context_by_reference();
