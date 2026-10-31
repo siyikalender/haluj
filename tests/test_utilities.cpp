@@ -31,6 +31,7 @@ For more information, please refer to <http://unlicense.org>
 /// \author Claude Opus 5.5 <noreply@anthropic.com>
 /// \date   2026
 
+#include <cstdint>
 #include <cstring>
 #include <iterator>
 #include <optional>
@@ -87,6 +88,141 @@ static void test_digital_input_filter()
   g(0x2u);
   HALUJ_CHECK(g(0x2u) == 0u);
   HALUJ_CHECK(g.mask() == 0x1u);
+}
+
+namespace
+{
+
+// Feeds a pattern of single bit samples and returns the outputs as a string
+// of '0' and '1', one per sample
+template<typename Debounce>
+const char* debounce(const char* samples)
+{
+  static char out[32];
+
+  haluj::digital_input_filter<unsigned, 4, Debounce> f(0x1u);
+
+  std::size_t i = 0;
+  for (; samples[i] != '\0'; ++i)
+    out[i] = f(samples[i] == '1' ? 1u : 0u) ? '1' : '0';
+  out[i] = '\0';
+
+  return out;
+}
+
+bool is(const char* a, const char* b)
+{
+  return std::strcmp(a, b) == 0;
+}
+
+} // namespace
+
+static void test_debounce_patterns()
+{
+  using namespace haluj;
+
+  // A noisy sample while the input is held at 1
+  const char* glitch_high = "11110111";
+  HALUJ_CHECK(is(debounce<debounce_rising >(glitch_high), "00010000"));
+  HALUJ_CHECK(is(debounce<debounce_falling>(glitch_high), "11111111"));
+  HALUJ_CHECK(is(debounce<debounce_both   >(glitch_high), "00011111"));
+
+  // A noisy sample while the input is held at 0, after a press
+  const char* glitch_low = "111100001000";
+  HALUJ_CHECK(is(debounce<debounce_rising >(glitch_low), "000100000000"));
+  HALUJ_CHECK(is(debounce<debounce_falling>(glitch_low), "111111101111"));
+  HALUJ_CHECK(is(debounce<debounce_both   >(glitch_low), "000111100000"));
+
+  // Bouncing on press and release
+  const char* bounce = "1010111110100000";
+  HALUJ_CHECK(is(debounce<debounce_rising >(bounce), "0000000110000000"));
+  HALUJ_CHECK(is(debounce<debounce_falling>(bounce), "1111111111111100"));
+  HALUJ_CHECK(is(debounce<debounce_both   >(bounce), "0000000111111100"));
+
+  // The default keeps the behaviour the filter always had
+  HALUJ_CHECK(is(debounce<debounce_rising>(bounce),
+                 []
+                 {
+                   static char out[32];
+                   haluj::digital_input_filter<unsigned, 4> f(0x1u);
+                   const char* in = "1010111110100000";
+                   std::size_t i = 0;
+                   for (; in[i] != '\0'; ++i)
+                     out[i] = f(in[i] == '1' ? 1u : 0u) ? '1' : '0';
+                   out[i] = '\0';
+                   return out;
+                 }()));
+}
+
+// Each policy against its definition, worked out from the last samples for
+// every bit, on pseudo random input with a mask and several buffer sizes
+template<typename Debounce, unsigned N>
+static void check_debounce_model(int policy)
+{
+  const std::uint8_t mask = 0x5Au;
+
+  haluj::digital_input_filter<std::uint8_t, N, Debounce> f(mask);
+
+  std::uint8_t history[N] = {};
+  std::uint8_t expected   = 0;
+  std::uint32_t seed      = 12345u + N;
+
+  for (int step = 0; step < 2000; ++step)
+  {
+    seed = seed * 1103515245u + 12345u;
+    // Mostly steady inputs with occasional changes, so every policy has
+    // something to filter
+    const std::uint8_t raw = (seed >> 24) < 40u ? std::uint8_t(seed >> 8)
+                                                : history[0] ^ std::uint8_t((seed >> 16) & 0x10u);
+
+    for (unsigned k = N - 1; k > 0; --k)
+      history[k] = history[k - 1];
+    history[0] = std::uint8_t(raw & mask);
+
+    std::uint8_t next = 0;
+    for (unsigned bit = 0; bit < 8; ++bit)
+    {
+      const std::uint8_t b = std::uint8_t(1u << bit);
+      if ((mask & b) == 0)
+        continue;
+
+      unsigned high = 0;
+      for (unsigned k = 0; k < N; ++k)
+        high += (history[k] & b) ? 1u : 0u;
+
+      bool on = false;
+      switch (policy)
+      {
+        case 0: on = (high == N);                                      break; // rising
+        case 1: on = (high > 0);                                       break; // falling
+        case 2: on = (high == N) || (high > 0 && (expected & b) != 0); break; // both
+      }
+      if (on)
+        next = std::uint8_t(next | b);
+    }
+
+    const std::uint8_t previous = expected;
+    expected = next;
+
+    HALUJ_CHECK(f(raw) == expected);
+    HALUJ_CHECK(f.edge() == std::uint8_t(previous ^ expected));
+  }
+}
+
+template<unsigned N>
+static void check_debounce_models()
+{
+  check_debounce_model<haluj::debounce_rising,  N>(0);
+  check_debounce_model<haluj::debounce_falling, N>(1);
+  check_debounce_model<haluj::debounce_both,    N>(2);
+}
+
+static void test_debounce_models()
+{
+  check_debounce_models<1>();
+  check_debounce_models<2>();
+  check_debounce_models<3>();
+  check_debounce_models<5>();
 }
 
 static void test_blackboard()
@@ -151,6 +287,8 @@ int main()
 {
   test_bidirectional_map();
   test_digital_input_filter();
+  test_debounce_patterns();
+  test_debounce_models();
   test_blackboard();
   test_set_and_wait();
   test_utility();

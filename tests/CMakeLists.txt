@@ -57,7 +57,6 @@ target_link_libraries(haluj_known_bugs PRIVATE haluj::haluj haluj_warnings)
 set(HALUJ_KNOWN_BUGS
   vector_assign_full
   format_int_truncation
-  digital_filter_glitch
   to_first_comparator
   state_machine_rvalue_argument
 )

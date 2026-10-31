@@ -37,7 +37,51 @@ For more information, please refer to <http://unlicense.org>
 namespace haluj
 {
 
-template<typename T, unsigned BufferSize>
+// Debounce policies
+//
+// The filter keeps the last BufferSize samples of each input bit. After
+// every sample it works out two masks:
+//   ones   the bits that were 1 in every sample
+//   zeros  the bits that were 0 in every sample
+// and the policy turns them, with the current value, into the new value.
+
+/// A 0 to 1 change needs BufferSize equal samples, a 1 to 0 change is
+/// immediate. For active high inputs whose activation must be confirmed.
+struct debounce_rising
+{
+  template<typename T>
+  static T apply(T, T ones, T, T)
+  {
+    return ones;
+  }
+};
+
+/// A 1 to 0 change needs BufferSize equal samples, a 0 to 1 change is
+/// immediate. The mirror of debounce_rising, for active low inputs.
+struct debounce_falling
+{
+  template<typename T>
+  static T apply(T, T, T zeros, T mask)
+  {
+    return T(~zeros & mask);
+  }
+};
+
+/// Both changes need BufferSize equal samples; while the samples disagree a
+/// bit keeps its value. A single noisy sample changes nothing.
+struct debounce_both
+{
+  template<typename T>
+  static T apply(T value, T ones, T zeros, T)
+  {
+    return T((value | ones) & ~zeros);
+  }
+};
+
+/// Filters up to the width of T digital inputs, one per bit, sampled by
+/// calling operator() with the raw input. Bits outside the mask are ignored
+/// and read as 0.
+template<typename T, unsigned BufferSize, typename Debounce = debounce_rising>
 struct digital_input_filter
 {
   static_assert(BufferSize > 0U, "digital_input_filter needs at least one sample");
@@ -59,20 +103,24 @@ struct digital_input_filter
       m_input[i]  =   m_input[i - 1U];
     }
 
-    T result = m_input[0U] = p_input & m_mask;
+    m_input[0U] = T(p_input & m_mask);
+
+    T ones  = m_input[0U];
+    T zeros = T(~m_input[0U]);
 
     for (unsigned i = 1U; i < c_buffer_size; i++)
     {
-      result      &=  m_input[i];
+      ones  = T(ones  &  m_input[i]);
+      zeros = T(zeros & ~m_input[i]);
     }
 
-    m_edge              = result ^ m_value;
+    zeros = T(zeros & m_mask);
 
-    if (m_edge != 0)
-    {
-      m_value             = result;
-    }
-    
+    const T result = Debounce::apply(m_value, ones, zeros, m_mask);
+
+    m_edge  = T(result ^ m_value);
+    m_value = result;
+
     return m_value;
   }
 

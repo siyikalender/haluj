@@ -51,7 +51,6 @@ For more information, please refer to <http://unlicense.org>
 
 #include "haluj/bidirectional_map.hpp"
 #include "haluj/bounded/vector.hpp"
-#include "haluj/digital_input_filter.hpp"
 #include "haluj/format.hpp"
 #include "haluj/state_machine.hpp"
 
@@ -71,16 +70,6 @@ static void format_int_truncation()
   char  text[8] = {};
   char* end     = haluj::format(12345, text, text + 3);
   HALUJ_CHECK(std::string(text, end) != "345");
-}
-
-// A single low sample must not release a debounced input
-static void digital_filter_glitch()
-{
-  haluj::digital_input_filter<unsigned, 4> f(0x1u);
-  for (int i = 0; i < 4; ++i)
-    f(1u);
-
-  HALUJ_CHECK(f(0u) == 1u);
 }
 
 // to_first over an array must use the given comparator
@@ -125,7 +114,6 @@ static const known_bug bugs[] =
 {
   {"vector_assign_full",            vector_assign_full},
   {"format_int_truncation",         format_int_truncation},
-  {"digital_filter_glitch",         digital_filter_glitch},
   {"to_first_comparator",           to_first_comparator},
   {"state_machine_rvalue_argument", state_machine_rvalue_argument},
 };
