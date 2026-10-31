@@ -34,6 +34,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include <algorithm>
 #include <cmath>
+#include <concepts>
 #include <cstddef>
 #include <iterator>
 #include <limits>
@@ -42,12 +43,17 @@ For more information, please refer to <http://unlicense.org>
 namespace haluj
 {
   
+/// The integers format() writes: every integer type but bool
+template<typename T>
+concept format_integer = std::integral<T> && !std::same_as<std::remove_cv_t<T>, bool>;
+
+/// Where format() writes: a forward iterator to char, such as char* or the
+/// iterator of a bounded::vector<char, N>
+template<typename Iterator>
+concept char_output = std::forward_iterator<Iterator> && std::output_iterator<Iterator, char>;
+
 namespace format_detail
 {
-
-template<typename T>
-using enable_if_integer_t =
-  std::enable_if_t<std::is_integral<T>::value && !std::is_same<T, bool>::value>;
 
 /// The number of characters from first to last
 template<typename Iterator>
@@ -64,9 +70,7 @@ inline std::size_t room(Iterator first, Iterator last)
 ///
 /// Nothing is written when the text does not fit in [first, last); first is
 /// returned then.
-template<typename Integer,
-         typename Iterator,
-         typename = format_detail::enable_if_integer_t<Integer> >
+template<format_integer Integer, char_output Iterator>
 Iterator format(Integer n, Iterator first, Iterator last)
 {
   typedef std::make_unsigned_t<Integer> magnitude_type;
@@ -121,9 +125,7 @@ Iterator format(Integer n, Iterator first, Iterator last)
 ///
 /// Nothing is written when size characters do not fit in [first, last);
 /// first is returned then.
-template<typename Integer,
-         typename Iterator,
-         typename = format_detail::enable_if_integer_t<Integer> >
+template<format_integer Integer, char_output Iterator>
 Iterator format_hex(Integer n, Iterator first, Iterator last, std::size_t size)
 {
   typedef std::make_unsigned_t<Integer> value_type;
@@ -160,7 +162,7 @@ Iterator format_hex(Integer n, Iterator first, Iterator last, std::size_t size)
 /// Nothing is written, and first is returned, when the text does not fit in
 /// [first, last), when n times 10^precision does not fit in an int, or when
 /// n is NaN or infinite.
-template<typename Iterator>
+template<char_output Iterator>
 Iterator format(float n, Iterator first, Iterator last, std::size_t precision)
 {
   static const float multipliers[] =

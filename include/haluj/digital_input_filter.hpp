@@ -32,8 +32,18 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_DIGITAL_INPUT_FILTER_HPP
 #define HALUJ_DIGITAL_INPUT_FILTER_HPP
 
+#include <concepts>
+
 namespace haluj
 {
+
+/// A debounce policy turns the current value and the ones and zeros masks
+/// of the samples into the new value: apply(value, ones, zeros, mask)
+template<typename Debounce, typename T>
+concept debounce_policy = requires(T bits)
+{
+  { Debounce::apply(bits, bits, bits, bits) } -> std::convertible_to<T>;
+};
 
 // Debounce policies
 //
@@ -79,7 +89,9 @@ struct debounce_both
 /// Filters up to the width of T digital inputs, one per bit, sampled by
 /// calling operator() with the raw input. Bits outside the mask are ignored
 /// and read as 0.
-template<typename T, unsigned BufferSize, typename Debounce = debounce_rising>
+template<std::integral                 T,
+         unsigned                       BufferSize,
+         debounce_policy<T>             Debounce = debounce_rising>
 struct digital_input_filter
 {
   static_assert(BufferSize > 0U, "digital_input_filter needs at least one sample");

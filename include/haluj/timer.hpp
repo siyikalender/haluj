@@ -33,10 +33,38 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_TIMER_HPP
 #define HALUJ_TIMER_HPP
 
+#include <concepts>
 #include <cstddef>
 
 namespace haluj
 {
+
+/// What timer<> needs of its implementation. software::fwd, software::bwd,
+/// chrono and proxy are the implementations of the library.
+///
+///   duration                the type of a time span
+///   load(duration)          set the timeout
+///   start(), stop()         run or stop
+///   is_running()
+///   reset()                 start over: a full timeout from now
+///   reload()                start the next period, keeping the time that ran
+///                           past the timeout
+///   operator()(duration)    advance by a delta; true once the timeout is
+///                           reached while running
+template<typename Implementation>
+concept timer_implementation =
+  requires(Implementation impl,
+           const Implementation cimpl,
+           typename Implementation::duration delta)
+  {
+    impl.load(delta);
+    impl.start();
+    impl.stop();
+    { cimpl.is_running() } -> std::convertible_to<bool>;
+    impl.reset();
+    impl.reload();
+    { impl(delta) } -> std::convertible_to<bool>;
+  };
 
 // Timer behaviours
 //
@@ -79,12 +107,20 @@ struct one_shot
   }
 };
 
+/// A behaviour can be called with an implementation and a function
+template<typename Behaviour, typename Implementation>
+concept timer_behaviour =
+  requires(const Behaviour behaviour, Implementation& impl, std::nullptr_t& function)
+  {
+    behaviour(impl, function);
+  };
+
 // Timer 
 
 template
 <
-  typename Implementation,
-  typename Behaviour = periodic
+  timer_implementation                        Implementation,
+  timer_behaviour<Implementation>             Behaviour = periodic
 >
 struct timer
 {

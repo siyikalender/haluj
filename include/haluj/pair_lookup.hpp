@@ -33,10 +33,11 @@ For more information, please refer to <http://unlicense.org>
 #define HALUJ_PAIR_LOOKUP_HPP
 
 #include <algorithm>
-#include <cstring>
+#include <concepts>
 #include <functional>
 #include <iterator>
-#include <type_traits>
+#include <ranges>
+#include <string_view>
 #include <utility>
 
 namespace haluj
@@ -45,9 +46,9 @@ namespace haluj
 /// Compares two C strings by content
 struct c_str_equal_to
 {
-  bool operator ()(const char* a, const char* b) const
+  constexpr bool operator ()(const char* a, const char* b) const
   {
-    return std::strcmp(a, b) == 0;
+    return std::string_view(a) == std::string_view(b);
   }
 };
 
@@ -56,7 +57,7 @@ struct c_str_equal_to
 struct in_range
 {
   template<typename T>
-  bool operator ()(const std::pair<T, T>& a, const T& b) const
+  constexpr bool operator ()(const std::pair<T, T>& a, const T& b) const
   {
     return (b >= a.first) && (b < a.second);
   }
@@ -65,19 +66,10 @@ struct in_range
 namespace pair_lookup_detail
 {
 
-// A range is anything std::begin and std::end apply to: a C array,
+// A range is anything std::ranges::begin and end apply to: a C array,
 // std::array, bounded::vector, a standard container...
-template<typename Range, typename = void>
-struct is_range : std::false_type {};
-
 template<typename Range>
-struct is_range<Range,
-                std::void_t<decltype(std::begin(std::declval<const Range&>())),
-                            decltype(std::end(std::declval<const Range&>()))>>
-  : std::true_type {};
-
-template<typename Range>
-using iterator_t = decltype(std::begin(std::declval<const Range&>()));
+using iterator_t = std::ranges::iterator_t<const Range>;
 
 template<typename Iterator>
 using pair_t = typename std::iterator_traits<Iterator>::value_type;
@@ -90,6 +82,23 @@ using second_t = typename pair_t<Iterator>::second_type;
 
 } // namespace pair_lookup_detail
 
+/// An iterator over pairs, such as std::pair or anything with first and
+/// second members and first_type and second_type
+template<typename Iterator>
+concept pair_iterator =
+  std::input_iterator<Iterator> &&
+  requires(Iterator it)
+  {
+    typename pair_lookup_detail::first_t<Iterator>;
+    typename pair_lookup_detail::second_t<Iterator>;
+    it->first;
+    it->second;
+  };
+
+/// A comparator called as comparator(element, key)
+template<typename CompFunc, typename Element, typename Key>
+concept pair_comparator = std::predicate<const CompFunc&, const Element&, const Key&>;
+
 // The key may be of another type than the elements it is compared with:
 // the default comparator, std::equal_to<>, compares any two types that
 // have ==, so an int key finds a uint8_t element. A comparator of one's
@@ -97,9 +106,10 @@ using second_t = typename pair_t<Iterator>::second_type;
 
 /// The first pair in [first, last) whose first element matches p_key
 template<typename     Key,
-         typename     Iterator,
+         pair_iterator Iterator,
          typename     CompFunc = std::equal_to<> >
-inline Iterator
+  requires pair_comparator<CompFunc, pair_lookup_detail::first_t<Iterator>, Key>
+constexpr Iterator
 find_in_first(const Key&      p_key,
               Iterator        p_first_it,
               Iterator        p_last_it,
@@ -114,9 +124,10 @@ find_in_first(const Key&      p_key,
 
 /// The first pair in [first, last) whose second element matches p_key
 template<typename     Key,
-         typename     Iterator,
+         pair_iterator Iterator,
          typename     CompFunc = std::equal_to<> >
-inline Iterator
+  requires pair_comparator<CompFunc, pair_lookup_detail::second_t<Iterator>, Key>
+constexpr Iterator
 find_in_second(const Key&      p_key,
                Iterator        p_first_it,
                Iterator        p_last_it,
@@ -133,9 +144,10 @@ find_in_second(const Key&      p_key,
 /// or an empty OptionalType when there is none
 template<template<class> class OptionalType,
          typename     Key,
-         typename     Iterator,
+         pair_iterator Iterator,
          typename     CompFunc = std::equal_to<> >
-inline OptionalType<pair_lookup_detail::second_t<Iterator>>
+  requires pair_comparator<CompFunc, pair_lookup_detail::first_t<Iterator>, Key>
+constexpr OptionalType<pair_lookup_detail::second_t<Iterator>>
 to_second(const Key&      p_key,
           Iterator        p_first_it,
           Iterator        p_last_it,
@@ -156,17 +168,17 @@ to_second(const Key&      p_key,
 /// to_second over a whole range
 template<template<class> class OptionalType,
          typename     Key,
-         typename     Range,
-         typename     CompFunc = std::equal_to<>,
-         typename     = std::enable_if_t<pair_lookup_detail::is_range<Range>::value> >
-inline OptionalType<pair_lookup_detail::second_t<pair_lookup_detail::iterator_t<Range>>>
+         std::ranges::common_range Range,
+         typename     CompFunc = std::equal_to<> >
+  requires pair_iterator<pair_lookup_detail::iterator_t<Range>>
+constexpr OptionalType<pair_lookup_detail::second_t<pair_lookup_detail::iterator_t<Range>>>
 to_second(const Key&      p_key,
           const Range&    p_range,
           const CompFunc  p_comparator = CompFunc())
 {
   return to_second<OptionalType>(p_key,
-                                 std::begin(p_range),
-                                 std::end(p_range),
+                                 std::ranges::begin(p_range),
+                                 std::ranges::end(p_range),
                                  p_comparator);
 }
 
@@ -174,9 +186,10 @@ to_second(const Key&      p_key,
 /// or an empty OptionalType when there is none
 template<template<class> class OptionalType,
          typename     Key,
-         typename     Iterator,
+         pair_iterator Iterator,
          typename     CompFunc = std::equal_to<> >
-inline OptionalType<pair_lookup_detail::first_t<Iterator>>
+  requires pair_comparator<CompFunc, pair_lookup_detail::second_t<Iterator>, Key>
+constexpr OptionalType<pair_lookup_detail::first_t<Iterator>>
 to_first(const Key&      p_key,
          Iterator        p_first_it,
          Iterator        p_last_it,
@@ -197,17 +210,17 @@ to_first(const Key&      p_key,
 /// to_first over a whole range
 template<template<class> class OptionalType,
          typename     Key,
-         typename     Range,
-         typename     CompFunc = std::equal_to<>,
-         typename     = std::enable_if_t<pair_lookup_detail::is_range<Range>::value> >
-inline OptionalType<pair_lookup_detail::first_t<pair_lookup_detail::iterator_t<Range>>>
+         std::ranges::common_range Range,
+         typename     CompFunc = std::equal_to<> >
+  requires pair_iterator<pair_lookup_detail::iterator_t<Range>>
+constexpr OptionalType<pair_lookup_detail::first_t<pair_lookup_detail::iterator_t<Range>>>
 to_first(const Key&      p_key,
          const Range&    p_range,
          const CompFunc  p_comparator = CompFunc())
 {
   return to_first<OptionalType>(p_key,
-                                std::begin(p_range),
-                                std::end(p_range),
+                                std::ranges::begin(p_range),
+                                std::ranges::end(p_range),
                                 p_comparator);
 }
 

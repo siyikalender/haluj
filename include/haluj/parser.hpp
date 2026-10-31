@@ -32,6 +32,8 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_PARSER_HPP
 #define HALUJ_PARSER_HPP
 
+#include <concepts>
+
 namespace haluj
 {
 
@@ -65,6 +67,18 @@ constexpr bool is_space(char c)  { return c == ' ' || (c >= '\t' && c <= '\r'); 
 /// optimisation does not apply and every level of a grammar grows.
 struct rule
 {};
+
+/// What every rule provides: accept(first, last) tries the rule at first,
+/// moves first past what it matched and tells whether it matched. A rule is
+/// a template over the iterator; it is checked here with const char*, so a
+/// rule must at least work on plain character arrays. The combinators take
+/// parser_rule arguments, so a wrong argument is reported where the rule is
+/// built.
+template<typename Rule>
+concept parser_rule = requires(const Rule rule, const char*& first, const char* last)
+{
+  { rule.accept(first, last) } -> std::same_as<bool>;
+};
 
 /// Specific character parser rule
 /// parses the specified character
@@ -337,7 +351,7 @@ struct opt_p
 };
 
 /// Creates and oprional expression parser rule
-template<typename ExprType>
+template<parser_rule ExprType>
 constexpr opt_p<ExprType> opt(const ExprType& expr)
 {
   return opt_p<ExprType>(expr);
@@ -346,7 +360,7 @@ constexpr opt_p<ExprType> opt(const ExprType& expr)
 /// Accepts expr as long as it succeeds and consumes input. Used by om and
 /// zm: a rule that succeeds without consuming anything (opt, zm, rest at the
 /// end of the input) would otherwise be repeated forever.
-template<typename ExprType, typename Iterator>
+template<parser_rule ExprType, typename Iterator>
 constexpr void repeat_(const ExprType& expr, Iterator& first, Iterator last)
 {
   for (;;)
@@ -383,7 +397,7 @@ struct om_p
   [[no_unique_address]] ExprType expr_;
 };
 
-template<typename ExprType>
+template<parser_rule ExprType>
 constexpr om_p<ExprType> om(const ExprType& p_expr)
 {
   return om_p<ExprType>(p_expr);
@@ -407,7 +421,7 @@ struct zm_p
   [[no_unique_address]] ExprType expr_;
 };
 
-template<typename ExprType>
+template<parser_rule ExprType>
 constexpr zm_p<ExprType> zm(const ExprType& expr)
 {
   return zm_p<ExprType>(expr);
@@ -469,14 +483,14 @@ struct seq_p<ExprType>
   [[no_unique_address]] ExprType  expr_;
 };
 
-template<typename ExprType>
+template<parser_rule ExprType>
 constexpr seq_p<ExprType>
 seq(const ExprType& p_a)
 {
   return seq_p<ExprType>(p_a);
 }
 
-template<typename ExprType, typename ... Types>
+template<parser_rule ExprType, parser_rule ... Types>
 constexpr seq_p<ExprType, Types...>
 seq(const ExprType& p_a, Types... args)
 {
@@ -532,14 +546,14 @@ struct any_p<ExprType>
   [[no_unique_address]] ExprType  expr_;
 };
 
-template<typename ExprType>
+template<parser_rule ExprType>
 constexpr any_p<ExprType>
 any(const ExprType& p_a)
 {
   return any_p<ExprType>(p_a);
 }
 
-template<typename ExprType, typename ... Types>
+template<parser_rule ExprType, parser_rule ... Types>
 constexpr any_p<ExprType, Types...>
 any(const ExprType& p_a, Types... args)
 {
@@ -575,7 +589,7 @@ struct except_p
   [[no_unique_address]] ExprType    expr_;
 };
 
-template<typename ExprType>
+template<parser_rule ExprType>
 constexpr except_p<ExprType>
 except(const ExprType& p_expr)
 {
@@ -607,7 +621,7 @@ struct except_2_p
   [[no_unique_address]] EscapeExprType    esc_expr_;
 };
 
-template<typename ExprType, typename EscapeExprType>
+template<parser_rule ExprType, parser_rule EscapeExprType>
 constexpr except_2_p<ExprType, EscapeExprType>
 except_2(const ExprType& p_expr, const EscapeExprType& p_esc_expr)
 {
@@ -669,7 +683,7 @@ struct action_p
   [[no_unique_address]] const ActionType  a_;
 };
 
-template<typename ExprType, typename ActionType = default_action>
+template<parser_rule ExprType, typename ActionType = default_action>
 constexpr action_p<ExprType, ActionType>
 action(const ExprType   &p_expr,
        const ActionType &p_action = ActionType())

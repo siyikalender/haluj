@@ -32,20 +32,20 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_CYCLIC_INDEX_HPP
 #define HALUJ_CYCLIC_INDEX_HPP
 
-#include <type_traits>
+#include <concepts>
 
 namespace haluj
 {
 
 /// Advances v by one step in a ring of N. Requires v < N.
-template<typename T>
+template<std::integral T>
 constexpr T cyclic_increment(const T v, const T N)
 {
   return (v == T(N - 1)) ? T(0) : T(v + 1);
 }
 
 /// Moves v back by one step in a ring of N. Requires v < N.
-template<typename T>
+template<std::integral T>
 constexpr T cyclic_decrement(const T v, const T N)
 {
   return (v == T(0)) ? T(N - 1) : T(v - 1);
@@ -53,14 +53,14 @@ constexpr T cyclic_decrement(const T v, const T N)
 
 /// Advances v by size steps in a ring of N. Requires v < N and size <= N.
 /// v + size is never formed, so it cannot overflow T.
-template<typename T>
+template<std::integral T>
 constexpr T cyclic_increment(const T v, T size, const T N)
 {
   return (v >= T(N - size)) ? T(v - (N - size)) : T(v + size);
 }
 
 /// Moves v back by size steps in a ring of N. Requires v < N and size <= N.
-template<typename T>
+template<std::integral T>
 constexpr T cyclic_decrement(const T v, T size, const T N)
 {
   return (v >= size) ? T(v - size) : T(v + (N - size));
@@ -71,7 +71,7 @@ constexpr T cyclic_decrement(const T v, T size, const T N)
 ///
 /// For example the number of elements between the tail and the head of a
 /// ring buffer is cyclic_distance_forward(tail, head, N).
-template<typename T>
+template<std::integral T>
 constexpr T cyclic_distance_forward(const T from, const T to, const T N)
 {
   return (to >= from) ? T(to - from) : T(N - (from - to));
@@ -81,7 +81,7 @@ constexpr T cyclic_distance_forward(const T from, const T to, const T N)
 /// that is (from - to) mod N. Requires from < N and to < N.
 ///
 /// cyclic_distance_backward(a, b, N) == cyclic_distance_forward(b, a, N)
-template<typename T>
+template<std::integral T>
 constexpr T cyclic_distance_backward(const T from, const T to, const T N)
 {
   return cyclic_distance_forward(to, from, N);
@@ -93,10 +93,9 @@ constexpr T cyclic_distance_backward(const T from, const T to, const T N)
 /// It is a plain value: trivially copyable, and usable in constant
 /// expressions. value is kept below N by the operators; code that writes
 /// value directly must keep it below N too.
-template<typename T, T N>
+template<std::integral T, T N>
 struct cyclic_index
 {
-  static_assert(std::is_integral<T>::value, "cyclic_index needs an integral type");
   static_assert(N > T(0), "cyclic_index needs at least one position");
 
   constexpr cyclic_index& operator++()
@@ -147,37 +146,37 @@ struct cyclic_index
 // The comparisons compare the raw positions. On a ring "less than" is not an
 // order of the positions in time; use cyclic_distance_forward for that.
 
-template<typename T, T N>
+template<std::integral T, T N>
 constexpr bool operator<(cyclic_index<T, N> A, cyclic_index<T, N> B)
 {
   return A.value < B.value;
 }
 
-template<typename T, T N>
+template<std::integral T, T N>
 constexpr bool operator==(cyclic_index<T, N> A, cyclic_index<T, N> B)
 {
   return A.value == B.value;
 }
 
-template<typename T, T N>
+template<std::integral T, T N>
 constexpr bool operator>(cyclic_index<T, N> A, cyclic_index<T, N> B)
 {
   return A.value > B.value;
 }
 
-template<typename T, T N>
+template<std::integral T, T N>
 constexpr bool operator!=(cyclic_index<T, N> A, cyclic_index<T, N> B)
 {
   return A.value != B.value;
 }
 
-template<typename T, T N>
+template<std::integral T, T N>
 constexpr bool operator<=(cyclic_index<T, N> A, cyclic_index<T, N> B)
 {
   return A.value <= B.value;
 }
 
-template<typename T, T N>
+template<std::integral T, T N>
 constexpr bool operator>=(cyclic_index<T, N> A, cyclic_index<T, N> B)
 {
   return A.value >= B.value;

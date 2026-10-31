@@ -32,6 +32,7 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_RING_BUFFER_HPP
 #define HALUJ_RING_BUFFER_HPP
 
+#include <concepts>
 #include <cstddef>
 
 #include "concurrency.hpp"
@@ -39,6 +40,16 @@ For more information, please refer to <http://unlicense.org>
 
 namespace haluj
 {
+
+/// The storage of a ring_buffer: a random access container whose size() is
+/// fixed and known at compile time, such as std::array
+template<typename Container>
+concept ring_buffer_container = requires(Container c, const Container cc, std::size_t i)
+{
+  typename Container::value_type;
+  { cc.size() } -> std::convertible_to<std::size_t>;
+  { c[i] } -> std::same_as<typename Container::value_type&>;
+};
 
 /// A fixed capacity ring buffer (FIFO) over a random access container, such
 /// as std::array<char, 64>, whose size is the capacity. Any capacity works.
@@ -80,8 +91,8 @@ namespace haluj
 /// A ring_buffer is built at compile time: as a global, declare it constinit
 /// and it starts in .bss, with no code run at start up. The container is
 /// value initialized, so a local ring_buffer clears its storage when built.
-template< typename  RandomAccessContainerType,
-          typename  Concurrency = single_context>
+template< ring_buffer_container  RandomAccessContainerType,
+          concurrency_policy     Concurrency = single_context>
 struct ring_buffer
 {
   typedef RandomAccessContainerType             container_type;

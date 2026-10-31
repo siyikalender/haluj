@@ -32,13 +32,24 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_EVENT_STRATEGY_HPP
 #define HALUJ_EVENT_STRATEGY_HPP
 
+#include <concepts>
+
 #include "concurrency.hpp"
 
 namespace haluj
 {
 
+/// An event strategy tells whether an event is pending: test(event).
+/// strategy::blackboard is the strategy of the library.
+template<typename EventStrategy, typename Event>
+concept event_strategy = requires(const EventStrategy strategy, const Event event)
+{
+  { strategy.test(event) } -> std::convertible_to<bool>;
+};
+
 template <typename EventType, 
           typename EventStrategyType>
+  requires event_strategy<EventStrategyType, EventType>
 struct on_t
 {
   typedef EventType                     event_type;
@@ -65,6 +76,7 @@ struct on_t
 
 template <typename  EventType,
           typename  EventStrategyType>
+  requires event_strategy<EventStrategyType, EventType>
 constexpr on_t<EventType, EventStrategyType>
 on(const EventType p_event, 
    const EventStrategyType& p_event_strategy)
@@ -77,8 +89,7 @@ on(const EventType p_event,
 /// A temporary strategy would be destroyed before the result is used
 template <typename  EventType,
           typename  EventStrategyType>
-on_t<EventType, EventStrategyType>
-on(const EventType, const EventStrategyType&&) = delete;
+void on(const EventType, const EventStrategyType&&) = delete;
 
 namespace strategy
 {
@@ -100,8 +111,8 @@ namespace strategy
 /// needs an atomic read-modify-write, which Cortex-M0 does not have; there,
 /// raise() from more than one context only with interrupts masked around
 /// it.
-template <typename EventType,
-          typename Concurrency = single_context>
+template <typename           EventType,
+          concurrency_policy Concurrency = single_context>
 struct blackboard
 {
   typedef EventType     event_type;

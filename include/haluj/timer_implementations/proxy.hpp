@@ -34,6 +34,8 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_TIMER_IMPLEMENTATIONS_PROXY_HPP
 #define HALUJ_TIMER_IMPLEMENTATIONS_PROXY_HPP
 
+#include <concepts>
+
 namespace haluj
 {
 
@@ -45,7 +47,7 @@ namespace timer_implementations
 ///
 ///   haluj::timer<haluj::timer_implementations::proxy<tim2>> t;
 ///
-/// Timer must provide:
+/// Timer must provide (the static_timer concept below checks it):
 ///
 ///   typedef ... duration;
 ///   static void load(duration);       the timeout
@@ -62,6 +64,19 @@ namespace timer_implementations
 /// The proxy holds no state, so every timer<proxy<Timer>> object drives the
 /// same Timer.
 template<typename Timer>
+concept static_timer =
+  requires(typename Timer::duration delta)
+  {
+    Timer::load(delta);
+    Timer::start();
+    Timer::stop();
+    { Timer::is_running() } -> std::convertible_to<bool>;
+    Timer::reset();
+    Timer::reload();
+    { Timer::proceed(delta) } -> std::convertible_to<bool>;
+  };
+
+template<static_timer Timer>
 struct proxy
 {
   typedef typename Timer::duration duration;

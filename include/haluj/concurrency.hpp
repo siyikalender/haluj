@@ -35,6 +35,7 @@ For more information, please refer to <http://unlicense.org>
 #define HALUJ_CONCURRENCY_HPP
 
 #include <atomic>
+#include <concepts>
 
 namespace haluj
 {
@@ -53,6 +54,14 @@ struct single_context
 struct spsc
 {
   static constexpr bool is_atomic = true;
+};
+
+/// A concurrency policy tells whether shared state is atomic. single_context
+/// and spsc are the policies of the library.
+template<typename Concurrency>
+concept concurrency_policy = requires
+{
+  { Concurrency::is_atomic } -> std::convertible_to<bool>;
 };
 
 namespace concurrency_detail
@@ -88,7 +97,7 @@ struct shared<T, true>
 
 /// A value shared under a concurrency policy: a plain T for single_context,
 /// an atomic with acquire loads and release stores for spsc
-template<typename T, typename Concurrency>
+template<typename T, concurrency_policy Concurrency>
 using shared = concurrency_detail::shared<T, Concurrency::is_atomic>;
 
 } // namespace haluj
