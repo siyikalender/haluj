@@ -32,7 +32,6 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_DIGITAL_INPUT_FILTER_HPP
 #define HALUJ_DIGITAL_INPUT_FILTER_HPP
 
-#include <algorithm>
 
 namespace haluj
 {
@@ -50,7 +49,7 @@ namespace haluj
 struct debounce_rising
 {
   template<typename T>
-  static T apply(T, T ones, T, T)
+  static constexpr T apply(T, T ones, T, T)
   {
     return ones;
   }
@@ -61,7 +60,7 @@ struct debounce_rising
 struct debounce_falling
 {
   template<typename T>
-  static T apply(T, T, T zeros, T mask)
+  static constexpr T apply(T, T, T zeros, T mask)
   {
     return T(~zeros & mask);
   }
@@ -72,7 +71,7 @@ struct debounce_falling
 struct debounce_both
 {
   template<typename T>
-  static T apply(T value, T ones, T zeros, T)
+  static constexpr T apply(T value, T ones, T zeros, T)
   {
     return T((value | ones) & ~zeros);
   }
@@ -88,15 +87,14 @@ struct digital_input_filter
 
   static constexpr unsigned c_buffer_size = BufferSize;
 
-  digital_input_filter(const T p_mask = 0U)
-  : m_mask(p_mask),
+  constexpr digital_input_filter(const T p_mask = 0U)
+  : m_input{},
+    m_mask(p_mask),
     m_value(0U),
     m_edge(0U)
-  {
-    std::fill_n(&m_input[0], c_buffer_size, 0U);
-  }
+  {}
 
-  T operator()(const T      p_input)
+  constexpr T operator()(const T      p_input)
   {
     for (unsigned i = (c_buffer_size - 1U); i > 0U; i--)
     {
@@ -124,17 +122,17 @@ struct digital_input_filter
     return m_value;
   }
 
-  T      value() const
+  constexpr T      value() const
   {
     return m_value;
   }
 
-  T      edge() const
+  constexpr T      edge() const
   {
     return m_edge;
   }
   
-  T mask() const
+  constexpr T mask() const
   {
     return m_mask;
   }

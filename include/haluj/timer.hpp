@@ -49,10 +49,10 @@ namespace haluj
 namespace timer_detail
 {
 
-inline void call(std::nullptr_t) {}
+constexpr void call(std::nullptr_t) {}
 
 template<typename Function>
-inline void call(Function& p_function) { p_function(); }
+constexpr void call(Function& p_function) { p_function(); }
 
 } // namespace timer_detail
 
@@ -61,7 +61,7 @@ inline void call(Function& p_function) { p_function(); }
 struct periodic
 {
   template<typename Implementation, typename Function>
-  void operator()(Implementation& p_impl, Function& p_function) const
+  constexpr void operator()(Implementation& p_impl, Function& p_function) const
   {
     p_impl.reload();
     timer_detail::call(p_function);
@@ -72,7 +72,7 @@ struct periodic
 struct one_shot
 {
   template<typename Implementation, typename Function>
-  void operator()(Implementation& p_impl, Function& p_function) const
+  constexpr void operator()(Implementation& p_impl, Function& p_function) const
   {
     p_impl.stop();
     timer_detail::call(p_function);
@@ -96,8 +96,7 @@ struct timer
 
   // Constructors
 
-  timer()
-  {}
+  constexpr timer() = default;
 
   timer(const timer& ) = delete;
   
@@ -110,7 +109,7 @@ struct timer
     typename Function     = std::nullptr_t,
     typename DurationType = int
   >
-  bool operator()
+  constexpr bool operator()
   (
     Function      p_function  = Function(),
     DurationType  p_delta     = DurationType(1)
@@ -128,32 +127,32 @@ struct timer
 
   // Methods
   
-  void set(duration p_value)
+  constexpr void set(duration p_value)
   {
     impl_.load(p_value);
     impl_.reset();
     impl_.start();
   }
 
-  void load(duration p_value)
+  constexpr void load(duration p_value)
   {
     impl_.load(p_value);
   }
   
-  void stop()
+  constexpr void stop()
   {
     impl_.stop();
   }
   
-  bool is_running() const
+  constexpr bool is_running() const
   {
     return impl_.is_running();
   }  
 
 // private:
 
-  implementation  impl_;
-  behaviour       behaviour_;
+  implementation  impl_{};
+  behaviour       behaviour_{};
 };
 
 } // namespace haluj

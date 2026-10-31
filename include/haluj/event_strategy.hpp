@@ -45,7 +45,7 @@ struct on_t
   typedef EventStrategyType             event_strategy_type;
   
   /// The strategy is kept by reference, so it must outlive this object
-  on_t(const event_type             p_event,
+  constexpr on_t(const event_type             p_event,
        const event_strategy_type&   p_event_strategy)
   : event(p_event),
     event_strategy(p_event_strategy)
@@ -54,7 +54,7 @@ struct on_t
   /// A temporary strategy would be destroyed before operator() runs
   on_t(const event_type, const event_strategy_type&&) = delete;
   
-  bool operator()() const
+  constexpr bool operator()() const
   {
     return (event_strategy.test(event));
   }
@@ -108,20 +108,20 @@ struct blackboard
   typedef Concurrency   concurrency;
 
   /// consumer: true if p_event is pending
-  bool test(EventType   p_event) const
+  constexpr bool test(EventType   p_event) const
   {
     // The flag is read first: once it is seen set, the event is there
     return (is_valid.load() && (pending_event == p_event));
   }
 
   /// consumer: takes the pending event off the board
-  void clear()
+  constexpr void clear()
   {
     is_valid.store(false);
   }
 
   /// consumer: takes p_event off the board if it is pending
-  bool test_and_clear(EventType p_event)
+  constexpr bool test_and_clear(EventType p_event)
   {
     bool result = false;
 
@@ -136,7 +136,7 @@ struct blackboard
 
   /// producer: puts p_event on the board if it is free; false if another
   /// event is still pending
-  bool raise(EventType p_event)
+  constexpr bool raise(EventType p_event)
   {
     bool result = false;
 

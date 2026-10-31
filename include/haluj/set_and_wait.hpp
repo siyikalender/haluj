@@ -47,7 +47,7 @@ struct set_and_wait
     wait
   };
   
-  set_and_wait()
+  constexpr set_and_wait()
   : state_(states::set)
   {}
   
@@ -55,7 +55,7 @@ struct set_and_wait
            typename TestFunction      = default_test_function, 
            typename SuccessFunction   = default_function,
            typename WaitIdleFunction  = default_function>
-  void operator () (SetFunction       set_function        = SetFunction(),
+  constexpr void operator () (SetFunction       set_function        = SetFunction(),
                     TestFunction      test_function       = TestFunction(),
                     SuccessFunction   success_function    = SuccessFunction(),
                     WaitIdleFunction  wait_idle_function  = WaitIdleFunction())

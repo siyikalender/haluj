@@ -244,7 +244,19 @@ static void test_entry_forms()
 
   static constexpr auto e = entry<s::a>(nullptr, nullptr, nullptr);
   static_assert(decltype(e)::key == s::a, "constexpr entry");
-  HALUJ_CHECK(std::get<1>(e.value) == nullptr);
+
+  // A missing action becomes no_action, an empty type that takes no room
+  static_assert(std::is_same<std::decay_t<decltype(std::get<1>(e.value))>,
+                             no_action>::value, "nullptr kept as no_action");
+  // (three of the same empty type in a tuple need a byte each)
+  static_assert(sizeof(e) <= 3, "an entry without actions holds no pointers");
+
+  constexpr auto t = transition<s::a, s::a>(g_always);
+  static_assert(std::is_same<decltype(t)::action_type, no_action>::value,
+                "a transition without action has no_action");
+  static_assert(std::is_same<decltype(transition<s::a, s::a>(g_always, nullptr)),
+                             std::remove_const_t<decltype(t)>>::value,
+                "nullptr as the action is the same as none");
 }
 
 int main()

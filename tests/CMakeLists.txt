@@ -8,7 +8,7 @@
 # Date:   2026
 
 # Run time tests
-foreach(test test_containers test_format test_parser test_state_machine
+foreach(test test_constinit test_containers test_format test_parser test_state_machine
              test_timer test_utilities)
   add_executable(haluj_${test} ${test}.cpp)
   target_link_libraries(haluj_${test} PRIVATE haluj::haluj haluj_warnings)

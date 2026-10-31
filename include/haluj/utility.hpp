@@ -17,7 +17,7 @@ struct async_loop
 {
   typedef ValueType value_t;
 
-  explicit async_loop(const value_t p_initial = value_t(0))
+  constexpr explicit async_loop(const value_t p_initial = value_t(0))
   {
     initialize(p_initial);
   }
@@ -26,14 +26,14 @@ struct async_loop
 
   async_loop(async_loop&& p_other) = delete;
 
-  void initialize(const value_t p_initial)
+  constexpr void initialize(const value_t p_initial)
   {
     value_ = p_initial;
   }
 
   template<typename Condition, 
            typename Update>
-  bool operator()(Condition p_condition, 
+  constexpr bool operator()(Condition p_condition, 
                   Update    p_update)
   {
     bool result = p_condition(value_);

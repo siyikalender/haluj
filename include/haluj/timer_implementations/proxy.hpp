@@ -66,37 +66,37 @@ struct proxy
 {
   typedef typename Timer::duration duration;
 
-  void load(duration p_value)
+  constexpr void load(duration p_value)
   {
     Timer::load(p_value);
   }
 
-  void start()
+  constexpr void start()
   {
     Timer::start();
   }
 
-  void stop()
+  constexpr void stop()
   {
     Timer::stop();
   }
 
-  bool is_running() const
+  constexpr bool is_running() const
   {
     return Timer::is_running();
   }
 
-  void reset()
+  constexpr void reset()
   {
     Timer::reset();
   }
 
-  void reload()
+  constexpr void reload()
   {
     Timer::reload();
   }
 
-  bool operator ()(duration p_delta)
+  constexpr bool operator ()(duration p_delta)
   {
     return Timer::proceed(p_delta);
   }

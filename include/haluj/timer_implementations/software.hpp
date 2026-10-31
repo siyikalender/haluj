@@ -48,22 +48,22 @@ struct base
 {
   typedef DurationType  duration;
 
-  void load(duration p_value) 
+  constexpr void load(duration p_value) 
   {
     timeout_ = p_value;
   }
 
-  void start()
+  constexpr void start()
   {
     run_ = true;
   }
   
-  void stop()
+  constexpr void stop()
   {
     run_ = false;
   }
   
-  bool is_running() const
+  constexpr bool is_running() const
   {
     return run_;
   }
@@ -83,24 +83,24 @@ struct forward : base<DurationType>
   typedef base<DurationType>          base_t;
   typedef typename base_t::duration   duration;
   
-  void iterate(duration p_delta)
+  constexpr void iterate(duration p_delta)
   {
     elapsed_ += p_delta;
   }
 
-  bool predicate() const
+  constexpr bool predicate() const
   {
     return (elapsed_ >= base_t::timeout_);
   }
 
   /// Starts over from zero
-  void reset()
+  constexpr void reset()
   {
     elapsed_ = duration(0);
   }
 
   /// Starts the next period, keeping the time that ran past the timeout
-  void reload()
+  constexpr void reload()
   {
     elapsed_ -= base_t::timeout_;
   }
@@ -123,24 +123,24 @@ struct backward : base<DurationType>
   typedef base<DurationType>          base_t;
   typedef typename base_t::duration   duration;
 
-  void iterate(duration p_delta)
+  constexpr void iterate(duration p_delta)
   {
     remaining_ -= p_delta;
   }
 
-  bool predicate() const
+  constexpr bool predicate() const
   {
     return (remaining_ <= duration(0));
   }
   
   /// Starts over from the full timeout
-  void reset()
+  constexpr void reset()
   {
     remaining_ = base_t::timeout_;
   }
 
   /// Starts the next period, keeping the time that ran past zero
-  void reload()
+  constexpr void reload()
   {
     remaining_ += base_t::timeout_;
   }
@@ -163,7 +163,7 @@ struct implementation : DirectionType
   typedef DirectionType                 direction;
   typedef typename direction::duration  duration;
 
-  bool operator ()(duration p_delta)
+  constexpr bool operator ()(duration p_delta)
   {
     bool result = false;
 

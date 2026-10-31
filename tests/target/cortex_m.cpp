@@ -56,14 +56,16 @@ namespace
 enum class mode { idle, run };
 enum class dma_event : std::uint8_t { none, half, complete };
 
-haluj::ring_buffer<std::array<char, 64>, haluj::spsc>             rx;   // filled by the UART interrupt
-haluj::bounded::vector<char, 32>                                  line;
-haluj::timer<haluj::timer_implementations::software::fwd<std::uint32_t>> blink;
-haluj::digital_input_filter<std::uint32_t, 4>                     buttons(0x3u);
-haluj::set_and_wait                                               handshake;
-haluj::strategy::blackboard<dma_event, haluj::spsc>               dma;  // raised by the DMA interrupt
-mode                                                              state = mode::idle;
-std::uint32_t                                                     setpoint = 0;
+// constinit: every global is built at compile time and starts in .bss or
+// .data, so nothing runs before main and an interrupt may come at any time
+constinit haluj::ring_buffer<std::array<char, 64>, haluj::spsc>             rx;   // filled by the UART interrupt
+constinit haluj::bounded::vector<char, 32>                                  line;
+constinit haluj::timer<haluj::timer_implementations::software::fwd<std::uint32_t>> blink;
+constinit haluj::digital_input_filter<std::uint32_t, 4>                     buttons(0x3u);
+constinit haluj::set_and_wait                                               handshake;
+constinit haluj::strategy::blackboard<dma_event, haluj::spsc>               dma;  // raised by the DMA interrupt
+constinit mode                                                              state = mode::idle;
+constinit std::uint32_t                                                     setpoint = 0;
 
 const std::pair<std::uint8_t, mode> modes[] = {{0, mode::idle}, {1, mode::run}};
 
@@ -97,7 +99,7 @@ std::uint32_t          systick_timer::timeout = 0;
 std::uint32_t          systick_timer::last    = 0;
 bool                   systick_timer::running = false;
 
-haluj::timer<haluj::timer_implementations::proxy<systick_timer>> watchdog;
+constinit haluj::timer<haluj::timer_implementations::proxy<systick_timer>> watchdog;
 
 } // namespace
 

@@ -60,6 +60,10 @@ namespace bounded
 /// constructible, and an element that leaves the vector (pop_back, resize,
 /// clear) is not destroyed until it is overwritten. Both are natural for the
 /// trivial types this vector is meant for.
+///
+/// A vector is built at compile time: as a global, declare it constinit and
+/// it starts in .bss, with no code run at start up. The storage is value
+/// initialized, so a local vector clears its storage when built.
 template<typename T, std::size_t Capacity>
 struct vector
 {
@@ -77,27 +81,26 @@ struct vector
 
   // Copying and assigning are left to the compiler (rule of zero): they copy
   // the whole storage, so a vector of trivially copyable T is trivially
-  // copyable. The user provided default constructor keeps the type from
-  // being an aggregate, so that vector<int, 4> v{1, 2} does not compile
-  // into a vector of size 0 with 1 and 2 in its storage.
-  vector()
-  {}
+  // copyable. The declared default constructor keeps the type from being an
+  // aggregate, so that vector<int, 4> v{1, 2} does not compile into a
+  // vector of size 0 with 1 and 2 in its storage.
+  constexpr vector() = default;
 
   /// \pre !full()
-  void push_back(const T& p_value)
+  constexpr void push_back(const T& p_value)
   {
     m_data[m_size] = p_value;
     m_size++;
   }
 
   /// \pre !empty()
-  void pop_back()
+  constexpr void pop_back()
   {
     m_size--;
   }
 
   /// \pre p_size <= capacity()
-  void resize(const std::size_t p_size, const T& p_initial = T())
+  constexpr void resize(const std::size_t p_size, const T& p_initial = T())
   {
     if (m_size < p_size)
     {
@@ -111,7 +114,7 @@ struct vector
     return Capacity;
   }
 
-  std::size_t size() const
+  constexpr std::size_t size() const
   {
     return m_size;
   }
@@ -119,110 +122,110 @@ struct vector
   /// Takes a forward range: it is measured, then copied.
   /// \pre distance(first, last) <= capacity()
   template <typename ForwardIterator>
-  void assign(ForwardIterator first, ForwardIterator last)
+  constexpr void assign(ForwardIterator first, ForwardIterator last)
   {
     resize(std::distance(first, last));
     std::copy (first, last, begin());
   }
 
-  bool empty() const
+  constexpr bool empty() const
   {
     return size() == 0;
   }
 
-  bool full() const
+  constexpr bool full() const
   {
     return size() == Capacity;
   }
 
-  iterator begin()
+  constexpr iterator begin()
   {
     return m_data;
   }
 
   // m_data + m_size rather than &m_data[m_size], which would index past the
   // array when the vector is full
-  iterator end()
+  constexpr iterator end()
   {
     return m_data + m_size;
   }
 
-  const_iterator begin() const
+  constexpr const_iterator begin() const
   {
     return m_data;
   }
 
-  const_iterator end() const
+  constexpr const_iterator end() const
   {
     return m_data + m_size;
   }
 
-  reverse_iterator rbegin()
+  constexpr reverse_iterator rbegin()
   {
     return reverse_iterator(end());
   }
 
-  reverse_iterator rend()
+  constexpr reverse_iterator rend()
   {
     return reverse_iterator(begin());
   }
 
-  const_reverse_iterator rbegin() const
+  constexpr const_reverse_iterator rbegin() const
   {
     return const_reverse_iterator(end());
   }
 
-  const_reverse_iterator rend() const
+  constexpr const_reverse_iterator rend() const
   {
     return const_reverse_iterator(begin());
   }
 
-  reference front()
+  constexpr reference front()
   {
     return *begin();
   }
 
-  reference back()
+  constexpr reference back()
   {
     return m_data[m_size - 1];
   }
 
-  const_reference front() const
+  constexpr const_reference front() const
   {
     return *begin();
   }
 
-  const_reference back() const
+  constexpr const_reference back() const
   {
     return m_data[m_size - 1];
   }
 
-  void clear()
+  constexpr void clear()
   {
     m_size = 0U;
   }
 
-  reference operator[](size_type p_index)
+  constexpr reference operator[](size_type p_index)
   {
     return m_data[p_index];
   }
 
-  const_reference operator[](size_type p_index) const
+  constexpr const_reference operator[](size_type p_index) const
   {
     return m_data[p_index];
   }
 
-  pointer data()
+  constexpr pointer data()
   {
     return &m_data[0];
   }
 
-  const_pointer data() const
+  constexpr const_pointer data() const
   {
     return &m_data[0];
   }
 
-  T             m_data[Capacity];
+  T             m_data[Capacity]{};
   std::size_t   m_size = 0U;
 };
 
@@ -231,7 +234,7 @@ struct vector
 /// Appends v if there is room
 template<typename     T,
          std::size_t  Capacity>
-inline bool push_back(vector<T, Capacity>& c, const T& v)
+constexpr bool push_back(vector<T, Capacity>& c, const T& v)
 {
   bool result = false;
   
@@ -247,7 +250,7 @@ inline bool push_back(vector<T, Capacity>& c, const T& v)
 /// Removes the last element if there is one
 template<typename     T,
          std::size_t  Capacity>
-inline bool pop_back(vector<T, Capacity>& c)
+constexpr bool pop_back(vector<T, Capacity>& c)
 {
   bool result = false;
 
@@ -264,7 +267,7 @@ inline bool pop_back(vector<T, Capacity>& c)
 template<typename     T,
          std::size_t  Capacity,
          typename     ForwardIterator>
-inline bool assign(vector<T, Capacity>& p_c,
+constexpr bool assign(vector<T, Capacity>& p_c,
                    ForwardIterator      p_first,
                    ForwardIterator      p_last)
 {
@@ -284,7 +287,7 @@ inline bool assign(vector<T, Capacity>& p_c,
 /// Changes the size if it fits; new elements are copies of p_initial
 template<typename     T,
          std::size_t  Capacity>
-inline bool resize(vector<T, Capacity>&  c,
+constexpr bool resize(vector<T, Capacity>&  c,
                    const std::size_t     p_size,
                    const T&              p_initial = T())
 {

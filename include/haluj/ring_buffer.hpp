@@ -76,6 +76,10 @@ namespace haluj
 /// value that was true at some moment of the call. clear() and back() are
 /// for when the other side is not running: back() reads the newest element,
 /// which in spsc use the producer may be writing at that moment.
+///
+/// A ring_buffer is built at compile time: as a global, declare it constinit
+/// and it starts in .bss, with no code run at start up. The container is
+/// value initialized, so a local ring_buffer clears its storage when built.
 template< typename  RandomAccessContainerType,
           typename  Concurrency = single_context>
 struct ring_buffer
@@ -86,11 +90,12 @@ struct ring_buffer
   typedef std::size_t                           index_type;
   typedef Concurrency                           concurrency;
 
-  ring_buffer()
-  {}
+  // Declared so the type is not an aggregate: ring_buffer{...} with values
+  // would fill the container and the positions directly
+  constexpr ring_buffer() = default;
 
   /// clear: empty the buffer
-  void clear()
+  constexpr void clear()
   {
     m_tail.store(0);
     m_head.store(0);
@@ -103,7 +108,7 @@ struct ring_buffer
   }
 
   /// size: how many elements are written/available to read
-  std::size_t size() const
+  constexpr std::size_t size() const
   {
     const index_type tail = m_tail.load();
     const index_type head = m_head.load();
@@ -111,26 +116,26 @@ struct ring_buffer
   }
 
   /// remaining: remaining free space to write
-  std::size_t remaining() const
+  constexpr std::size_t remaining() const
   {
     return capacity() - size();
   }
 
   /// full: returns true if buffer is full
-  bool full() const
+  constexpr bool full() const
   {
     return size() == capacity();
   }
 
   /// empty: returns true if buffer is empty
-  bool empty() const
+  constexpr bool empty() const
   {
     return m_head.load() == m_tail.load();
   }
 
   /// push: Add a new element to head
   /// \pre !full()
-  void push(const base_type &p_data)
+  constexpr void push(const base_type &p_data)
   {
     const index_type head = m_head.load();
     m_container[element(head)] = p_data;
@@ -139,13 +144,13 @@ struct ring_buffer
 
   /// pop: remove element from the tail
   /// \pre !empty()
-  void pop()
+  constexpr void pop()
   {
     m_tail.store(cyclic_increment(m_tail.load(), modulus()));
   }
 
   /// try_push: push if there is room
-  bool try_push(const base_type &p_data)
+  constexpr bool try_push(const base_type &p_data)
   {
     bool result = false;
 
@@ -159,7 +164,7 @@ struct ring_buffer
   }
 
   /// try_pop: take the oldest element into p_data if there is one
-  bool try_pop(base_type &p_data)
+  constexpr bool try_pop(base_type &p_data)
   {
     bool result = false;
 
@@ -175,12 +180,12 @@ struct ring_buffer
 
   /// front: oldest element, the next one pop() removes
   /// \pre !empty()
-  base_type& front()
+  constexpr base_type& front()
   {
     return m_container[element(m_tail.load())];
   }
 
-  const base_type& front() const
+  constexpr const base_type& front() const
   {
     return m_container[element(m_tail.load())];
   }
@@ -188,32 +193,32 @@ struct ring_buffer
   /// back: newest element, the last one push() added
   /// \pre !empty()
   /// In spsc use, call it only while the producer is not running.
-  base_type& back()
+  constexpr base_type& back()
   {
     return m_container[element(cyclic_decrement(m_head.load(), modulus()))];
   }
 
-  const base_type& back() const
+  constexpr const base_type& back() const
   {
     return m_container[element(cyclic_decrement(m_head.load(), modulus()))];
   }
 
   typedef shared<index_type, concurrency> position_type;
 
-  container_type      m_container;
+  container_type      m_container{};
   position_type       m_tail;
   position_type       m_head;
 
 private:
 
   // The positions count round twice the capacity
-  index_type modulus() const
+  constexpr index_type modulus() const
   {
     return 2U * capacity();
   }
 
   // Where in the container the element of a position is
-  index_type element(const index_type p_position) const
+  constexpr index_type element(const index_type p_position) const
   {
     return (p_position < capacity()) ? p_position : (p_position - capacity());
   }

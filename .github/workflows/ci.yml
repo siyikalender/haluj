@@ -115,6 +115,16 @@ jobs:
             arm-none-eabi-size cortex_m_cxx${std}.o
           done
 
+      - name: No start up code
+        run: |
+          # Every global is constinit: nothing may run before main
+          for obj in cortex_m_cxx*.o; do
+            if arm-none-eabi-objdump -h "$obj" | grep -q init_array; then
+              echo "::error::$obj needs code to run before main"
+              exit 1
+            fi
+          done
+
       - name: No heap, no exceptions
         run: |
           forbidden='malloc|calloc|realloc|free|operator new|operator delete|__cxa_allocate_exception|__cxa_throw|__cxa_begin_catch'

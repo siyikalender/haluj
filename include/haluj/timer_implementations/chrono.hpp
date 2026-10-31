@@ -51,61 +51,61 @@ struct chrono
   typedef typename Clock::time_point  time_point;
   typedef Duration                    duration;
 
-  chrono() {}
+  constexpr chrono() = default;
   
   chrono(const chrono& ) = delete;
   
   chrono(chrono&& ) = delete;
 
-  void load(duration p_value) 
+  constexpr void load(duration p_value) 
   {
     load_ = p_value;
   }
 
-  void start()
+  constexpr void start()
   {
     run_ = true;
   }
   
-  void stop()
+  constexpr void stop()
   {
     run_ = false;
   }
   
-  bool is_running() const
+  constexpr bool is_running() const
   {
     return run_;
   }
 
-  void iterate(duration)
+  constexpr void iterate(duration)
   {}
 
-  bool predicate() const
+  constexpr bool predicate() const
   {
     return Clock::now() >= timeout_;
   }
 
   /// Starts over: the timeout is a full period from now
-  void reset()
+  constexpr void reset()
   {
     timeout_ = Clock::now() + load_;
   }
 
   /// Starts the next period from the previous timeout, not from now, so
   /// the period does not drift
-  void reload()
+  constexpr void reload()
   {
     timeout_ += load_;
   }
 
-  bool operator ()(duration)
+  constexpr bool operator ()(duration)
   {
     return run_ && predicate();
   }
   
   bool        run_ = false;
-  time_point  timeout_;
-  duration    load_;
+  time_point  timeout_{};
+  duration    load_{};
 };
 
 } // namespace timer_implementations

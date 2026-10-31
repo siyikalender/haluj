@@ -35,6 +35,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include <cstddef>
 #include <tuple>
+#include <type_traits>
 #include <utility>
 
 namespace haluj
@@ -57,7 +58,8 @@ namespace haluj
 //
 // A transition to the same state (From == To) runs exit and entry too.
 // nullptr stands for a missing action, and a state without an entry in the
-// map has no actions.
+// map has no actions. A missing action is kept as no_action, an empty type,
+// so it takes no room in the machine.
 //
 // Built from captureless lambdas or functions, the machine can be constexpr
 // and placed in read only memory.
@@ -79,6 +81,66 @@ struct g_always_t
 // lvalues, and a callback may take them by value, by (const) reference or
 // as auto&&, but not as a concrete rvalue reference such as std::string&&.
 
+/// The action of a transition or a state that has none
+struct no_action
+{
+  template<typename... Args>
+  constexpr void operator()(Args&&...) const
+  {}
+};
+
+namespace state_machine_detail
+{
+
+// nullptr given for an action is kept as no_action: a std::nullptr_t member
+// takes the room of a pointer, an empty type none
+template<typename T>
+using action_t = std::conditional_t<std::is_null_pointer_v<T>, no_action, T>;
+
+constexpr no_action to_action(std::nullptr_t)
+{
+  return no_action();
+}
+
+template<typename Action>
+constexpr const Action& to_action(const Action& p_action)
+{
+  return p_action;
+}
+
+// The actions of an entry: a tuple of (enter, do, exit) has its nullptr
+// elements made no_action; any other value is kept as it is
+template<typename Value>
+struct actions
+{
+  typedef Value type;
+};
+
+template<typename... Actions>
+struct actions<std::tuple<Actions...>>
+{
+  typedef std::tuple<action_t<Actions>...> type;
+};
+
+template<typename Value>
+constexpr const Value& to_actions(const Value& p_value)
+{
+  return p_value;
+}
+
+template<typename... Actions>
+constexpr std::tuple<action_t<Actions>...>
+to_actions(const std::tuple<Actions...>& p_actions)
+{
+  return std::apply([](const Actions&... p_action)
+                    {
+                      return std::tuple<action_t<Actions>...>(to_action(p_action)...);
+                    },
+                    p_actions);
+}
+
+} // namespace state_machine_detail
+
 template < typename... Args >
 constexpr void _invoke_a(std::nullptr_t, Args&&...)
 {}
@@ -97,7 +159,7 @@ template
   auto            From,
   decltype(From)  To,
   typename        TriggerType,
-  typename        ActionType = std::nullptr_t
+  typename        ActionType = no_action
 >
 struct transition_t
 {
@@ -109,7 +171,7 @@ struct transition_t
   static constexpr state_type to   = To;
 
   constexpr transition_t( trigger_type p_trigger,
-                action_type  p_action   = nullptr)
+                action_type  p_action   = action_type())
   : trigger(p_trigger),
     action(p_action)
   {}
@@ -144,15 +206,17 @@ template
   auto            From,
   decltype(From)  To,
   typename        TriggerType,
-  typename        ActionType  = std::nullptr_t
+  typename        ActionType  = no_action
 >
-constexpr transition_t<From, To, TriggerType, ActionType>
+constexpr transition_t<From, To, TriggerType,
+                       state_machine_detail::action_t<ActionType>>
 transition(TriggerType  trigger, 
            ActionType   action = ActionType())
 {
   return 
-    transition_t<From, To, TriggerType, ActionType>
-      (trigger, action);
+    transition_t<From, To, TriggerType,
+                 state_machine_detail::action_t<ActionType>>
+      (trigger, state_machine_detail::to_action(action));
 }
 
 /// generic empty graph template for variadic template final nesting
@@ -233,10 +297,11 @@ struct entry_t
 
 template <auto        Key,
           typename    ValueType>
-constexpr entry_t<Key, ValueType>
+constexpr entry_t<Key, typename state_machine_detail::actions<ValueType>::type>
 entry(const ValueType& p_value)
 {
-  return entry_t<Key, ValueType>(p_value);
+  return entry_t<Key, typename state_machine_detail::actions<ValueType>::type>(
+           state_machine_detail::to_actions(p_value));
 }
 
 /// The actions of a state: entry<State>(enter, do, exit), with nullptr for
@@ -246,11 +311,10 @@ template <auto        Key,
           typename    Enter,
           typename    Do,
           typename    Exit>
-constexpr entry_t<Key, std::tuple<Enter, Do, Exit>>
+constexpr auto
 entry(const Enter& p_enter, const Do& p_do, const Exit& p_exit)
 {
-  return entry_t<Key, std::tuple<Enter, Do, Exit>>(
-           std::tuple<Enter, Do, Exit>(p_enter, p_do, p_exit));
+  return entry<Key>(std::tuple<Enter, Do, Exit>(p_enter, p_do, p_exit));
 }
 
 /// generic empty map template for variadic template final nesting
