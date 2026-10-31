@@ -36,9 +36,8 @@ ctest --test-dir build --output-on-failure
 ```
 
 - `tests/test_*.cpp`: run time tests
-- `tests/known_bugs.cpp`: one case per known bug. Each case checks the
-  correct behaviour and is expected to fail; when a bug is fixed its case
-  fails in ctest and moves to the ordinary tests.
+- `tests/compile_fail/`: code that must not compile, each with the
+  diagnostic it must fail with
 - Header checks: every header must compile on its own. Headers that do not
   yet are listed in `HALUJ_BROKEN_HEADERS` in `tests/CMakeLists.txt`.
 - `tests/target/cortex_m.cpp`: compiled for Cortex-M in CI, which also checks

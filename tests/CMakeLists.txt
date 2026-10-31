@@ -56,21 +56,6 @@ haluj_compile_fail(digital_input_filter_no_samples "needs at least one sample")
 haluj_compile_fail(state_machine_rvalue_reference_action
   "cannot bind rvalue reference|expects an rvalue")
 
-# Known bugs: each case checks the correct behaviour and is expected to fail
-# until the bug is fixed (see known_bugs.cpp). When a case starts to pass,
-# ctest reports it as failing: move it to the ordinary tests.
-add_executable(haluj_known_bugs known_bugs.cpp)
-target_link_libraries(haluj_known_bugs PRIVATE haluj::haluj haluj_warnings)
-
-set(HALUJ_KNOWN_BUGS
-  format_int_truncation
-)
-
-foreach(bug ${HALUJ_KNOWN_BUGS})
-  add_test(NAME known_bug.${bug} COMMAND haluj_known_bugs ${bug})
-  set_tests_properties(known_bug.${bug} PROPERTIES WILL_FAIL TRUE)
-endforeach()
-
 # Every public header must compile on its own and survive being included
 # twice. All headers together in one translation unit catch clashing include
 # guards and names.

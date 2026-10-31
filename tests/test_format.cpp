@@ -30,7 +30,11 @@ For more information, please refer to <http://unlicense.org>
 /// \author Claude Opus 5.5 <noreply@anthropic.com>
 /// \date   2026
 
+#include <cstdint>
+#include <cstdio>
 #include <cstring>
+#include <limits>
+#include <type_traits>
 
 #include "haluj/format.hpp"
 
@@ -69,6 +73,90 @@ static void test_format_int()
   HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(42, f, l); }), "42"));
   HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(-7, f, l); }), "-7"));
   HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(2147483647, f, l); }), "2147483647"));
+}
+
+namespace
+{
+
+// Formats value into buffers of every length from 0 to one more than it
+// needs, with guard bytes after each: the text must be written whole and
+// right, or not at all, and nothing past the buffer may change
+template<typename Integer>
+void check_integer(Integer value)
+{
+  char expected[32];
+  if (std::is_signed<Integer>::value)
+    std::snprintf(expected, sizeof(expected), "%lld", static_cast<long long>(value));
+  else
+    std::snprintf(expected, sizeof(expected), "%llu", static_cast<unsigned long long>(value));
+
+  const std::size_t length = std::strlen(expected);
+
+  for (std::size_t room = 0; room <= length + 1; ++room)
+  {
+    char buffer[40];
+    std::memset(buffer, '#', sizeof(buffer));
+
+    char* end = haluj::format(value, buffer, buffer + room);
+
+    if (room < length)
+    {
+      HALUJ_CHECK(end == buffer);
+    }
+    else
+    {
+      HALUJ_CHECK(end == buffer + length);
+      HALUJ_CHECK(std::memcmp(buffer, expected, length) == 0);
+    }
+
+    for (std::size_t k = (room < length ? 0 : length); k < sizeof(buffer); ++k)
+      HALUJ_CHECK(buffer[k] == '#');
+  }
+}
+
+template<typename Integer>
+void check_integer_type()
+{
+  using limits = std::numeric_limits<Integer>;
+
+  check_integer<Integer>(limits::min());
+  check_integer<Integer>(Integer(limits::min() + 1));
+  check_integer<Integer>(limits::max());
+  check_integer<Integer>(Integer(limits::max() - 1));
+  check_integer<Integer>(Integer(0));
+  check_integer<Integer>(Integer(1));
+  check_integer<Integer>(Integer(9));
+  check_integer<Integer>(Integer(10));
+  check_integer<Integer>(Integer(99));
+  check_integer<Integer>(Integer(100));
+  if (std::is_signed<Integer>::value)
+  {
+    check_integer<Integer>(Integer(-1));
+    check_integer<Integer>(Integer(-10));
+  }
+}
+
+} // namespace
+
+// Every integer type, at its limits and where the number of digits changes
+static void test_format_integers()
+{
+  check_integer_type<signed char>();
+  check_integer_type<unsigned char>();
+  check_integer_type<std::int16_t>();
+  check_integer_type<std::uint16_t>();
+  check_integer_type<std::int32_t>();
+  check_integer_type<std::uint32_t>();
+  check_integer_type<std::int64_t>();
+  check_integer_type<std::uint64_t>();
+  check_integer_type<long>();
+  check_integer_type<unsigned long long>();
+
+  // The cases from the review
+  buffer b;
+  HALUJ_CHECK(equal(b([](char* f, char*) { return haluj::format(12345, f, f + 3); }), ""));
+  HALUJ_CHECK(equal(b([](char* f, char*) { return haluj::format(-5, f, f + 1); }), ""));
+  HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(3000000000u, f, l); }), "3000000000"));
 }
 
 static void test_format_hex()
@@ -123,6 +211,7 @@ static void test_format_float_bounds()
 int main()
 {
   test_format_int();
+  test_format_integers();
   test_format_hex();
   test_format_float();
   test_format_float_bounds();

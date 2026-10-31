@@ -22,7 +22,7 @@ env:
   BIT_COMMIT: a6a60919b1a0d82aef380d40ca995380433de68d
 
 jobs:
-  # Tests, known bug checks and header checks on GCC and Clang
+  # Tests, compile failure tests and header checks on GCC and Clang
   test:
     name: ${{ matrix.compiler }} ${{ matrix.build_type }} C++${{ matrix.std }}
     runs-on: ubuntu-latest

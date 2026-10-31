@@ -32,10 +32,12 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_FORMAT_HPP
 #define HALUJ_FORMAT_HPP
 
-#include <cstdint>
-#include <cmath>
 #include <algorithm>
+#include <cmath>
+#include <cstddef>
 #include <iterator>
+#include <limits>
+#include <type_traits>
 
 namespace haluj
 {
@@ -60,34 +62,75 @@ Iterator format_hex(unsigned n, Iterator first, Iterator last, std::size_t size)
   return first; // check for premature end
 }
 
-template<typename Iterator>
-Iterator format(int n, Iterator first, Iterator last)
+namespace format_detail
 {
-  if (n < 0 && (first != last)) 
+
+template<typename T>
+using enable_if_integer_t =
+  std::enable_if_t<std::is_integral<T>::value && !std::is_same<T, bool>::value>;
+
+/// The number of characters from first to last
+template<typename Iterator>
+inline std::size_t room(Iterator first, Iterator last)
+{
+  return static_cast<std::size_t>(std::distance(first, last));
+}
+
+} // namespace format_detail
+
+/// Writes n in decimal, with a leading '-' when it is negative, and returns
+/// the end of the text. Works for every integer type, signed or unsigned, of
+/// any width.
+///
+/// Nothing is written when the text does not fit in [first, last); first is
+/// returned then.
+template<typename Integer,
+         typename Iterator,
+         typename = format_detail::enable_if_integer_t<Integer> >
+Iterator format(Integer n, Iterator first, Iterator last)
+{
+  typedef std::make_unsigned_t<Integer> magnitude_type;
+
+  bool           negative  = false;
+  magnitude_type magnitude = static_cast<magnitude_type>(n);
+
+  if constexpr (std::is_signed<Integer>::value)
   {
-    n = -n;
-    *first++ = '-';
-  }
-  
-  Iterator initial = first;
-  
-  if (n > 0)
-  {
-    while((n > 0) && (first != last))
+    if (n < Integer(0))
     {
-      int d = n % 10;
-      *first++ = ('0' + d);
-      n /= 10;
+      // Negated in the unsigned type, where it cannot overflow: this gives
+      // the magnitude of the most negative value too
+      negative  = true;
+      magnitude = static_cast<magnitude_type>(magnitude_type(0) - magnitude);
     }
   }
-  else
+
+  // Digits from the least significant end; 20 digits hold any 64 bit value
+  char  digits[std::numeric_limits<magnitude_type>::digits10 + 1];
+  char* const digits_end = digits + sizeof(digits);
+  char* digit            = digits_end;
+
+  do
   {
-    *first++ = '0';
+    *--digit = static_cast<char>('0' + (magnitude % 10U));
+    magnitude = static_cast<magnitude_type>(magnitude / 10U);
   }
-  
-  std::reverse(initial, first);
-  
-  return first;
+  while (magnitude != 0U);
+
+  const std::size_t length =
+    static_cast<std::size_t>(digits_end - digit) + (negative ? 1U : 0U);
+
+  if (format_detail::room(first, last) < length)
+  {
+    return first;
+  }
+
+  if (negative)
+  {
+    *first++ = '-';
+  }
+
+  return std::copy(digit, digits_end, first);
 }
 
 /// Formats n with a fixed number of decimals (at most 5), for example
