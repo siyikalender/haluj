@@ -168,6 +168,66 @@ static void test_format_hex()
   HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format_hex(0x1234u, f, l, 2); }), "34"));
 }
 
+namespace
+{
+
+// format_hex of value with every width up to 20 digits, into buffers of
+// every length around it, against snprintf
+template<typename Integer>
+void check_hex(Integer value)
+{
+  typedef std::make_unsigned_t<Integer> value_type;
+
+  char full[40];
+  std::snprintf(full, sizeof(full), "0000000000000000%016llX",
+                static_cast<unsigned long long>(static_cast<value_type>(value)));
+  const std::size_t full_length = std::strlen(full);
+
+  for (std::size_t size = 0; size <= 20; ++size)
+  {
+    const char* expected = full + full_length - size;
+
+    for (std::size_t room = (size > 0 ? size - 1 : 0); room <= size + 1; ++room)
+    {
+      char buffer[40];
+      std::memset(buffer, '#', sizeof(buffer));
+
+      char* end = haluj::format_hex(value, buffer, buffer + room, size);
+
+      if (room < size)
+      {
+        HALUJ_CHECK(end == buffer);
+      }
+      else
+      {
+        HALUJ_CHECK(end == buffer + size);
+        HALUJ_CHECK(std::memcmp(buffer, expected, size) == 0);
+      }
+
+      for (std::size_t k = (room < size ? 0 : size); k < sizeof(buffer); ++k)
+        HALUJ_CHECK(buffer[k] == '#');
+    }
+  }
+}
+
+} // namespace
+
+static void test_format_hex_types()
+{
+  check_hex<std::uint8_t>(0xA5u);
+  check_hex<std::uint16_t>(0xBEEFu);
+  check_hex<std::uint32_t>(0xDEADBEEFu);
+  check_hex<std::uint64_t>(0x0123456789ABCDEFull);
+  check_hex<std::uint64_t>(std::numeric_limits<std::uint64_t>::max());
+  check_hex<int>(0x0A);
+  check_hex<int>(-1);                 // two's complement: FFFFFFFF
+  check_hex<std::int8_t>(-2);         // FE
+
+  // The case from the review: a width of 4 into 2 characters
+  buffer b;
+  HALUJ_CHECK(equal(b([](char* f, char*) { return haluj::format_hex(0x1234u, f, f + 2, 4); }), ""));
+}
+
 static void test_format_float()
 {
   buffer b;
@@ -213,6 +273,7 @@ int main()
   test_format_int();
   test_format_integers();
   test_format_hex();
+  test_format_hex_types();
   test_format_float();
   test_format_float_bounds();
   return haluj_test::report("test_format");

@@ -42,26 +42,6 @@ For more information, please refer to <http://unlicense.org>
 namespace haluj
 {
   
-template<typename Iterator>
-Iterator format_hex(unsigned n, Iterator first, Iterator last, std::size_t size)
-{
-  Iterator    initial = first;
-  
-  for (std::size_t i = 0; (i < size) && (first != last); i++)
-  {
-    unsigned d = n & 0xF;
-    if (d < 10)
-      *first++ = ('0' + d);
-    else
-      *first++ = ('A' + (d - 10));
-    n >>= 4;
-  }
-  
-  std::reverse(initial, first);  
-
-  return first; // check for premature end
-}
-
 namespace format_detail
 {
 
@@ -131,6 +111,42 @@ Iterator format(Integer n, Iterator first, Iterator last)
   }
 
   return std::copy(digit, digits_end, first);
+}
+
+/// Writes the size lowest hexadecimal digits of n, most significant first and
+/// with leading zeros, in upper case: 0xBEEF with size 4 gives "BEEF", 0x0A
+/// with size 2 gives "0A" and 0x1234 with size 2 gives "34". Returns the end
+/// of the text. Works for every integer type; a negative value is written as
+/// its unsigned equivalent (two's complement).
+///
+/// Nothing is written when size characters do not fit in [first, last);
+/// first is returned then.
+template<typename Integer,
+         typename Iterator,
+         typename = format_detail::enable_if_integer_t<Integer> >
+Iterator format_hex(Integer n, Iterator first, Iterator last, std::size_t size)
+{
+  typedef std::make_unsigned_t<Integer> value_type;
+
+  const value_type  value = static_cast<value_type>(n);
+  const std::size_t bits  = std::numeric_limits<value_type>::digits;
+
+  if (format_detail::room(first, last) < size)
+  {
+    return first;
+  }
+
+  for (std::size_t i = size; i > 0U; --i)
+  {
+    // Digits beyond the width of the type are leading zeros; shifting by
+    // the width or more would be undefined
+    const std::size_t shift = 4U * (i - 1U);
+    const unsigned    d     = (shift < bits) ? unsigned((value >> shift) & 0xFU) : 0U;
+
+    *first++ = static_cast<char>(d < 10U ? ('0' + d) : ('A' + (d - 10U)));
+  }
+
+  return first;
 }
 
 /// Formats n with a fixed number of decimals (at most 5), for example
