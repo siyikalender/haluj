@@ -59,13 +59,17 @@ constexpr bool is_space(char c)  { return c == ' ' || (c >= '\t' && c <= '\r'); 
 
 } // namespace parser_detail
 
+/// An empty tag that rules of one's own may derive from. The rules of the
+/// library do not: a rule that holds rules all derived from the same empty
+/// base cannot place them at the same address, so the empty base
+/// optimisation does not apply and every level of a grammar grows.
 struct rule
 {};
 
 /// Specific character parser rule
 /// parses the specified character
 
-struct ch_p : rule
+struct ch_p
 {
   constexpr ch_p(char c)
   : c_(c) {}
@@ -92,7 +96,7 @@ constexpr ch_p ch(const char c)
 
 /// Alphabetic parser rule
 /// parses a single alphabethic character defined in C locale
-struct alpha_p : rule
+struct alpha_p
 {
   constexpr alpha_p()
   {}
@@ -115,7 +119,7 @@ constexpr alpha_p alpha()
 
 /// Alphanumeric parser rule
 /// parses a single alphanumeric character defined in C locale
-struct alnum_p : rule
+struct alnum_p
 {
   constexpr alnum_p()
   {}
@@ -137,7 +141,7 @@ constexpr alnum_p alnum()
 }
 
 /// Whitespace parser rule (including eol)
-struct space_p : rule
+struct space_p
 {
   constexpr space_p()
   {}
@@ -163,7 +167,7 @@ constexpr space_p space()
 
 /// Single digit parser rule
 /// parses a single digit
-struct digit_p : rule
+struct digit_p
 {
   constexpr digit_p()
   {}
@@ -189,7 +193,7 @@ constexpr digit_p digit()
 
 /// Single hexadecimal digit parser rule
 /// parses a single digit
-struct hex_digit_p : rule
+struct hex_digit_p
 {
   constexpr hex_digit_p()
   {}
@@ -216,7 +220,7 @@ constexpr hex_digit_p hex_digit()
 /// Single octal digit parser rule
 /// parses a single octal digit
 
-struct oct_digit_p : rule
+struct oct_digit_p
 {
   constexpr oct_digit_p()
   {}
@@ -243,7 +247,7 @@ constexpr oct_digit_p oct_digit()
 /// Single binary digit parser rule
 /// parses a single binary digit
 
-struct bin_digit_p : rule
+struct bin_digit_p
 {
   constexpr bin_digit_p()
   {}
@@ -269,7 +273,7 @@ constexpr bin_digit_p bin_digit()
 
 /// Upper case parser rule
 /// parses a single upper case alpha character defined in C locale
-struct upper_p : rule
+struct upper_p
 {
   constexpr upper_p()
   {}
@@ -293,7 +297,7 @@ constexpr upper_p upper()
 /// rest parser rule
 /// consumes all remaining characters to end of the range
 /// typical this rule is useful for parsing line comments
-struct rest_p : rule
+struct rest_p
 {
   constexpr rest_p()
   {}
@@ -316,7 +320,7 @@ constexpr rest_p rest()
 /// optional expression parser rule
 /// Always true regardless the return value of accept method of the expr
 template<typename ExprType>
-struct opt_p : rule
+struct opt_p
 {
   constexpr opt_p(const ExprType& expr)
   : expr_(expr)
@@ -358,7 +362,7 @@ constexpr void repeat_(const ExprType& expr, Iterator& first, Iterator last)
 /// One and more expression parser rule
 /// At least one times the 
 template<typename ExprType>
-struct om_p : rule
+struct om_p
 {
   constexpr om_p(const ExprType& expr)
   : expr_(expr)
@@ -386,7 +390,7 @@ constexpr om_p<ExprType> om(const ExprType& p_expr)
 }
 
 template<typename ExprType>
-struct zm_p : rule
+struct zm_p
 {
   constexpr zm_p(const ExprType& expr)
   : expr_(expr)
@@ -410,7 +414,7 @@ constexpr zm_p<ExprType> zm(const ExprType& expr)
 }
 
 template<typename ... Types>
-struct seq_p : rule
+struct seq_p
 {
   template<typename Iterator>
   constexpr bool accept(Iterator &, Iterator) const
@@ -420,7 +424,7 @@ struct seq_p : rule
 };
 
 template<typename ExprType, typename ... Types>
-struct seq_p<ExprType, Types...> : rule
+struct seq_p<ExprType, Types...>
 {
   typedef seq_p<Types...> next;
 
@@ -458,7 +462,7 @@ seq(const ExprType& p_a, Types... args)
 
 
 template<typename ... Types>
-struct any_p : rule
+struct any_p
 {
   template<typename Iterator>
   constexpr bool accept(Iterator &, Iterator) const
@@ -468,7 +472,7 @@ struct any_p : rule
 };
 
 template<typename ExprType, typename ... Types>
-struct any_p<ExprType, Types...> : rule
+struct any_p<ExprType, Types...>
 {
   typedef any_p<Types...> next;
 
@@ -504,7 +508,7 @@ any(const ExprType& p_a, Types... args)
 
 //
 template<typename ExprType>
-struct except_p : rule
+struct except_p
 {
   constexpr except_p(const ExprType& expr)
   : expr_(expr)
@@ -539,7 +543,7 @@ except(const ExprType& p_expr)
 }
 
 template<typename ExprType, typename EscapeExprType>
-struct except_2_p : rule
+struct except_2_p
 {
   constexpr except_2_p(const ExprType&        p_expr,
              const EscapeExprType&  p_esc_expr)
@@ -572,7 +576,7 @@ except_2(const ExprType& p_expr, const EscapeExprType& p_esc_expr)
 
 
 template<typename ExprType>
-struct accept_adaptor_p : rule
+struct accept_adaptor_p
 {
   constexpr accept_adaptor_p(const ExprType &expr)
   : expr_(expr)
@@ -602,7 +606,7 @@ struct default_action
 };
 
 template <typename ExprType, typename ActionType = default_action>
-struct action_p : rule
+struct action_p
 {
   constexpr action_p(const ExprType   &p_expr,
            const ActionType &p_action)
@@ -637,7 +641,7 @@ This rule can be used for Debug purposes.
 Due to its iostream and std::string dependencies, it is left commented
 
 template <typename ExprType>
-struct info_p : rule
+struct info_p
 {
   info_p(const ExprType   &p_expr, const std::string& p_name)
   : expr_(p_expr),

@@ -195,6 +195,10 @@ static_assert(consumed(haluj::hex_digit(), "F") == 1, "hex digit");
 static_assert(consumed(haluj::rest(), "rest") == 4, "rest");
 static_assert(consumed(quoted, "\"a\\\"b\" tail") == 6, "quoted with escape");
 
+// The rules hold no padding: nested empty rules take no room of their own
+static_assert(sizeof(command) <= 8, "a 5 rule command fits in 8 bytes");
+static_assert(sizeof(haluj::om(haluj::digit())) == 1, "an empty rule takes one byte");
+
 } // namespace
 
 // The constant rules work at run time too, on any iterator
