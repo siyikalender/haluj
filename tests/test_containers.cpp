@@ -32,6 +32,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include <array>
 #include <cstdint>
+#include <deque>
 #include <iterator>
 #include <numeric>
 #include <type_traits>
@@ -329,6 +330,111 @@ static void test_ring_buffer_contract()
   HALUJ_CHECK(next_out == next_in);
 }
 
+// Positions count round 2 * capacity, so full and empty never look alike,
+// whatever the capacity. Each policy is checked against std::deque through
+// many rounds of pushes and pops that keep to the contract.
+template<typename Concurrency, std::size_t N>
+static void check_ring_buffer_model()
+{
+  haluj::ring_buffer<std::array<int, N>, Concurrency> r;
+  std::deque<int> model;
+
+  std::uint32_t seed = 7u + N;
+  int next = 0;
+
+  for (int step = 0; step < 4000; ++step)
+  {
+    seed = seed * 1103515245u + 12345u;
+    const bool want_push = ((seed >> 16) % 3u) != 0u;   // fill more than drain
+
+    if (want_push && !r.full())
+    {
+      r.push(next);
+      model.push_back(next);
+      ++next;
+    }
+    else if (!r.empty())
+    {
+      HALUJ_CHECK(r.front() == model.front());
+      r.pop();
+      model.pop_front();
+    }
+
+    HALUJ_CHECK(r.size() == model.size());
+    HALUJ_CHECK(r.empty() == model.empty());
+    HALUJ_CHECK(r.full() == (model.size() == N));
+    HALUJ_CHECK(r.remaining() == N - model.size());
+    if (!model.empty())
+    {
+      HALUJ_CHECK(r.front() == model.front());
+      HALUJ_CHECK(r.back() == model.back());
+    }
+  }
+
+  // Filled to the brim and drained again, so that full and empty both occur
+  // at every position of the 2 * capacity cycle
+  for (std::size_t round = 0; round < 2 * N + 1; ++round)
+  {
+    while (!r.full())
+    {
+      r.push(next++);
+    }
+    HALUJ_CHECK(r.size() == N && !r.empty());
+
+    r.pop();
+    HALUJ_CHECK(r.size() == N - 1 && !r.full());
+
+    while (!r.empty())
+    {
+      r.pop();
+    }
+    HALUJ_CHECK(r.size() == 0 && !r.full());
+  }
+}
+
+template<typename Concurrency>
+static void check_ring_buffer_models()
+{
+  check_ring_buffer_model<Concurrency, 1>();
+  check_ring_buffer_model<Concurrency, 2>();
+  check_ring_buffer_model<Concurrency, 3>();
+  check_ring_buffer_model<Concurrency, 5>();
+  check_ring_buffer_model<Concurrency, 7>();
+  check_ring_buffer_model<Concurrency, 8>();
+}
+
+static void test_ring_buffer_any_capacity()
+{
+  check_ring_buffer_models<haluj::single_context>();
+  check_ring_buffer_models<haluj::spsc>();
+}
+
+// try_push and try_pop check by themselves
+static void test_ring_buffer_try()
+{
+  haluj::ring_buffer<std::array<int, 3>, haluj::spsc> r;
+
+  HALUJ_CHECK(r.try_push(1));
+  HALUJ_CHECK(r.try_push(2));
+  HALUJ_CHECK(r.try_push(3));
+  HALUJ_CHECK(!r.try_push(4));
+  HALUJ_CHECK(r.size() == 3);
+
+  int v = 0;
+  for (int expected = 1; expected <= 3; ++expected)
+  {
+    HALUJ_CHECK(r.try_pop(v));
+    HALUJ_CHECK(v == expected);
+  }
+  HALUJ_CHECK(!r.try_pop(v));
+  HALUJ_CHECK(v == 3);
+}
+
+// The single context buffer holds plain positions and no flags
+static_assert(sizeof(haluj::ring_buffer<std::array<std::uint8_t, 8>>) ==
+              8 + 2 * sizeof(std::size_t),
+              "storage and two positions only");
+
 // Every position and step count of small rings and of rings at the top of
 // uint8_t, against arithmetic done in a wider type
 template<typename T>
@@ -519,6 +625,8 @@ int main()
   test_bounded_vector_pop_back_full_resize();
   test_ring_buffer();
   test_ring_buffer_back();
+  test_ring_buffer_any_capacity();
+  test_ring_buffer_try();
   test_ring_buffer_contract();
   test_cyclic_steps();
   test_cyclic_distance();

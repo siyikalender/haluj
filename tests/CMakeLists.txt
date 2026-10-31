@@ -15,6 +15,12 @@ foreach(test test_containers test_format test_parser test_state_machine
   add_test(NAME ${test} COMMAND haluj_${test})
 endforeach()
 
+# ring_buffer with the spsc policy between two threads
+find_package(Threads REQUIRED)
+add_executable(haluj_test_ring_buffer_spsc test_ring_buffer_spsc.cpp)
+target_link_libraries(haluj_test_ring_buffer_spsc PRIVATE haluj::haluj haluj_warnings Threads::Threads)
+add_test(NAME test_ring_buffer_spsc COMMAND haluj_test_ring_buffer_spsc)
+
 # Compile failure tests: each source must fail to build with the expected
 # diagnostic. The target is excluded from the normal build and built by the
 # test itself; matching the message makes sure it fails for the right reason.
