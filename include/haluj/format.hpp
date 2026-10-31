@@ -153,8 +153,13 @@ Iterator format_hex(Integer n, Iterator first, Iterator last, std::size_t size)
 /// 3.14159f with precision 2 gives "3.14" and 0.05f with precision 3 gives
 /// "0.050". Returns the end of the written text.
 ///
-/// Nothing is written when the text does not fit in [first, last); first is
-/// returned then. n times 10^precision must fit in an int.
+/// A negative value that rounds to zero keeps its sign: -0.004f with
+/// precision 2 gives "-0.00", which shows a small negative value. -0.0f
+/// itself gives "0.00".
+///
+/// Nothing is written, and first is returned, when the text does not fit in
+/// [first, last), when n times 10^precision does not fit in an int, or when
+/// n is NaN or infinite.
 template<typename Iterator>
 Iterator format(float n, Iterator first, Iterator last, std::size_t precision)
 {
@@ -180,6 +185,13 @@ Iterator format(float n, Iterator first, Iterator last, std::size_t precision)
   n *= multipliers[precision];
 
   n = std::round(n);
+
+  // int(n) is defined only for a value that int can hold. The test is false
+  // for NaN too, as is every comparison with NaN, and for infinity.
+  if (!(n < static_cast<float>(std::numeric_limits<int>::max())))
+  {
+    return first;
+  }
 
   // Digits of the scaled value, without any decimal point
   char        digits[16];

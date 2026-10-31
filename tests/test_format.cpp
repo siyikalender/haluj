@@ -268,8 +268,42 @@ static void test_format_float_bounds()
   HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(0.0f, f, l, 2); }), "0.00"));
 }
 
+// Values whose scaled form does not fit in an int, NaN and infinity write
+// nothing; a small negative value that rounds to zero keeps its sign
+static void test_format_float_range()
+{
+  const float values[] =
+  {
+    std::numeric_limits<float>::quiet_NaN(),
+    std::numeric_limits<float>::infinity(),
+    -std::numeric_limits<float>::infinity(),
+    1e10f,
+    -1e10f,
+    3e7f,       // 3e9 with precision 2
+  };
+
+  for (float v : values)
+  {
+    char buffer[40];
+    std::memset(buffer, '#', sizeof(buffer));
+    HALUJ_CHECK(haluj::format(v, buffer, buffer + sizeof(buffer), 2) == buffer);
+    HALUJ_CHECK(buffer[0] == '#');
+  }
+
+  buffer b;
+
+  // Large values that still fit
+  HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(2e7f, f, l, 2); }), "20000000.00"));
+  HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(-2e7f, f, l, 2); }), "-20000000.00"));
+
+  // The sign of a small negative value is kept on purpose
+  HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(-0.004f, f, l, 2); }), "-0.00"));
+  HALUJ_CHECK(equal(b([](char* f, char* l) { return haluj::format(-0.0f, f, l, 2); }), "0.00"));
+}
+
 int main()
 {
+  test_format_float_range();
   test_format_int();
   test_format_integers();
   test_format_hex();
