@@ -83,26 +83,6 @@ static void test_one_shot()
   HALUJ_CHECK(!t.is_running());
 }
 
-static void test_user_behaviour()
-{
-  // The callback decides whether the timer keeps running
-  haluj::timer<sw::fwd<unsigned>, haluj::user> t;
-  t.set(1);
-
-  int fired = 0;
-  for (int i = 0; i < 10; ++i)
-    t([&fired] { return ++fired == 3; }, 1u);
-
-  HALUJ_CHECK(fired == 3);
-  HALUJ_CHECK(!t.is_running());
-
-  // Without a function it stops, as one_shot does
-  haluj::timer<sw::fwd<unsigned>, haluj::user> u;
-  u.set(1);
-  HALUJ_CHECK(u(nullptr, 1u));
-  HALUJ_CHECK(!u.is_running());
-}
-
 // periodic starts the next period before calling the function, so a set()
 // inside the function is kept
 static void test_periodic_set_in_callback()
@@ -331,7 +311,6 @@ int main()
 {
   test_periodic();
   test_one_shot();
-  test_user_behaviour();
   test_periodic_set_in_callback();
   test_own_behaviours();
   test_backward();

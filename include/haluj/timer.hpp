@@ -79,28 +79,6 @@ struct one_shot
   }
 };
 
-/// The function decides: true stops the timer, false starts the next
-/// period. The function must not call set() when it returns false, as the
-/// reload that follows would shift the new period. Without a function the
-/// timer stops, as with one_shot.
-struct user
-{
-  template<typename Implementation, typename Function>
-  void operator()(Implementation& p_impl, Function& p_function) const
-  {
-    if (p_function())
-      p_impl.stop();
-    else
-      p_impl.reload();
-  }
-
-  template<typename Implementation>
-  void operator()(Implementation& p_impl, std::nullptr_t) const
-  {
-    p_impl.stop();
-  }
-};
-
 // Timer 
 
 template
