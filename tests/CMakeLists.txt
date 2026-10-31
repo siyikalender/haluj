@@ -45,6 +45,9 @@ haluj_compile_fail(cyclic_index_empty_ring   "needs at least one position")
 # larger than the remaining time
 haluj_compile_fail(timer_backward_unsigned "needs a signed duration type")
 
+# A filter without samples has nothing to filter
+haluj_compile_fail(digital_input_filter_no_samples "needs at least one sample")
+
 # Known bugs: each case checks the correct behaviour and is expected to fail
 # until the bug is fixed (see known_bugs.cpp). When a case starts to pass,
 # ctest reports it as failing: move it to the ordinary tests.

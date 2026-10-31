@@ -76,7 +76,7 @@ static void format_int_truncation()
 // A single low sample must not release a debounced input
 static void digital_filter_glitch()
 {
-  digital_input_filter<unsigned, 4> f(0x1u);
+  haluj::digital_input_filter<unsigned, 4> f(0x1u);
   for (int i = 0; i < 4; ++i)
     f(1u);
 

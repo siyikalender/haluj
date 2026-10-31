@@ -56,7 +56,7 @@ enum class mode { idle, run };
 haluj::ring_buffer<std::array<char, 64>>                          rx;
 haluj::bounded::vector<char, 32>                                  line;
 haluj::timer<haluj::timer_implementations::software::fwd<std::uint32_t>> blink;
-digital_input_filter<std::uint32_t, 4>                            buttons(0x3u);
+haluj::digital_input_filter<std::uint32_t, 4>                     buttons(0x3u);
 haluj::set_and_wait                                               handshake;
 mode                                                              state = mode::idle;
 std::uint32_t                                                     setpoint = 0;

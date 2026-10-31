@@ -73,7 +73,7 @@ static void test_bidirectional_map()
 
 static void test_digital_input_filter()
 {
-  digital_input_filter<unsigned, 3> f(0x1u);
+  haluj::digital_input_filter<unsigned, 3> f(0x1u);
 
   HALUJ_CHECK(f(1u) == 0u);
   HALUJ_CHECK(f(1u) == 0u);
@@ -83,7 +83,7 @@ static void test_digital_input_filter()
   HALUJ_CHECK(f.edge() == 0u);
 
   // Bits outside the mask are ignored
-  digital_input_filter<unsigned, 2> g(0x1u);
+  haluj::digital_input_filter<unsigned, 2> g(0x1u);
   g(0x2u);
   HALUJ_CHECK(g(0x2u) == 0u);
   HALUJ_CHECK(g.mask() == 0x1u);

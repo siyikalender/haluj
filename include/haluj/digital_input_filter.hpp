@@ -34,9 +34,14 @@ For more information, please refer to <http://unlicense.org>
 
 #include <algorithm>
 
+namespace haluj
+{
+
 template<typename T, unsigned BufferSize>
 struct digital_input_filter
 {
+  static_assert(BufferSize > 0U, "digital_input_filter needs at least one sample");
+
   static constexpr unsigned c_buffer_size = BufferSize;
 
   digital_input_filter(const T p_mask = 0U)
@@ -91,6 +96,8 @@ struct digital_input_filter
   T      m_value;
   T      m_edge;
 };
+
+} // namespace haluj
 
 // HALUJ_DIGITAL_INPUT_FILTER_HPP
 #endif
