@@ -53,7 +53,7 @@ haluj_compile_fail(on_temporary_strategy "deleted")
 
 # cyclic_index rejects index types and ring sizes it cannot work with
 haluj_compile_fail(cyclic_index_not_integral
-  "satisfaction of 'integral|does not satisfy 'integral'")
+  "satisfaction of [^a-z]+(std::)?integral|does not satisfy [^a-z]+integral")
 haluj_compile_fail(cyclic_index_empty_ring   "needs at least one position")
 
 # A backward timer with an unsigned duration would never expire on a step
@@ -62,17 +62,18 @@ haluj_compile_fail(timer_backward_unsigned "needs a signed duration type")
 
 # Concepts: an argument that does not provide the interface is reported by
 # the name of the concept it fails. The two patterns are the wording of GCC
-# and of Clang.
+# and of Clang; [^a-z]+ stands for the quote, which GCC writes as ' or as a
+# typographic quote depending on the locale.
 haluj_compile_fail(parser_not_a_rule
-  "parser_rule<Types>\\) \\[with|does not satisfy 'parser_rule'")
+  "parser_rule<Types>\\) \\[with|does not satisfy [^a-z]+parser_rule")
 haluj_compile_fail(timer_not_an_implementation
-  "satisfaction of 'timer_implementation|does not satisfy 'timer_implementation'")
+  "satisfaction of [^a-z]+(haluj::)?timer_implementation|does not satisfy [^a-z]+timer_implementation")
 haluj_compile_fail(ring_buffer_not_a_policy
-  "satisfaction of 'concurrency_policy|does not satisfy 'concurrency_policy'")
+  "satisfaction of [^a-z]+(haluj::)?concurrency_policy|does not satisfy [^a-z]+concurrency_policy")
 haluj_compile_fail(on_without_test
-  "satisfaction of 'event_strategy|constraints not satisfied for class template 'on_t'")
+  "satisfaction of [^a-z]+(haluj::)?event_strategy|constraints not satisfied for class template [^a-z]+on_t")
 haluj_compile_fail(format_bool
-  "satisfaction of 'format_integer|does not satisfy 'format_integer'")
+  "satisfaction of [^a-z]+(haluj::)?format_integer|does not satisfy [^a-z]+format_integer")
 
 # A filter without samples has nothing to filter
 haluj_compile_fail(digital_input_filter_no_samples "needs at least one sample")
