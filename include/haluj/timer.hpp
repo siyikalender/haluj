@@ -39,29 +39,66 @@ namespace haluj
 {
 
 // Timer behaviours
+//
+// A behaviour decides what happens when the timer expires. timer calls it
+// with its implementation and with the function given to operator() (or
+// nullptr when there is none). A behaviour of your own needs the same two
+// call operators; through the implementation it can reload(), stop(),
+// load() a new timeout and so on.
 
+namespace timer_detail
+{
+
+inline void call(std::nullptr_t) {}
+
+template<typename Function>
+inline void call(Function& p_function) { p_function(); }
+
+} // namespace timer_detail
+
+/// Expires every timeout. The next period starts before the function is
+/// called, so the function may call set() to start a different one.
 struct periodic
 {
-  bool operator()(std::nullptr_t) { return false; };
-
-  template<typename Function> 
-  bool operator()(Function f) { f(); return false; };
+  template<typename Implementation, typename Function>
+  void operator()(Implementation& p_impl, Function& p_function) const
+  {
+    p_impl.reload();
+    timer_detail::call(p_function);
+  }
 };
 
+/// Expires once, then the timer stops until the next set()
 struct one_shot
 {
-  bool operator()(std::nullptr_t) { return true; };
-
-  template<typename Function> 
-  bool operator()(Function f) { f(); return true; };
+  template<typename Implementation, typename Function>
+  void operator()(Implementation& p_impl, Function& p_function) const
+  {
+    p_impl.stop();
+    timer_detail::call(p_function);
+  }
 };
 
+/// The function decides: true stops the timer, false starts the next
+/// period. The function must not call set() when it returns false, as the
+/// reload that follows would shift the new period. Without a function the
+/// timer stops, as with one_shot.
 struct user
 {
-  bool operator()(std::nullptr_t) { return true; };
+  template<typename Implementation, typename Function>
+  void operator()(Implementation& p_impl, Function& p_function) const
+  {
+    if (p_function())
+      p_impl.stop();
+    else
+      p_impl.reload();
+  }
 
-  template<typename Function> 
-  bool operator()(Function f) { return f(); };
+  template<typename Implementation>
+  void operator()(Implementation& p_impl, std::nullptr_t) const
+  {
+    p_impl.stop();
+  }
 };
 
 // Timer 
@@ -102,12 +139,12 @@ struct timer
   )
   {
     bool result = impl_(duration(p_delta));
-    
-    if (result && behaviour_(p_function))
+
+    if (result)
     {
-      // stop timer for one or N shot behaviour
-      impl_.stop();
+      behaviour_(impl_, p_function);
     }
+
     return result;
   }
 

@@ -148,37 +148,32 @@ struct backward : base<DurationType>
   duration    remaining_ = duration(0);
 };
 
-/// A software timer advanced by the caller with operator()(delta).
+/// A software timer advanced by the caller with operator()(delta), which
+/// returns true once the timeout is reached.
 ///
-/// With AutoReset, an expiry starts the next period without losing the time
-/// that ran past it, so a step that does not divide the timeout does not
-/// make the period drift. A step longer than the timeout makes the timer
-/// fall behind: it expires once per call until it has caught up. Keep the
-/// step no longer than the timeout.
-template<typename DirectionType, bool AutoReset = true>
+/// What follows an expiry is up to the behaviour of the timer. The periodic
+/// behaviour calls reload(), which starts the next period without losing
+/// the time that ran past the timeout, so a step that does not divide the
+/// timeout does not make the period drift. A step longer than the timeout
+/// makes the timer fall behind: it expires once per call until it has
+/// caught up. Keep the step no longer than the timeout.
+template<typename DirectionType>
 struct implementation : DirectionType
 {
   typedef DirectionType                 direction;
   typedef typename direction::duration  duration;
-  
-  static constexpr bool auto_reset = AutoReset;
 
   bool operator ()(duration p_delta)
   {
     bool result = false;
-    
+
     if (direction::is_running())
     {
       direction::iterate(p_delta);
-      
-      result = direction::predicate();
 
-      if(auto_reset && result)
-      {
-        direction::reload();
-      }
+      result = direction::predicate();
     }
-    
+
     return result;
   }
 };

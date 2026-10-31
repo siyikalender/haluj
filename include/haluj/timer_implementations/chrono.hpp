@@ -39,18 +39,17 @@ namespace haluj
 namespace timer_implementations
 {
 
+/// A timer that reads a std::chrono clock instead of being advanced by the
+/// caller; the delta given to operator() is ignored.
 template
 <
   typename  Clock, 
-  typename  Duration,
-  bool      AutoReset
+  typename  Duration
 >
 struct chrono
 {
   typedef typename Clock::time_point  time_point;
   typedef Duration                    duration;
-  
-  static constexpr bool auto_reset = AutoReset;
 
   chrono() {}
   
@@ -86,21 +85,22 @@ struct chrono
     return Clock::now() >= timeout_;
   }
 
+  /// Starts over: the timeout is a full period from now
   void reset()
   {
     timeout_ = Clock::now() + load_;
-  }  
-  
+  }
+
+  /// Starts the next period from the previous timeout, not from now, so
+  /// the period does not drift
+  void reload()
+  {
+    timeout_ += load_;
+  }
+
   bool operator ()(duration)
   {
-    bool result = run_ && predicate();
-    
-    if (auto_reset && result)
-    {
-      timeout_ += load_;
-    }
-    
-    return result;
+    return run_ && predicate();
   }
   
   bool        run_ = false;

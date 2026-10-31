@@ -95,6 +95,84 @@ static void test_user_behaviour()
 
   HALUJ_CHECK(fired == 3);
   HALUJ_CHECK(!t.is_running());
+
+  // Without a function it stops, as one_shot does
+  haluj::timer<sw::fwd<unsigned>, haluj::user> u;
+  u.set(1);
+  HALUJ_CHECK(u(nullptr, 1u));
+  HALUJ_CHECK(!u.is_running());
+}
+
+// periodic starts the next period before calling the function, so a set()
+// inside the function is kept
+static void test_periodic_set_in_callback()
+{
+  haluj::timer<sw::fwd<unsigned>> t;
+  t.set(3u);
+
+  int  expiries[4] = {};
+  int  count       = 0;
+  auto on_expiry   = [&] { if (count == 1) t.set(5u); };
+
+  for (int i = 1; i <= 20 && count < 4; ++i)
+  {
+    if (t(on_expiry, 1u))
+      expiries[count++] = i;
+  }
+
+  // 3, then the period of 3 that the function replaced with 5: 3 + 3 + 5...
+  HALUJ_CHECK(expiries[0] == 3);
+  HALUJ_CHECK(expiries[1] == 6);
+  HALUJ_CHECK(expiries[2] == 11);
+  HALUJ_CHECK(expiries[3] == 16);
+}
+
+// Behaviours of one's own get the implementation and can do what they need
+namespace
+{
+
+// Doubles the period after every expiry: 2, 4, 8, ...
+struct backoff
+{
+  template<typename Implementation, typename Function>
+  void operator()(Implementation& p_impl, Function&) const
+  {
+    p_impl.reload();
+    p_impl.load(p_impl.timeout_ * 2u);
+  }
+};
+
+// Neither reloads nor stops: expired until the next set()
+struct hold
+{
+  template<typename Implementation, typename Function>
+  void operator()(Implementation&, Function&) const
+  {}
+};
+
+} // namespace
+
+static void test_own_behaviours()
+{
+  haluj::timer<sw::fwd<unsigned>, backoff> b;
+  b.set(2u);
+
+  int expiries[3] = {};
+  int count       = 0;
+  for (int i = 1; i <= 20 && count < 3; ++i)
+  {
+    if (b(nullptr, 1u))
+      expiries[count++] = i;
+  }
+  HALUJ_CHECK(expiries[0] == 2 && expiries[1] == 6 && expiries[2] == 14);
+
+  haluj::timer<sw::fwd<unsigned>, hold> h;
+  h.set(2u);
+  HALUJ_CHECK(!h(nullptr, 1u));
+  HALUJ_CHECK(h(nullptr, 1u));
+  HALUJ_CHECK(h(nullptr, 1u));
+  HALUJ_CHECK(h(nullptr, 1u));
+  HALUJ_CHECK(h.is_running());
 }
 
 static void test_backward()
@@ -231,7 +309,7 @@ static void test_chrono()
   using clock = std::chrono::steady_clock;
   using ms    = std::chrono::milliseconds;
 
-  haluj::timer<haluj::timer_implementations::chrono<clock, ms, true>> t;
+  haluj::timer<haluj::timer_implementations::chrono<clock, ms>> t;
   HALUJ_CHECK(!t.is_running()); // not started before set()
 
   t.set(ms(1000));
@@ -240,6 +318,13 @@ static void test_chrono()
 
   t.set(ms(0));
   HALUJ_CHECK(t(nullptr, 0));
+  HALUJ_CHECK(t.is_running()); // periodic: reloaded, still running
+
+  haluj::timer<haluj::timer_implementations::chrono<clock, ms>, haluj::one_shot> o;
+  o.set(ms(0));
+  HALUJ_CHECK(o(nullptr, 0));
+  HALUJ_CHECK(!o.is_running());
+  HALUJ_CHECK(!o(nullptr, 0));
 }
 
 int main()
@@ -247,6 +332,8 @@ int main()
   test_periodic();
   test_one_shot();
   test_user_behaviour();
+  test_periodic_set_in_callback();
+  test_own_behaviours();
   test_backward();
   test_backward_large_step();
   test_periodic_no_drift();
