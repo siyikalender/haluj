@@ -21,6 +21,11 @@ add_executable(haluj_test_ring_buffer_spsc test_ring_buffer_spsc.cpp)
 target_link_libraries(haluj_test_ring_buffer_spsc PRIVATE haluj::haluj haluj_warnings Threads::Threads)
 add_test(NAME test_ring_buffer_spsc COMMAND haluj_test_ring_buffer_spsc)
 
+# blackboard with the spsc policy between two threads
+add_executable(haluj_test_blackboard_spsc test_blackboard_spsc.cpp)
+target_link_libraries(haluj_test_blackboard_spsc PRIVATE haluj::haluj haluj_warnings Threads::Threads)
+add_test(NAME test_blackboard_spsc COMMAND haluj_test_blackboard_spsc)
+
 # Compile failure tests: each source must fail to build with the expected
 # diagnostic. The target is excluded from the normal build and built by the
 # test itself; matching the message makes sure it fails for the right reason.

@@ -32,6 +32,8 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_EVENT_STRATEGY_HPP
 #define HALUJ_EVENT_STRATEGY_HPP
 
+#include "concurrency.hpp"
+
 namespace haluj
 {
 
@@ -81,45 +83,76 @@ on(const EventType, const EventStrategyType&&) = delete;
 namespace strategy
 {
   
-template <typename EventType>
+/// A single slot for one pending event: raise() puts an event on the board
+/// if it is free, test() looks at it and clear() takes it off.
+///
+/// Concurrency: single_context (the default) for a board used from one
+/// context, or spsc when one context raises events and another tests and
+/// clears them, for example an interrupt and the main loop. In spsc use the
+/// producer calls only raise(), and the consumer only test(),
+/// test_and_clear() and clear(). Only the producer turns the board from
+/// free to taken and only the consumer turns it back, which is why plain
+/// loads and stores are enough.
+///
+/// One producer only: two producers in different contexts, such as two
+/// interrupts of different priority, could both see the board free and
+/// both write it, and one event would overwrite the other unreported. That
+/// needs an atomic read-modify-write, which Cortex-M0 does not have; there,
+/// raise() from more than one context only with interrupts masked around
+/// it.
+template <typename EventType,
+          typename Concurrency = single_context>
 struct blackboard
 {
+  typedef EventType     event_type;
+  typedef Concurrency   concurrency;
+
+  /// consumer: true if p_event is pending
   bool test(EventType   p_event) const
   {
-    return (is_valid && (pending_event == p_event));
+    // The flag is read first: once it is seen set, the event is there
+    return (is_valid.load() && (pending_event == p_event));
   }
 
+  /// consumer: takes the pending event off the board
   void clear()
   {
-    is_valid = false;
+    is_valid.store(false);
   }
 
+  /// consumer: takes p_event off the board if it is pending
   bool test_and_clear(EventType p_event)
   {
     bool result = false;
-    
+
     if (test(p_event))
     {
       result = true;
       clear();
     }
-    
+
     return result;
   }
 
+  /// producer: puts p_event on the board if it is free; false if another
+  /// event is still pending
   bool raise(EventType p_event)
   {
     bool result = false;
-    if (!is_valid)
+
+    if (!is_valid.load())
     {
-      result = is_valid = true;
-      pending_event     = p_event;
+      // The event first, then the flag that publishes it
+      pending_event = p_event;
+      is_valid.store(true);
+      result = true;
     }
+
     return result;
   }
 
-  bool      is_valid = false;
-  EventType pending_event;
+  shared<bool, Concurrency>  is_valid;
+  EventType                  pending_event{};
 };
 
 } // namespace strategy

@@ -302,9 +302,10 @@ static void test_debounce_models()
   check_debounce_models<5>();
 }
 
-static void test_blackboard()
+template<typename Concurrency>
+static void check_blackboard()
 {
-  haluj::strategy::blackboard<int> board;
+  haluj::strategy::blackboard<int, Concurrency> board;
 
   HALUJ_CHECK(!board.test(3));
   HALUJ_CHECK(board.raise(3));
@@ -313,9 +314,22 @@ static void test_blackboard()
   HALUJ_CHECK(!board.test(4));
   HALUJ_CHECK(haluj::on(3, board)());
 
+  HALUJ_CHECK(!board.test_and_clear(4));
+  HALUJ_CHECK(board.test(3));   // a test for another event leaves it
   HALUJ_CHECK(board.test_and_clear(3));
   HALUJ_CHECK(!board.test(3));
   HALUJ_CHECK(board.raise(4));
+  HALUJ_CHECK(board.test(4));
+
+  board.clear();
+  HALUJ_CHECK(!board.test(4));
+  HALUJ_CHECK(board.raise(5));
+}
+
+static void test_blackboard()
+{
+  check_blackboard<haluj::single_context>();
+  check_blackboard<haluj::spsc>();
 }
 
 static void test_set_and_wait()

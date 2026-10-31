@@ -39,6 +39,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include "haluj/bounded/vector.hpp"
 #include "haluj/digital_input_filter.hpp"
+#include "haluj/event_strategy.hpp"
 #include "haluj/format.hpp"
 #include "haluj/pair_lookup.hpp"
 #include "haluj/parser.hpp"
@@ -53,12 +54,14 @@ namespace
 {
 
 enum class mode { idle, run };
+enum class dma_event : std::uint8_t { none, half, complete };
 
 haluj::ring_buffer<std::array<char, 64>, haluj::spsc>             rx;   // filled by the UART interrupt
 haluj::bounded::vector<char, 32>                                  line;
 haluj::timer<haluj::timer_implementations::software::fwd<std::uint32_t>> blink;
 haluj::digital_input_filter<std::uint32_t, 4>                     buttons(0x3u);
 haluj::set_and_wait                                               handshake;
+haluj::strategy::blackboard<dma_event, haluj::spsc>               dma;  // raised by the DMA interrupt
 mode                                                              state = mode::idle;
 std::uint32_t                                                     setpoint = 0;
 
@@ -109,6 +112,19 @@ extern "C" void uart_rx(char c)
 {
   if (!rx.full())
     rx.push(c);
+}
+
+// Called from the DMA interrupt; an event the main loop has not taken yet
+// stays, the new one is dropped
+extern "C" bool dma_isr(bool complete)
+{
+  return dma.raise(complete ? dma_event::complete : dma_event::half);
+}
+
+// Main loop side: takes the completion when it is there
+extern "C" bool dma_done()
+{
+  return dma.test_and_clear(dma_event::complete);
 }
 
 // Parses "SET <n>" commands

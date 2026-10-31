@@ -48,7 +48,7 @@ jobs:
         run: ctest --output-on-failure --parallel 4
 
   # Address and undefined behaviour sanitizers, and the thread sanitizer for
-  # the spsc ring_buffer test
+  # the spsc ring_buffer and blackboard tests
   sanitizers:
     name: ${{ matrix.compiler }} ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest

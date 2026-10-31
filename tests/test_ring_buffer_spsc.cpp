@@ -40,6 +40,8 @@ For more information, please refer to <http://unlicense.org>
 
 #include "check.hpp"
 
+// A side that has to wait yields, so the test also finishes when the two
+// threads share one core with other tests or run slowly under a sanitizer
 namespace
 {
 
@@ -56,6 +58,8 @@ void producer()
   {
     if (buffer.try_push(value))
       ++value;
+    else
+      std::this_thread::yield();
   }
   producer_done.store(true);
 }
@@ -81,6 +85,8 @@ static void test_try_push_try_pop()
       ++expected;
       ++received;
     }
+    else
+      std::this_thread::yield();
   }
 
   p.join();
@@ -104,6 +110,8 @@ static void test_contract()
         buffer.push(value);
         ++value;
       }
+      else
+        std::this_thread::yield();
     }
   });
 
@@ -119,6 +127,8 @@ static void test_contract()
       buffer.pop();
       ++expected;
     }
+    else
+      std::this_thread::yield();
   }
 
   p.join();
