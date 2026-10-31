@@ -31,12 +31,15 @@ For more information, please refer to <http://unlicense.org>
 /// \author Claude Opus 5.5 <noreply@anthropic.com>
 /// \date   2026
 
+#include <array>
 #include <cstdint>
 #include <cstring>
 #include <iterator>
 #include <optional>
 #include <utility>
+#include <vector>
 
+#include "haluj/bounded/vector.hpp"
 #include "haluj/digital_input_filter.hpp"
 #include "haluj/event_strategy.hpp"
 #include "haluj/pair_lookup.hpp"
@@ -70,6 +73,80 @@ static void test_pair_lookup()
   HALUJ_CHECK(*code == 1);
 
   HALUJ_CHECK(haluj::find_in_first(1, std::begin(table), std::end(table)) == std::begin(table));
+}
+
+// The same lookups give the same answers whatever holds the pairs
+template<typename Range>
+static void check_lookups_on(const Range& table)
+{
+  using haluj::to_first;
+  using haluj::to_second;
+
+  HALUJ_CHECK(std::strcmp(*to_second<std::optional>(1, table), "on") == 0);
+  HALUJ_CHECK(std::strcmp(*to_second<std::optional>(2, table), "off") == 0);
+  HALUJ_CHECK(!to_second<std::optional>(3, table).has_value());
+
+  // Copies of the strings: only a comparison by content finds them
+  char        on[]  = "on";
+  char        off[] = "off";
+  const char* key_on  = on;
+  const char* key_off = off;
+
+  HALUJ_CHECK(*to_first<std::optional>(key_on,  table, haluj::c_str_equal_to()) == 1);
+  HALUJ_CHECK(*to_first<std::optional>(key_off, table, haluj::c_str_equal_to()) == 2);
+  HALUJ_CHECK(!to_first<std::optional>("x", table, haluj::c_str_equal_to()).has_value());
+
+  // With the default comparator the pointers are compared
+  HALUJ_CHECK(!to_first<std::optional>(key_off, table).has_value());
+
+  // The iterator overloads give the same answers
+  HALUJ_CHECK(*to_first<std::optional>(key_off, std::begin(table), std::end(table),
+                                       haluj::c_str_equal_to()) == 2);
+  HALUJ_CHECK(std::strcmp(*to_second<std::optional>(2, std::begin(table), std::end(table)),
+                          "off") == 0);
+}
+
+static void test_pair_lookup_ranges()
+{
+  using entry = std::pair<int, const char*>;
+
+  static const entry c_array[] = {{1, "on"}, {2, "off"}};
+  check_lookups_on(c_array);
+
+  const std::array<entry, 2> std_array = {{{1, "on"}, {2, "off"}}};
+  check_lookups_on(std_array);
+
+  haluj::bounded::vector<entry, 4> bounded;
+  bounded.push_back(entry(1, "on"));
+  bounded.push_back(entry(2, "off"));
+  check_lookups_on(bounded);
+
+  const std::vector<entry> std_vector = {{1, "on"}, {2, "off"}};
+  check_lookups_on(std_vector);
+}
+
+// The key need not have the type of the elements
+static void test_pair_lookup_key_type()
+{
+  enum class mode { idle, run };
+
+  static const std::pair<std::uint8_t, mode> modes[] = {{0, mode::idle}, {1, mode::run}};
+
+  HALUJ_CHECK(*haluj::to_second<std::optional>(1, modes) == mode::run);
+  HALUJ_CHECK(*haluj::to_first<std::optional>(mode::idle, modes) == 0);
+
+  // A table of half open ranges, looked up with in_range
+  static const std::pair<std::pair<int, int>, char> grades[] =
+  {
+    {{0, 50},   'F'},
+    {{50, 70},  'C'},
+    {{70, 101}, 'A'}
+  };
+
+  HALUJ_CHECK(*haluj::to_second<std::optional>(0,   grades, haluj::in_range()) == 'F');
+  HALUJ_CHECK(*haluj::to_second<std::optional>(69,  grades, haluj::in_range()) == 'C');
+  HALUJ_CHECK(*haluj::to_second<std::optional>(70,  grades, haluj::in_range()) == 'A');
+  HALUJ_CHECK(!haluj::to_second<std::optional>(101, grades, haluj::in_range()).has_value());
 }
 
 static void test_digital_input_filter()
@@ -286,6 +363,8 @@ static void test_utility()
 int main()
 {
   test_pair_lookup();
+  test_pair_lookup_ranges();
+  test_pair_lookup_key_type();
   test_digital_input_filter();
   test_debounce_patterns();
   test_debounce_models();

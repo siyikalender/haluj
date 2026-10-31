@@ -51,7 +51,6 @@ For more information, please refer to <http://unlicense.org>
 
 #include "haluj/bounded/vector.hpp"
 #include "haluj/format.hpp"
-#include "haluj/pair_lookup.hpp"
 #include "haluj/state_machine.hpp"
 
 #include "check.hpp"
@@ -70,18 +69,6 @@ static void format_int_truncation()
   char  text[8] = {};
   char* end     = haluj::format(12345, text, text + 3);
   HALUJ_CHECK(std::string(text, end) != "345");
-}
-
-// to_first over an array must use the given comparator
-static void to_first_comparator()
-{
-  static const std::pair<int, const char*> table[] = {{1, "on"}, {2, "off"}};
-
-  char        buffer[] = "off";
-  const char* key      = buffer;
-
-  auto code = haluj::to_first<std::optional>(key, table, haluj::c_str_equal_to());
-  HALUJ_CHECK(code.has_value() && *code == 2);
 }
 
 // An rvalue argument must reach the transition action intact
@@ -114,7 +101,6 @@ static const known_bug bugs[] =
 {
   {"vector_assign_full",            vector_assign_full},
   {"format_int_truncation",         format_int_truncation},
-  {"to_first_comparator",           to_first_comparator},
   {"state_machine_rvalue_argument", state_machine_rvalue_argument},
 };
 
