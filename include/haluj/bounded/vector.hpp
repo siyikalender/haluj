@@ -42,6 +42,24 @@ namespace haluj
 namespace bounded
 {
 
+/// A vector with its storage inside the object: at most Capacity elements,
+/// no dynamic allocation.
+///
+/// The member functions do not check the capacity or the size. The caller
+/// checks first:
+///   - push_back() requires !full()
+///   - pop_back(), front() and back() require !empty()
+///   - resize(n) requires n <= capacity()
+///   - assign(first, last) requires distance(first, last) <= capacity()
+///   - operator[](i) requires i < size()
+/// The free functions push_back, pop_back, resize and assign below are the
+/// checked versions: they return false and leave the vector unchanged when
+/// the call does not fit.
+///
+/// The storage holds Capacity elements from the start, so T must be default
+/// constructible, and an element that leaves the vector (pop_back, resize,
+/// clear) is not destroyed until it is overwritten. Both are natural for the
+/// trivial types this vector is meant for.
 template<typename T, std::size_t Capacity>
 struct vector
 {
@@ -65,12 +83,20 @@ struct vector
   vector()
   {}
 
+  /// \pre !full()
   void push_back(const T& p_value)
   {
     m_data[m_size] = p_value;
     m_size++;
   }
 
+  /// \pre !empty()
+  void pop_back()
+  {
+    m_size--;
+  }
+
+  /// \pre p_size <= capacity()
   void resize(const std::size_t p_size, const T& p_initial = T())
   {
     if (m_size < p_size)
@@ -90,8 +116,10 @@ struct vector
     return m_size;
   }
 
-  template <typename InputIterator>
-  void assign(InputIterator first, InputIterator last)
+  /// Takes a forward range: it is measured, then copied.
+  /// \pre distance(first, last) <= capacity()
+  template <typename ForwardIterator>
+  void assign(ForwardIterator first, ForwardIterator last)
   {
     resize(std::distance(first, last));
     std::copy (first, last, begin());
@@ -100,6 +128,11 @@ struct vector
   bool empty() const
   {
     return size() == 0;
+  }
+
+  bool full() const
+  {
+    return size() == Capacity;
   }
 
   iterator begin()
@@ -193,7 +226,10 @@ struct vector
   std::size_t   m_size = 0U;
 };
 
-template<typename     T, 
+// Checked versions of the member functions
+
+/// Appends v if there is room
+template<typename     T,
          std::size_t  Capacity>
 inline bool push_back(vector<T, Capacity>& c, const T& v)
 {
@@ -208,12 +244,29 @@ inline bool push_back(vector<T, Capacity>& c, const T& v)
   return result;
 }
 
-template<typename     T, 
-         std::size_t  Capacity, 
-         typename     InputIterator>
-inline bool assign(vector<T, Capacity>& p_c, 
-                   InputIterator        p_first, 
-                   InputIterator        p_last)
+/// Removes the last element if there is one
+template<typename     T,
+         std::size_t  Capacity>
+inline bool pop_back(vector<T, Capacity>& c)
+{
+  bool result = false;
+
+  if (!c.empty())
+  {
+    c.pop_back();
+    result = true;
+  }
+
+  return result;
+}
+
+/// Replaces the contents with a forward range if it fits
+template<typename     T,
+         std::size_t  Capacity,
+         typename     ForwardIterator>
+inline bool assign(vector<T, Capacity>& p_c,
+                   ForwardIterator      p_first,
+                   ForwardIterator      p_last)
 {
   bool result = false;
 
@@ -228,16 +281,18 @@ inline bool assign(vector<T, Capacity>& p_c,
   return result;
 }
 
-template<typename     T, 
+/// Changes the size if it fits; new elements are copies of p_initial
+template<typename     T,
          std::size_t  Capacity>
-bool resize(vector<T, Capacity>&  c,
-            const std::size_t     p_size)
+inline bool resize(vector<T, Capacity>&  c,
+                   const std::size_t     p_size,
+                   const T&              p_initial = T())
 {
   bool result = false;
 
   if (p_size <= Capacity)
   {
-    c.resize(p_size);
+    c.resize(p_size, p_initial);
     result = true;
   }
 

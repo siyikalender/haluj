@@ -128,6 +128,43 @@ static void test_bounded_vector_iterators()
   HALUJ_CHECK(std::accumulate(cv.begin(), cv.end(), 0) == 10);
 }
 
+// pop_back and full, and the checked pop_back and resize
+static void test_bounded_vector_pop_back_full_resize()
+{
+  haluj::bounded::vector<int, 3> v;
+  HALUJ_CHECK(!v.full());
+  HALUJ_CHECK(!haluj::bounded::pop_back(v)); // nothing to remove
+  HALUJ_CHECK(v.empty());
+
+  // A producer that keeps to the contract
+  for (int i = 1; i <= 5; ++i)
+  {
+    if (!v.full())
+      v.push_back(i);
+  }
+  HALUJ_CHECK(v.full());
+  HALUJ_CHECK(v.size() == 3 && v.back() == 3);
+
+  v.pop_back();
+  HALUJ_CHECK(v.size() == 2 && v.back() == 2);
+  HALUJ_CHECK(!v.full());
+
+  HALUJ_CHECK(haluj::bounded::pop_back(v));
+  HALUJ_CHECK(haluj::bounded::pop_back(v));
+  HALUJ_CHECK(!haluj::bounded::pop_back(v));
+  HALUJ_CHECK(v.empty());
+
+  // New elements are copies of the given value
+  HALUJ_CHECK(haluj::bounded::resize(v, 3, 7));
+  HALUJ_CHECK(v.size() == 3 && v[0] == 7 && v[2] == 7);
+
+  HALUJ_CHECK(haluj::bounded::resize(v, 1, 9)); // shrinking keeps the rest
+  HALUJ_CHECK(v.size() == 1 && v[0] == 7);
+
+  HALUJ_CHECK(!haluj::bounded::resize(v, 4, 1)); // does not fit: unchanged
+  HALUJ_CHECK(v.size() == 1 && v[0] == 7);
+}
+
 // The checked assign takes any range that fits, including one that fills the
 // vector and an empty one, and refuses a longer one without changing the
 // vector
@@ -479,6 +516,7 @@ int main()
   test_bounded_vector_assign();
   test_bounded_vector_value();
   test_bounded_vector_iterators();
+  test_bounded_vector_pop_back_full_resize();
   test_ring_buffer();
   test_ring_buffer_back();
   test_ring_buffer_contract();
