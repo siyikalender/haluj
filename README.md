@@ -9,7 +9,7 @@ This is a header only lightweight toolbox written in C++. It consists several sm
 ## Requirements
 
 - C++17 (`state_machine.hpp` uses `auto` template parameters)
-- The [bit](https://github.com/siyikalender/bit) library, used by `ring_buffer.hpp`
+- Nothing else: the library has no dependencies
 
 No heap, exceptions or RTTI are needed; the library builds with
 `-fno-exceptions -fno-rtti` for bare metal targets such as ARM Cortex-M.
@@ -23,9 +23,6 @@ FetchContent_MakeAvailable(haluj)
 
 target_link_libraries(firmware PRIVATE haluj::haluj)
 ```
-
-The bit library is taken from an existing `bit::bit` target or an installed
-package; otherwise a pinned commit is downloaded (`HALUJ_FETCH_BIT`).
 
 ## Tests
 

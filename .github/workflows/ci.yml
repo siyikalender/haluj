@@ -17,10 +17,6 @@ on:
 permissions:
   contents: read
 
-env:
-  # Keep in step with the GIT_TAG in CMakeLists.txt
-  BIT_COMMIT: a6a60919b1a0d82aef380d40ca995380433de68d
-
 jobs:
   # Tests, compile failure tests and header checks on GCC and Clang
   test:
@@ -94,12 +90,6 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Fetch the bit library
-        run: |
-          git init -q "$RUNNER_TEMP/bit"
-          git -C "$RUNNER_TEMP/bit" fetch -q --depth 1 https://github.com/siyikalender/bit.git "$BIT_COMMIT"
-          git -C "$RUNNER_TEMP/bit" checkout -q FETCH_HEAD
-
       - name: Install xPack GNU Arm Embedded GCC
         run: |
           cd "$RUNNER_TEMP"
@@ -114,7 +104,7 @@ jobs:
           for std in 17 20; do
             arm-none-eabi-g++ -std=c++${std} -mcpu=${{ matrix.cpu }} -mthumb -Os \
               -fno-exceptions -fno-rtti -Wall -Wextra \
-              -Iinclude -I"$RUNNER_TEMP/bit/include" \
+              -Iinclude \
               -c tests/target/cortex_m.cpp -o cortex_m_cxx${std}.o
             arm-none-eabi-size cortex_m_cxx${std}.o
           done
