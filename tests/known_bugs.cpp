@@ -43,21 +43,11 @@ For more information, please refer to <http://unlicense.org>
 
 #include <cstdio>
 #include <cstring>
-#include <iterator>
 #include <string>
 
-#include "haluj/bounded/vector.hpp"
 #include "haluj/format.hpp"
 
 #include "check.hpp"
-
-// Assigning exactly capacity elements must succeed
-static void vector_assign_full()
-{
-  const int source[] = {1, 2, 3, 4};
-  haluj::bounded::vector<int, 4> v;
-  HALUJ_CHECK(haluj::bounded::assign(v, std::begin(source), std::end(source)));
-}
 
 // A number that does not fit must not be written as a different number
 static void format_int_truncation()
@@ -75,7 +65,6 @@ struct known_bug
 
 static const known_bug bugs[] =
 {
-  {"vector_assign_full",            vector_assign_full},
   {"format_int_truncation",         format_int_truncation},
 };
 

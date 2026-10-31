@@ -222,15 +222,15 @@ inline bool assign(vector<T, Capacity>& p_c,
                    InputIterator        p_last)
 {
   bool result = false;
-  
-  auto d = std::distance(p_first, p_last);
-  
-  if (d > 0 && d < static_cast<decltype(d)>(p_c.capacity()))
+
+  const auto d = std::distance(p_first, p_last);
+
+  if (d >= 0 && static_cast<std::size_t>(d) <= p_c.capacity())
   {
     p_c.assign(p_first, p_last);
     result = true;
   }
-  
+
   return result;
 }
 

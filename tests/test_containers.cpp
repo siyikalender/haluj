@@ -83,6 +83,28 @@ static void test_bounded_vector()
 
 // The checked push_back refuses an element once the vector is full and
 // leaves the storage around it alone
+// The checked assign takes any range that fits, including one that fills the
+// vector and an empty one, and refuses a longer one without changing the
+// vector
+static void test_bounded_vector_assign()
+{
+  const int four[] = {1, 2, 3, 4};
+  const int five[] = {1, 2, 3, 4, 5};
+
+  haluj::bounded::vector<int, 4> v;
+
+  HALUJ_CHECK(haluj::bounded::assign(v, std::begin(four), std::end(four)));
+  HALUJ_CHECK(v.size() == 4);
+  HALUJ_CHECK(v[0] == 1 && v[3] == 4);
+
+  HALUJ_CHECK(!haluj::bounded::assign(v, std::begin(five), std::end(five)));
+  HALUJ_CHECK(v.size() == 4);
+  HALUJ_CHECK(v[3] == 4);
+
+  HALUJ_CHECK(haluj::bounded::assign(v, std::begin(four), std::begin(four)));
+  HALUJ_CHECK(v.empty());
+}
+
 static void test_bounded_vector_push_back_full()
 {
   struct guarded
@@ -409,6 +431,7 @@ int main()
 {
   test_bounded_vector();
   test_bounded_vector_push_back_full();
+  test_bounded_vector_assign();
   test_ring_buffer();
   test_ring_buffer_back();
   test_ring_buffer_contract();
