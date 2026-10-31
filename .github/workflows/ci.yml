@@ -27,7 +27,7 @@ jobs:
       matrix:
         compiler: [g++, clang++]
         build_type: [Debug, Release]
-        std: [17, 20]
+        std: [20, 23]
 
     steps:
       - uses: actions/checkout@v4
@@ -107,7 +107,7 @@ jobs:
       - name: Compile
         run: |
           arm-none-eabi-g++ --version
-          for std in 17 20; do
+          for std in 20 23; do
             arm-none-eabi-g++ -std=c++${std} -mcpu=${{ matrix.cpu }} -mthumb -Os \
               -fno-exceptions -fno-rtti -Wall -Wextra -Wpedantic -Werror \
               -Iinclude \

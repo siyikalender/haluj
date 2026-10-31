@@ -8,7 +8,8 @@ This is a header only lightweight toolbox written in C++. It consists several sm
 
 ## Requirements
 
-- C++17 (`state_machine.hpp` uses `auto` template parameters)
+- C++20: concepts, `constinit`, `[[no_unique_address]]`, `<=>` and ranges
+  (GCC 10 or later, Clang 10 or later with libstdc++)
 - Nothing else: the library has no dependencies
 
 No heap, exceptions or RTTI are needed; the library builds with

@@ -32,8 +32,8 @@ target_include_directories(haluj
     $<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
 )
 
-# state_machine.hpp uses auto template parameters
-target_compile_features(haluj INTERFACE cxx_std_17)
+# Concepts, constinit, [[no_unique_address]], <=> and ranges
+target_compile_features(haluj INTERFACE cxx_std_20)
 
 if(HALUJ_BUILD_TESTS)
   # Warning flags for the code in this repository (tests only)
