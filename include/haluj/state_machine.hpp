@@ -33,8 +33,9 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_STATE_MACHINE_HPP
 #define HALUJ_STATE_MACHINE_HPP
 
-#include <utility>
+#include <cstddef>
 #include <tuple>
+#include <utility>
 
 namespace haluj
 {
@@ -43,20 +44,27 @@ namespace haluj
 struct g_always_t
 {
   template<typename... Args>
-  bool operator()(Args...) const
+  bool operator()(Args&&...) const
   {
     return true;
   }
 };
 
+// The arguments of a call to the machine reach every guard and action of
+// that call: the guards tested, then exit, transition action and enter. So
+// they are never forwarded: an rvalue forwarded to the first of them could
+// be moved from and reach the next ones empty. They are passed on as
+// lvalues, and a callback may take them by value, by (const) reference or
+// as auto&&, but not as a concrete rvalue reference such as std::string&&.
+
 template < typename... Args >
-inline void _invoke_a(std::nullptr_t np, Args&&...  args)
+inline void _invoke_a(std::nullptr_t, Args&&...)
 {}
 
 template < typename Action, typename... Args >
-inline void _invoke_a(Action&& action, Args&&... args)
+inline void _invoke_a(const Action& action, Args&&... args)
 {
-  action(std::forward<Args>(args)...);
+  action(args...);
 }
 
 constexpr g_always_t g_always;
@@ -86,7 +94,7 @@ struct transition_t
   
   template<typename... Args>
   bool test(const state_type p_current,
-            Args...          args) const
+            Args&&...        args) const
   {
     return (p_current == from) && trigger(args...);
   }
@@ -96,11 +104,11 @@ struct transition_t
   state_type do_transition(const StateActionMap&  p_map, 
                            Args&&...              args) const
   {
-    p_map.exit_(from, std::forward<Args>(args)...);
+    p_map.exit_(from, args...);
 
-    _invoke_a(action, std::forward<Args>(args)...);
+    _invoke_a(action, args...);
 
-    p_map.enter_(to, std::forward<Args>(args)...);
+    p_map.enter_(to, args...);
     
     return to;
   }
@@ -134,8 +142,8 @@ struct graph_t
             typename StateActionMap,
             typename... Args>
   StateType operator()(const StateType          p_current, 
-                       const StateActionMap&    p_map,
-                       Args...                  args) const
+                       const StateActionMap&,
+                       Args&&...) const
   {
     return p_current;
   }
@@ -159,12 +167,12 @@ struct graph_t<EdgeType, Entries...>
                        const StateActionMap&    p_map,
                        Args&&...                args) const
   {
-    if (edge_.test(p_current, std::forward<Args>(args)...))
+    if (edge_.test(p_current, args...))
     {
-      return edge_.do_transition(p_map, std::forward<Args>(args)...);
+      return edge_.do_transition(p_map, args...);
     }
 
-    return next_(p_current, p_map, std::forward<Args>(args)...);
+    return next_(p_current, p_map, args...);
   }
 
   const edge_type     edge_;
@@ -214,15 +222,15 @@ template <typename... Entries>
 struct map_t
 {
   template <typename    KeyType, typename... Args>  
-  void enter_(const KeyType&, Args...) const
+  void enter_(const KeyType&, Args&&...) const
   {}
 
   template <typename    KeyType, typename... Args>  
-  void do_(const KeyType&, Args...) const
+  void do_(const KeyType&, Args&&...) const
   {}
 
   template <typename    KeyType, typename... Args>  
-  void exit_(const KeyType&, Args...) const
+  void exit_(const KeyType&, Args&&...) const
   {}
 
 };
@@ -246,11 +254,11 @@ struct map_t<EntryType, Entries...>
   {
     if (p_key == entry_type::key)
     {
-      _invoke_a(std::get<0>(pair_.value), std::forward<Args>(args)...);
+      _invoke_a(std::get<0>(pair_.value), args...);
     }
     else
     {
-      next_.enter_(p_key, std::forward<Args>(args)...);
+      next_.enter_(p_key, args...);
     }
   }
 
@@ -259,11 +267,11 @@ struct map_t<EntryType, Entries...>
   {
     if (p_key == entry_type::key)
     {
-      _invoke_a(std::get<1>(pair_.value), std::forward<Args>(args)...);
+      _invoke_a(std::get<1>(pair_.value), args...);
     }
     else
     {
-      next_.do_(p_key, std::forward<Args>(args)...);
+      next_.do_(p_key, args...);
     }
   }
 
@@ -272,11 +280,11 @@ struct map_t<EntryType, Entries...>
   {
     if (p_key == entry_type::key)
     {
-      _invoke_a(std::get<2>(pair_.value), std::forward<Args>(args)...);
+      _invoke_a(std::get<2>(pair_.value), args...);
     }
     else
     {
-      next_.exit_(p_key, std::forward<Args>(args)...);
+      next_.exit_(p_key, args...);
     }
   }
   
@@ -316,7 +324,7 @@ struct machine_t
   StateType operator()(const StateType p_current, Args&&... args) const
   {
     map_.do_(p_current, args...);
-    return graph_(p_current, map_, std::forward<Args>(args)...);
+    return graph_(p_current, map_, args...);
   }
   
   const graph_type        graph_;

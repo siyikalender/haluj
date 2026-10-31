@@ -29,6 +29,9 @@ function(haluj_compile_fail name expected)
 
   set_tests_properties(compile_fail.${name} PROPERTIES
     PASS_REGULAR_EXPRESSION "${expected}"
+    # A build that succeeds fails the test even if the expected text shows
+    # up somewhere else in the output, for example in the target name
+    FAIL_REGULAR_EXPRESSION "Built target|Linking CXX executable"
     # Builds in the same build tree must not run in parallel
     RUN_SERIAL TRUE)
 endfunction()
@@ -48,6 +51,11 @@ haluj_compile_fail(timer_backward_unsigned "needs a signed duration type")
 # A filter without samples has nothing to filter
 haluj_compile_fail(digital_input_filter_no_samples "needs at least one sample")
 
+# The arguments of a call go to several callbacks, so they are passed as
+# lvalues and a callback taking a concrete rvalue reference cannot bind them
+haluj_compile_fail(state_machine_rvalue_reference_action
+  "cannot bind rvalue reference|expects an rvalue")
+
 # Known bugs: each case checks the correct behaviour and is expected to fail
 # until the bug is fixed (see known_bugs.cpp). When a case starts to pass,
 # ctest reports it as failing: move it to the ordinary tests.
@@ -57,7 +65,6 @@ target_link_libraries(haluj_known_bugs PRIVATE haluj::haluj haluj_warnings)
 set(HALUJ_KNOWN_BUGS
   vector_assign_full
   format_int_truncation
-  state_machine_rvalue_argument
 )
 
 foreach(bug ${HALUJ_KNOWN_BUGS})

@@ -44,14 +44,10 @@ For more information, please refer to <http://unlicense.org>
 #include <cstdio>
 #include <cstring>
 #include <iterator>
-#include <optional>
 #include <string>
-#include <tuple>
-#include <utility>
 
 #include "haluj/bounded/vector.hpp"
 #include "haluj/format.hpp"
-#include "haluj/state_machine.hpp"
 
 #include "check.hpp"
 
@@ -71,26 +67,6 @@ static void format_int_truncation()
   HALUJ_CHECK(std::string(text, end) != "345");
 }
 
-// An rvalue argument must reach the transition action intact
-static void state_machine_rvalue_argument()
-{
-  enum class st { idle, run };
-
-  static std::string received;
-  received.clear();
-
-  auto m = haluj::machine(
-    haluj::graph(
-      haluj::transition<st::idle, st::run>(
-        [](std::string e) { return e == "go"; },
-        [](std::string e) { received = e; })),
-    haluj::map(
-      haluj::entry<st::idle>(std::make_tuple(nullptr, nullptr, nullptr))));
-
-  m(st::idle, std::string("go"));
-  HALUJ_CHECK(received == "go");
-}
-
 struct known_bug
 {
   const char* name;
@@ -101,7 +77,6 @@ static const known_bug bugs[] =
 {
   {"vector_assign_full",            vector_assign_full},
   {"format_int_truncation",         format_int_truncation},
-  {"state_machine_rvalue_argument", state_machine_rvalue_argument},
 };
 
 int main(int argc, char** argv)

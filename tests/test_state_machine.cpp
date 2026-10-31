@@ -31,6 +31,7 @@ For more information, please refer to <http://unlicense.org>
 /// \date   2026
 
 #include <cstring>
+#include <string>
 #include <tuple>
 
 #include "haluj/state_machine.hpp"
@@ -69,8 +70,112 @@ trace calls;
 
 } // namespace
 
+// The arguments of a call reach every guard and action of that call intact,
+// even a temporary that a forwarding implementation would move from
+static void test_arguments_reach_every_callback()
+{
+  using namespace haluj;
+  enum class door { closed, open };
+
+  static std::string seen;
+  seen.clear();
+
+  auto m = machine(
+    graph(
+      transition<door::closed, door::open>(
+        [](std::string e) { seen += "g:" + e + " "; return e == "open"; },
+        [](std::string e) { seen += "a:" + e + " "; })),
+    map(
+      entry<door::closed>(std::make_tuple(
+        nullptr,
+        [](std::string e) { seen += "d:" + e + " "; },
+        [](std::string e) { seen += "x:" + e + " "; })),
+      entry<door::open>(std::make_tuple(
+        [](std::string e) { seen += "e:" + e + " "; }, nullptr, nullptr))));
+
+  HALUJ_CHECK(m(door::closed, std::string("open")) == door::open);
+  HALUJ_CHECK(seen == "d:open g:open x:open a:open e:open ");
+}
+
+namespace
+{
+
+struct counted
+{
+  static int copies;
+
+  counted() = default;
+  counted(const counted&) { ++copies; }
+  counted(counted&&)      { ++copies; }
+};
+
+int counted::copies = 0;
+
+} // namespace
+
+// Guards and actions that take their argument by reference see the caller's
+// object: no copy is made on the way
+static void test_arguments_not_copied()
+{
+  using namespace haluj;
+  enum class s { a, b };
+
+  auto never = [](const counted&) { return false; };
+  auto once  = [](const counted&) { return true; };
+
+  auto m = machine(
+    graph(
+      transition<s::a, s::b>(never),
+      transition<s::a, s::b>(never),
+      transition<s::a, s::b>(once, [](const counted&) {})),
+    map(
+      entry<s::a>(std::make_tuple(nullptr, [](const counted&) {}, [](const counted&) {})),
+      entry<s::b>(std::make_tuple([](const counted&) {}, nullptr, nullptr))));
+
+  counted event;
+  counted::copies = 0;
+
+  HALUJ_CHECK(m(s::a, event) == s::b);
+  HALUJ_CHECK(counted::copies == 0);
+
+  HALUJ_CHECK(m(s::a, counted()) == s::b);
+  HALUJ_CHECK(counted::copies == 0);
+}
+
+// An action may take a context by reference and change it, and generic
+// callbacks taking auto&& work too
+static void test_context_by_reference()
+{
+  using namespace haluj;
+  enum class s { a, b };
+
+  struct context
+  {
+    int entered = 0;
+    int left    = 0;
+  };
+
+  auto m = machine(
+    graph(
+      transition<s::a, s::b>([](auto&& c) { return c.entered == 0; }),
+      transition<s::b, s::a>(g_always)),
+    map(
+      entry<s::a>(std::make_tuple(nullptr, nullptr, [](context& c) { ++c.left; })),
+      entry<s::b>(std::make_tuple([](context& c) { ++c.entered; }, nullptr, nullptr))));
+
+  context c;
+  HALUJ_CHECK(m(s::a, c) == s::b);
+  HALUJ_CHECK(c.entered == 1 && c.left == 1);
+  HALUJ_CHECK(m(s::b, c) == s::a);
+  HALUJ_CHECK(m(s::a, c) == s::a); // the guard now refuses
+}
+
 int main()
 {
+  test_arguments_reach_every_callback();
+  test_arguments_not_copied();
+  test_context_by_reference();
+
   using namespace haluj;
 
   auto on = [](event e) { return [e](event x) { return x == e; }; };
