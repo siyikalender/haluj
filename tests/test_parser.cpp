@@ -195,8 +195,9 @@ static_assert(consumed(haluj::hex_digit(), "F") == 1, "hex digit");
 static_assert(consumed(haluj::rest(), "rest") == 4, "rest");
 static_assert(consumed(quoted, "\"a\\\"b\" tail") == 6, "quoted with escape");
 
-// The rules hold no padding: nested empty rules take no room of their own
-static_assert(sizeof(command) <= 8, "a 5 rule command fits in 8 bytes");
+// Empty rules take no room inside the rules that hold them
+// ([[no_unique_address]]): only the characters of the four ch() are stored
+static_assert(sizeof(command) == 4, "S, E, T and the sign: 4 bytes");
 static_assert(sizeof(haluj::om(haluj::digit())) == 1, "an empty rule takes one byte");
 
 } // namespace

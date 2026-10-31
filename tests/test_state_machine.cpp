@@ -254,6 +254,12 @@ static void test_entry_forms()
   constexpr auto t = transition<s::a, s::a>(g_always);
   static_assert(std::is_same<decltype(t)::action_type, no_action>::value,
                 "a transition without action has no_action");
+  // Empty guards and actions take no room in the machine; three no_action
+  // of an entry need a byte each, being of the same type
+  constexpr auto m = machine(graph(transition<s::a, s::a>(g_always, [](int) {})),
+                             map(entry<s::a>(nullptr, nullptr, nullptr)));
+  static_assert(sizeof(m) <= 4, "a machine of empty callbacks is a few bytes");
+
   static_assert(std::is_same<decltype(transition<s::a, s::a>(g_always, nullptr)),
                              std::remove_const_t<decltype(t)>>::value,
                 "nullptr as the action is the same as none");

@@ -152,7 +152,8 @@ struct timer
 // private:
 
   implementation  impl_{};
-  behaviour       behaviour_{};
+  // periodic and one_shot are empty: no room taken
+  [[no_unique_address]] behaviour behaviour_{};
 };
 
 } // namespace haluj

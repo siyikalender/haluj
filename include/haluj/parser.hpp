@@ -333,7 +333,7 @@ struct opt_p
     return true;
   }
 
-  ExprType    expr_;
+  [[no_unique_address]] ExprType    expr_;
 };
 
 /// Creates and oprional expression parser rule
@@ -380,7 +380,7 @@ struct om_p
     return result;
   }
 
-  ExprType expr_;
+  [[no_unique_address]] ExprType expr_;
 };
 
 template<typename ExprType>
@@ -404,7 +404,7 @@ struct zm_p
     return result;
   }
 
-  ExprType expr_;
+  [[no_unique_address]] ExprType expr_;
 };
 
 template<typename ExprType>
@@ -442,8 +442,31 @@ struct seq_p<ExprType, Types...>
     return result;
   }
 
-  ExprType  expr_;
-  next      next_;
+  [[no_unique_address]] ExprType  expr_;
+  [[no_unique_address]] next      next_;
+};
+
+// The last rule of a sequence. It holds no empty seq_p<> after it: two
+// nested sequences would each end with one, and two members of the same
+// empty type cannot share an address, so each would cost a byte.
+template<typename ExprType>
+struct seq_p<ExprType>
+{
+  constexpr seq_p(const ExprType& p_expr_)
+  : expr_(p_expr_)
+  {}
+
+  template<typename Iterator>
+  constexpr bool accept(Iterator &first, Iterator last) const
+  {
+    Iterator initial = first;
+    bool result = expr_.accept(first, last);
+    if (!result)
+      first = initial;
+    return result;
+  }
+
+  [[no_unique_address]] ExprType  expr_;
 };
 
 template<typename ExprType>
@@ -488,8 +511,25 @@ struct any_p<ExprType, Types...>
     return result;
   }
 
-  ExprType  expr_;
-  next      next_;
+  [[no_unique_address]] ExprType  expr_;
+  [[no_unique_address]] next      next_;
+};
+
+// The last alternative, without an empty any_p<> after it (see seq_p)
+template<typename ExprType>
+struct any_p<ExprType>
+{
+  constexpr any_p(const ExprType& p_expr_)
+  : expr_(p_expr_)
+  {}
+
+  template<typename Iterator>
+  constexpr bool accept(Iterator &first, Iterator last) const
+  {
+    return expr_.accept(first, last);
+  }
+
+  [[no_unique_address]] ExprType  expr_;
 };
 
 template<typename ExprType>
@@ -532,7 +572,7 @@ struct except_p
     return true; // except is not a strict parsing rule, so it always returns true;
   }
 
-  ExprType    expr_;
+  [[no_unique_address]] ExprType    expr_;
 };
 
 template<typename ExprType>
@@ -563,8 +603,8 @@ struct except_2_p
     return success;
   }
 
-  ExprType          expr_;
-  EscapeExprType    esc_expr_;
+  [[no_unique_address]] ExprType          expr_;
+  [[no_unique_address]] EscapeExprType    esc_expr_;
 };
 
 template<typename ExprType, typename EscapeExprType>
@@ -588,7 +628,7 @@ struct accept_adaptor_p
     return expr_(first, last);
   }
 
-  ExprType      expr_;
+  [[no_unique_address]] ExprType      expr_;
 };
 
 template<typename ExprType>
@@ -625,8 +665,8 @@ struct action_p
     return result;
   }
 
-  ExprType          expr_;
-  const ActionType  a_;
+  [[no_unique_address]] ExprType          expr_;
+  [[no_unique_address]] const ActionType  a_;
 };
 
 template<typename ExprType, typename ActionType = default_action>

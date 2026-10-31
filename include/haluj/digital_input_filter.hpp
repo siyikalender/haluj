@@ -32,7 +32,6 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_DIGITAL_INPUT_FILTER_HPP
 #define HALUJ_DIGITAL_INPUT_FILTER_HPP
 
-
 namespace haluj
 {
 

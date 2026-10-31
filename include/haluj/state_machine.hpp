@@ -58,8 +58,10 @@ namespace haluj
 //
 // A transition to the same state (From == To) runs exit and entry too.
 // nullptr stands for a missing action, and a state without an entry in the
-// map has no actions. A missing action is kept as no_action, an empty type,
-// so it takes no room in the machine.
+// map has no actions. A missing action is kept as no_action, an empty type.
+//
+// The members are [[no_unique_address]]: an empty guard or action (a
+// captureless lambda, g_always, no_action) takes no room in the machine.
 //
 // Built from captureless lambdas or functions, the machine can be constexpr
 // and placed in read only memory.
@@ -197,8 +199,8 @@ struct transition_t
     return to;
   }
 
-  const trigger_type  trigger;
-  const action_type   action;
+  [[no_unique_address]] const trigger_type  trigger;
+  [[no_unique_address]] const action_type   action;
 };
 
 template 
@@ -261,8 +263,8 @@ struct graph_t<EdgeType, Entries...>
     return next_(p_current, p_map, args...);
   }
 
-  const edge_type     edge_;
-  const next          next_;
+  [[no_unique_address]] const edge_type     edge_;
+  [[no_unique_address]] const next          next_;
 };
 
 template<typename EdgeType>
@@ -292,7 +294,7 @@ struct entry_t
   : value (p_value)
   {}
 
-  const value_type  value;
+  [[no_unique_address]] const value_type  value;
 };
 
 template <auto        Key,
@@ -388,8 +390,8 @@ struct map_t<EntryType, Entries...>
     }
   }
   
-  const entry_type  pair_;
-  const next        next_;
+  [[no_unique_address]] const entry_type  pair_;
+  [[no_unique_address]] const next        next_;
 };
 
 template<typename EntryType>
@@ -427,8 +429,8 @@ struct machine_t
     return graph_(p_current, map_, args...);
   }
   
-  const graph_type        graph_;
-  const map_type          map_;
+  [[no_unique_address]] const graph_type        graph_;
+  [[no_unique_address]] const map_type          map_;
 };
 
 template <typename GraphType,

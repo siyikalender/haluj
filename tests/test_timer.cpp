@@ -50,6 +50,15 @@ For more information, please refer to <http://unlicense.org>
 
 namespace sw = haluj::timer_implementations::software;
 
+// The behaviour is empty and takes no room: a timer is the size of its
+// implementation
+namespace
+{
+using sw_fwd = haluj::timer_implementations::software::fwd<std::uint32_t>;
+static_assert(sizeof(haluj::timer<sw_fwd>) == sizeof(sw_fwd), "periodic takes no room");
+static_assert(sizeof(haluj::timer<sw_fwd, haluj::one_shot>) == sizeof(sw_fwd), "one_shot takes no room");
+} // namespace
+
 static void test_periodic()
 {
   haluj::timer<sw::fwd<unsigned>> t;
