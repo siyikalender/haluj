@@ -49,14 +49,21 @@ jobs:
         working-directory: build
         run: ctest --output-on-failure --parallel 4
 
-  # Address and undefined behaviour sanitizers
+  # Address and undefined behaviour sanitizers, and the thread sanitizer for
+  # the spsc ring_buffer test
   sanitizers:
-    name: ${{ matrix.compiler }} sanitizers
+    name: ${{ matrix.compiler }} ${{ matrix.sanitizer }} sanitizer
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         compiler: [g++, clang++]
+        sanitizer: [address, thread]
+        include:
+          - sanitizer: address
+            flags: -fsanitize=address,undefined -fno-sanitize-recover=undefined
+          - sanitizer: thread
+            flags: -fsanitize=thread
 
     steps:
       - uses: actions/checkout@v4
@@ -66,7 +73,7 @@ jobs:
           cmake -S . -B build
           -DCMAKE_CXX_COMPILER=${{ matrix.compiler }}
           -DCMAKE_BUILD_TYPE=Debug
-          "-DCMAKE_CXX_FLAGS=-fsanitize=address,undefined -fno-sanitize-recover=undefined -fno-omit-frame-pointer"
+          "-DCMAKE_CXX_FLAGS=${{ matrix.flags }} -fno-omit-frame-pointer"
 
       - name: Build
         run: cmake --build build --parallel
