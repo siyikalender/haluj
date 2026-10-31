@@ -72,6 +72,11 @@ struct base
   duration    timeout_  = duration(0);
 };
   
+/// Counts the elapsed time up to the timeout.
+///
+/// The counter reaches at most timeout + delta - 1 before it is reloaded, so
+/// that value must fit in the duration type. This matters for small types:
+/// with uint8_t, timeout + delta must not exceed 256.
 template<typename DurationType>
 struct forward : base<DurationType>
 {
@@ -88,9 +93,16 @@ struct forward : base<DurationType>
     return (elapsed_ >= base_t::timeout_);
   }
 
+  /// Starts over from zero
   void reset()
   {
     elapsed_ = duration(0);
+  }
+
+  /// Starts the next period, keeping the time that ran past the timeout
+  void reload()
+  {
+    elapsed_ -= base_t::timeout_;
   }
   
   duration    elapsed_ = duration(0);
@@ -121,14 +133,28 @@ struct backward : base<DurationType>
     return (remaining_ <= duration(0));
   }
   
+  /// Starts over from the full timeout
   void reset()
   {
     remaining_ = base_t::timeout_;
+  }
+
+  /// Starts the next period, keeping the time that ran past zero
+  void reload()
+  {
+    remaining_ += base_t::timeout_;
   }
   
   duration    remaining_ = duration(0);
 };
 
+/// A software timer advanced by the caller with operator()(delta).
+///
+/// With AutoReset, an expiry starts the next period without losing the time
+/// that ran past it, so a step that does not divide the timeout does not
+/// make the period drift. A step longer than the timeout makes the timer
+/// fall behind: it expires once per call until it has caught up. Keep the
+/// step no longer than the timeout.
 template<typename DirectionType, bool AutoReset = true>
 struct implementation : DirectionType
 {
@@ -149,7 +175,7 @@ struct implementation : DirectionType
 
       if(auto_reset && result)
       {
-        direction::reset();
+        direction::reload();
       }
     }
     

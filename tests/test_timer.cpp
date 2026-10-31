@@ -133,6 +133,93 @@ static void test_backward_large_step()
   HALUJ_CHECK(first_backward_expiry<int>(6, 2) == 3);
 }
 
+// A periodic timer must not drift when the step does not divide the period:
+// after every call the number of expiries equals the number of whole periods
+// in the time passed so far
+template<typename Implementation>
+static void check_no_drift(int period, int step, int calls)
+{
+  using duration = typename Implementation::duration;
+
+  haluj::timer<Implementation> t;
+  t.set(duration(period));
+
+  int fired = 0;
+  for (int i = 1; i <= calls; ++i)
+  {
+    if (t(nullptr, duration(step)))
+      ++fired;
+
+    HALUJ_CHECK(fired == (i * step) / period);
+  }
+}
+
+static void test_periodic_no_drift()
+{
+  for (int period = 1; period <= 9; ++period)
+  {
+    for (int step = 1; step <= period; ++step)
+    {
+      check_no_drift<sw::fwd<unsigned>>(period, step, 200);
+      check_no_drift<sw::fwd<int>>(period, step, 200);
+      check_no_drift<sw::bwd<int>>(period, step, 200);
+      check_no_drift<sw::bwd<std::int16_t>>(period, step, 200);
+    }
+  }
+
+  // A small type at its limit: timeout + step = 256
+  check_no_drift<sw::fwd<std::uint8_t>>(200, 56, 500);
+
+  // The case from the review: period 3, step 2, 24 time units
+  haluj::timer<sw::fwd<unsigned>> t;
+  t.set(3u);
+  int fired = 0;
+  for (int i = 0; i < 12; ++i)
+    fired += t(nullptr, 2u) ? 1 : 0;
+  HALUJ_CHECK(fired == 8);
+}
+
+// A step longer than the period loses no period: the timer expires once per
+// call until it has caught up
+template<typename Implementation>
+static void check_catch_up()
+{
+  using duration = typename Implementation::duration;
+
+  haluj::timer<Implementation> t;
+  t.set(duration(3));
+
+  int fired = t(nullptr, duration(10)) ? 1 : 0;
+  for (int i = 0; i < 5; ++i)
+    fired += t(nullptr, duration(0)) ? 1 : 0;
+
+  HALUJ_CHECK(fired == 3); // 10 / 3 whole periods
+}
+
+static void test_periodic_catch_up()
+{
+  check_catch_up<sw::fwd<unsigned>>();
+  check_catch_up<sw::bwd<int>>();
+}
+
+// set() starts a full period again, whatever the counter held
+static void test_set_restarts()
+{
+  haluj::timer<sw::fwd<unsigned>> f;
+  f.set(5u);
+  f(nullptr, 4u);
+  f.set(5u);
+  HALUJ_CHECK(!f(nullptr, 4u));
+  HALUJ_CHECK(f(nullptr, 1u));
+
+  haluj::timer<sw::bwd<int>> b;
+  b.set(5);
+  b(nullptr, 4);
+  b.set(5);
+  HALUJ_CHECK(!b(nullptr, 4));
+  HALUJ_CHECK(b(nullptr, 1));
+}
+
 static void test_chrono()
 {
   using clock = std::chrono::steady_clock;
@@ -155,6 +242,9 @@ int main()
   test_user_behaviour();
   test_backward();
   test_backward_large_step();
+  test_periodic_no_drift();
+  test_periodic_catch_up();
+  test_set_restarts();
   test_chrono();
   return haluj_test::report("test_timer");
 }

@@ -55,12 +55,8 @@ For more information, please refer to <http://unlicense.org>
 #include "haluj/digital_input_filter.hpp"
 #include "haluj/format.hpp"
 #include "haluj/state_machine.hpp"
-#include "haluj/timer.hpp"
-#include "haluj/timer_implementations/software.hpp"
 
 #include "check.hpp"
-
-namespace sw = haluj::timer_implementations::software;
 
 // Assigning exactly capacity elements must succeed
 static void vector_assign_full()
@@ -76,20 +72,6 @@ static void format_int_truncation()
   char  text[8] = {};
   char* end     = haluj::format(12345, text, text + 3);
   HALUJ_CHECK(std::string(text, end) != "345");
-}
-
-// A periodic forward timer must keep the overshoot: period 3, step 2,
-// 24 time units -> 8 periods
-static void timer_forward_drift()
-{
-  haluj::timer<sw::fwd<unsigned>> t;
-  t.set(3);
-
-  int fired = 0;
-  for (int i = 0; i < 12; ++i)
-    fired += t(nullptr, 2u) ? 1 : 0;
-
-  HALUJ_CHECK(fired == 8);
 }
 
 // A single low sample must not release a debounced input
@@ -144,7 +126,6 @@ static const known_bug bugs[] =
 {
   {"vector_assign_full",            vector_assign_full},
   {"format_int_truncation",         format_int_truncation},
-  {"timer_forward_drift",           timer_forward_drift},
   {"digital_filter_glitch",         digital_filter_glitch},
   {"to_first_comparator",           to_first_comparator},
   {"state_machine_rvalue_argument", state_machine_rvalue_argument},
