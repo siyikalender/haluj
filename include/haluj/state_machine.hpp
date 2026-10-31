@@ -43,7 +43,7 @@ namespace haluj
 // A state machine built at compile time:
 //
 //   auto m = machine(graph(transition<From, To>(guard, action), ...),
-//                    map(entry<State>(std::make_tuple(enter, do, exit)), ...));
+//                    map(entry<State>(enter, do, exit), ...));
 //
 //   state = m(state, arguments...);
 //
@@ -237,6 +237,20 @@ constexpr entry_t<Key, ValueType>
 entry(const ValueType& p_value)
 {
   return entry_t<Key, ValueType>(p_value);
+}
+
+/// The actions of a state: entry<State>(enter, do, exit), with nullptr for
+/// an action the state does not have. The same as
+/// entry<State>(std::make_tuple(enter, do, exit)).
+template <auto        Key,
+          typename    Enter,
+          typename    Do,
+          typename    Exit>
+constexpr entry_t<Key, std::tuple<Enter, Do, Exit>>
+entry(const Enter& p_enter, const Do& p_do, const Exit& p_exit)
+{
+  return entry_t<Key, std::tuple<Enter, Do, Exit>>(
+           std::tuple<Enter, Do, Exit>(p_enter, p_do, p_exit));
 }
 
 /// generic empty map template for variadic template final nesting

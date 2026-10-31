@@ -33,6 +33,7 @@ For more information, please refer to <http://unlicense.org>
 #include <cstring>
 #include <string>
 #include <tuple>
+#include <type_traits>
 
 #include "haluj/state_machine.hpp"
 
@@ -160,8 +161,8 @@ static void test_context_by_reference()
       transition<s::a, s::b>([](auto&& c) { return c.entered == 0; }),
       transition<s::b, s::a>(g_always)),
     map(
-      entry<s::a>(std::make_tuple(nullptr, nullptr, [](context& c) { ++c.left; })),
-      entry<s::b>(std::make_tuple([](context& c) { ++c.entered; }, nullptr, nullptr))));
+      entry<s::a>(nullptr, nullptr, [](context& c) { ++c.left; }),
+      entry<s::b>([](context& c) { ++c.entered; }, nullptr, nullptr)));
 
   context c;
   HALUJ_CHECK(m(s::a, c) == s::b);
@@ -183,7 +184,7 @@ constexpr auto traffic = haluj::machine(
     haluj::transition<light::green,  light::yellow>([](int tick) { return tick >= 2; }),
     haluj::transition<light::yellow, light::red   >(haluj::g_always)),
   haluj::map(
-    haluj::entry<light::red>(std::make_tuple(nullptr, nullptr, nullptr))));
+    haluj::entry<light::red>(nullptr, nullptr, nullptr)));
 
 static_assert(traffic(light::red, 0)    == light::red,    "guard refuses");
 static_assert(traffic(light::red, 3)    == light::green,  "guard holds");
@@ -218,7 +219,7 @@ static void test_order_and_self_transition()
       transition<s::a, s::a>([](int e) { return e == 1; }, [](int) { order = 1; }),
       transition<s::a, s::b>([](int e) { return e >= 1; }, [](int) { order = 2; })),
     map(
-      entry<s::a>(std::make_tuple([](int) { ++entries; }, nullptr, [](int) { ++exits; }))));
+      entry<s::a>([](int) { ++entries; }, nullptr, [](int) { ++exits; })));
 
   HALUJ_CHECK(m(s::a, 1) == s::a);
   HALUJ_CHECK(order == 1);
@@ -228,8 +229,27 @@ static void test_order_and_self_transition()
   HALUJ_CHECK(order == 2);
 }
 
+// entry<S>(enter, do, exit) builds the same entry as the tuple form
+static void test_entry_forms()
+{
+  using namespace haluj;
+  enum class s { a };
+
+  auto enter = [](int) {};
+  auto exit  = [](int) {};
+
+  using from_tuple = decltype(entry<s::a>(std::make_tuple(enter, nullptr, exit)));
+  using from_three = decltype(entry<s::a>(enter, nullptr, exit));
+  static_assert(std::is_same<from_tuple, from_three>::value, "same entry type");
+
+  static constexpr auto e = entry<s::a>(nullptr, nullptr, nullptr);
+  static_assert(decltype(e)::key == s::a, "constexpr entry");
+  HALUJ_CHECK(std::get<1>(e.value) == nullptr);
+}
+
 int main()
 {
+  test_entry_forms();
   test_constexpr_machine();
   test_order_and_self_transition();
   test_arguments_reach_every_callback();
