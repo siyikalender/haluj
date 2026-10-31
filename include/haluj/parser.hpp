@@ -725,8 +725,8 @@ action(const ExprType   &p_expr,
 ///   What a level costs depends on the grammar and on the optimisation:
 ///   with GCC 13 on Cortex-M4 the expression grammar above takes 24 bytes
 ///   per level at -O2, where the rules inline into one function calling
-///   itself, but 120 bytes at -Os, where a level goes through three
-///   functions; a 32 character line can then nest 3.8 KB deep. Measure a
+///   itself, but 96 bytes at -Os, where a level goes through three
+///   functions; a 32 character line can then nest 3 KB deep. Measure a
 ///   grammar of your own with -fstack-usage.
 template<typename Derived>
 struct recursive
