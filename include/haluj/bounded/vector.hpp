@@ -32,11 +32,9 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_BOUNDED_VECTOR_HPP
 #define HALUJ_BOUNDED_VECTOR_HPP
 
-#include <cstdint>
-#include <cstdlib>
-#include <memory>
-#include <iterator>
 #include <algorithm>
+#include <cstddef>
+#include <iterator>
 
 namespace haluj
 {
@@ -59,14 +57,13 @@ struct vector
   typedef std::reverse_iterator<iterator>        reverse_iterator;
   typedef std::reverse_iterator<const_iterator>  const_reverse_iterator;
 
+  // Copying and assigning are left to the compiler (rule of zero): they copy
+  // the whole storage, so a vector of trivially copyable T is trivially
+  // copyable. The user provided default constructor keeps the type from
+  // being an aggregate, so that vector<int, 4> v{1, 2} does not compile
+  // into a vector of size 0 with 1 and 2 in its storage.
   vector()
   {}
-
-  vector(const vector& other)
-  : m_size(other.m_size)
-  {
-    std::copy(other.begin(), other.end(), begin());
-  }
 
   void push_back(const T& p_value)
   {
@@ -107,22 +104,24 @@ struct vector
 
   iterator begin()
   {
-    return iterator(std::addressof(m_data[0]));
+    return m_data;
   }
 
+  // m_data + m_size rather than &m_data[m_size], which would index past the
+  // array when the vector is full
   iterator end()
   {
-    return iterator(std::addressof(m_data[m_size]));
+    return m_data + m_size;
   }
 
   const_iterator begin() const
   {
-    return const_iterator(std::addressof(m_data[0]));
+    return m_data;
   }
 
   const_iterator end() const
   {
-    return const_iterator(std::addressof(m_data[m_size]));
+    return m_data + m_size;
   }
 
   reverse_iterator rbegin()
@@ -137,12 +136,12 @@ struct vector
 
   const_reverse_iterator rbegin() const
   {
-    return reverse_iterator(end());
+    return const_reverse_iterator(end());
   }
 
   const_reverse_iterator rend() const
   {
-    return reverse_iterator(begin());
+    return const_reverse_iterator(begin());
   }
 
   reference front()
@@ -178,11 +177,6 @@ struct vector
   const_reference operator[](size_type p_index) const
   {
     return m_data[p_index];
-  }
-
-  vector& operator =(const vector& other)
-  {
-    assign(other);
   }
 
   pointer data()

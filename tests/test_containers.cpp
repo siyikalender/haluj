@@ -83,6 +83,51 @@ static void test_bounded_vector()
 
 // The checked push_back refuses an element once the vector is full and
 // leaves the storage around it alone
+// A vector is a plain value: copied and assigned by the compiler, trivially
+// copyable for a trivially copyable T, and not an aggregate
+static_assert(std::is_trivially_copyable<haluj::bounded::vector<int, 4>>::value,
+              "trivially copyable");
+static_assert(!std::is_aggregate<haluj::bounded::vector<int, 4>>::value,
+              "not an aggregate");
+
+static void test_bounded_vector_value()
+{
+  haluj::bounded::vector<int, 4> a;
+  a.push_back(1);
+  a.push_back(2);
+
+  haluj::bounded::vector<int, 4> b;
+  b.push_back(9);
+
+  b = a;
+  HALUJ_CHECK(b.size() == 2);
+  HALUJ_CHECK(b[0] == 1 && b[1] == 2);
+
+  a[0] = 5;               // b is a copy, not a view
+  HALUJ_CHECK(b[0] == 1);
+
+  const haluj::bounded::vector<int, 4> c(b);
+  HALUJ_CHECK(c.size() == 2 && c[1] == 2);
+}
+
+// Reverse iteration over a const vector, and the iterators of a full vector
+static void test_bounded_vector_iterators()
+{
+  haluj::bounded::vector<int, 4> v;
+  for (int i = 1; i <= 4; ++i)
+    v.push_back(i);
+
+  const auto& cv = v;
+  int expected = 4;
+  for (auto it = cv.rbegin(); it != cv.rend(); ++it)
+    HALUJ_CHECK(*it == expected--);
+  HALUJ_CHECK(expected == 0);
+
+  HALUJ_CHECK(cv.end() - cv.begin() == 4);
+  HALUJ_CHECK(cv.end() == cv.data() + 4);
+  HALUJ_CHECK(std::accumulate(cv.begin(), cv.end(), 0) == 10);
+}
+
 // The checked assign takes any range that fits, including one that fills the
 // vector and an empty one, and refuses a longer one without changing the
 // vector
@@ -432,6 +477,8 @@ int main()
   test_bounded_vector();
   test_bounded_vector_push_back_full();
   test_bounded_vector_assign();
+  test_bounded_vector_value();
+  test_bounded_vector_iterators();
   test_ring_buffer();
   test_ring_buffer_back();
   test_ring_buffer_contract();
