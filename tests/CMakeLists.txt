@@ -87,8 +87,7 @@ set(HALUJ_HEADERS
 # Headers that do not compile on their own yet. Remove an entry once the
 # header is fixed; its check then joins the build.
 #   fragment                      missing #include <iterator>
-#   timer_implementations/proxy   incomplete; also shares the include guard of
-#                                 timer_implementations/chrono
+#   timer_implementations/proxy   incomplete
 set(HALUJ_BROKEN_HEADERS
   fragment
   timer_implementations/proxy

@@ -30,8 +30,8 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2022
 
-#ifndef HALUJ_TIMER_PROXY_HPP
-#define HALUJ_TIMER_PROXY_HPP
+#ifndef HALUJ_TIMER_IMPLEMENTATIONS_CHRONO_HPP
+#define HALUJ_TIMER_IMPLEMENTATIONS_CHRONO_HPP
 
 namespace haluj
 {
@@ -70,7 +70,7 @@ struct chrono
   
   void stop()
   {
-    run_ = false;;
+    run_ = false;
   }
   
   bool is_running() const
@@ -78,7 +78,7 @@ struct chrono
     return run_;
   }
 
-  void iterate(duration p_delta)
+  void iterate(duration)
   {}
 
   bool predicate() const
@@ -103,7 +103,7 @@ struct chrono
     return result;
   }
   
-  bool        run_;
+  bool        run_ = false;
   time_point  timeout_;
   duration    load_;
 };
@@ -112,5 +112,5 @@ struct chrono
 
 } // namespace haluj
 
-// HALUJ_TIMER_PROXY_HPP
+// HALUJ_TIMER_IMPLEMENTATIONS_CHRONO_HPP
 #endif

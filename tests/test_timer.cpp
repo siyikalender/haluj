@@ -34,7 +34,13 @@ For more information, please refer to <http://unlicense.org>
 #include <cstdint>
 
 #include "haluj/timer.hpp"
+
+// chrono.hpp used to share its include guard with proxy.hpp, so after
+// proxy.hpp it was skipped. Defining the old guard here makes sure it no
+// longer depends on that name.
+#define HALUJ_TIMER_PROXY_HPP
 #include "haluj/timer_implementations/chrono.hpp"
+#undef HALUJ_TIMER_PROXY_HPP
 #include "haluj/timer_implementations/software.hpp"
 
 #include "check.hpp"
@@ -226,7 +232,8 @@ static void test_chrono()
   using ms    = std::chrono::milliseconds;
 
   haluj::timer<haluj::timer_implementations::chrono<clock, ms, true>> t;
-  t.stop();
+  HALUJ_CHECK(!t.is_running()); // not started before set()
+
   t.set(ms(1000));
   HALUJ_CHECK(t.is_running());
   HALUJ_CHECK(!t(nullptr, 0)); // a second has not passed yet
