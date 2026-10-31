@@ -201,6 +201,74 @@ static_assert(sizeof(haluj::om(haluj::digit())) == 1, "an empty rule takes one b
 
 } // namespace
 
+// Recursive rules
+namespace
+{
+
+using namespace haluj;
+
+// expr   := term   (('+' | '-') term)*
+// term   := factor (('*' | '/') factor)*
+// factor := digit+ | '(' expr ')'
+struct expr : recursive<expr>
+{
+  static constexpr auto definition();
+};
+
+constexpr auto factor = any(om(digit()), seq(ch('('), expr{}, ch(')')));
+constexpr auto term   = seq(factor, zm(seq(any(ch('*'), ch('/')), factor)));
+
+constexpr auto expr::definition()
+{
+  return seq(term, zm(seq(any(ch('+'), ch('-')), term)));
+}
+
+// parens := ('(' parens ')')*   balanced parentheses, possibly none
+struct parens : recursive<parens>
+{
+  static constexpr auto definition()
+  {
+    return zm(seq(ch('('), parens{}, ch(')')));
+  }
+};
+
+static_assert(sizeof(expr) == 1, "a recursive rule is an empty type");
+
+static_assert(consumed(expr{}, "42") == 2,                "number");
+static_assert(consumed(expr{}, "1+2*(3-4)/5") == 11,      "nested");
+static_assert(consumed(expr{}, "((((7))))") == 9,         "deep");
+static_assert(consumed(expr{}, "(1+2") == -1,             "unclosed");
+static_assert(consumed(expr{}, "2*(3") == 1,              "stops before an unclosed group");
+static_assert(consumed(expr{}, "+1") == -1,               "no operand");
+
+static_assert(consumed(parens{}, "(()(()))x") == 8,       "balanced");
+static_assert(consumed(parens{}, "(()") == 0,             "unbalanced matches nothing");
+static_assert(consumed(parens{}, ")") == 0,               "empty match");
+
+} // namespace
+
+// The same rules at run time, on std::string iterators and on input nested
+// far deeper than a compile time evaluation would allow
+static void test_recursive_rules()
+{
+  const std::string sum = "10*(2+3)-(4/(1+1))";
+  auto first = sum.begin();
+  HALUJ_CHECK(expr{}.accept(first, sum.end()));
+  HALUJ_CHECK(first == sum.end());
+
+  std::string deep(500, '(');
+  deep += '1';
+  deep += std::string(500, ')');
+  first = deep.cbegin();
+  HALUJ_CHECK(expr{}.accept(first, deep.cend()));
+  HALUJ_CHECK(first == deep.cend());
+
+  deep.pop_back();                         // one ')' missing
+  first = deep.cbegin();
+  HALUJ_CHECK(!expr{}.accept(first, deep.cend()));
+  HALUJ_CHECK(first == deep.cbegin());     // a failed seq gives back its input
+}
+
 // The constant rules work at run time too, on any iterator
 static void test_constexpr_rules()
 {
@@ -215,6 +283,7 @@ static void test_constexpr_rules()
 int main()
 {
   test_constexpr_rules();
+  test_recursive_rules();
   test_primitives();
   test_character_classes();
   test_combinators();

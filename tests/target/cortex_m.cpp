@@ -127,6 +127,27 @@ extern "C" bool handle_line(const char* first, const char* last)
   return seq(ch('S'), ch('E'), ch('T'), om(space()), number).accept(first, last);
 }
 
+// A recursive grammar: arithmetic expressions with parentheses
+struct expression : haluj::recursive<expression>
+{
+  static constexpr auto definition();
+};
+
+constexpr auto factor = haluj::any(haluj::om(haluj::digit()),
+                                   haluj::seq(haluj::ch('('), expression{}, haluj::ch(')')));
+constexpr auto term   = haluj::seq(factor,
+                                   haluj::zm(haluj::seq(haluj::any(haluj::ch('*'), haluj::ch('/')), factor)));
+
+constexpr auto expression::definition()
+{
+  return haluj::seq(term, haluj::zm(haluj::seq(haluj::any(haluj::ch('+'), haluj::ch('-')), term)));
+}
+
+extern "C" bool is_expression(const char* first, const char* last)
+{
+  return expression{}.accept(first, last) && first == last;
+}
+
 // Formats the set point for the display
 extern "C" char* show_setpoint(char* first, char* last)
 {

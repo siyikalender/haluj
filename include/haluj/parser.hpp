@@ -636,6 +636,54 @@ action(const ExprType   &p_expr,
 {
   return action_p<ExprType, ActionType>(p_expr, p_action);
 }
+/// A rule that may refer to itself, directly or through other rules.
+///
+/// A grammar is a nest of rule types, so a rule cannot contain itself. A
+/// recursive rule is instead a named, empty type that gets its definition
+/// from a static function written after the rules that use it:
+///
+/// \code {.cpp}
+/// // expr   := term   (('+' | '-') term)*
+/// // term   := factor (('*' | '/') factor)*
+/// // factor := digit+ | '(' expr ')'
+/// struct expr : haluj::recursive<expr>
+/// {
+///   static constexpr auto definition();
+/// };
+///
+/// constexpr auto factor = any(om(digit()), seq(ch('('), expr{}, ch(')')));
+/// constexpr auto term   = seq(factor, zm(seq(any(ch('*'), ch('/')), factor)));
+///
+/// constexpr auto expr::definition()
+/// {
+///   return seq(term, zm(seq(any(ch('+'), ch('-')), term)));
+/// }
+/// \endcode
+///
+/// Two things to keep in mind:
+/// - No left recursion. A rule must consume input before it reaches itself
+///   again: expr := expr '+' term calls itself without end and overflows the
+///   stack. Write it as a repetition, as above.
+/// - Every level of nesting in the input is a level of calls on the stack.
+///   Without left recursion each level consumes at least one character, so
+///   the depth is at most the length of the input: bound the input, for
+///   example with the line buffer it is read into, to bound the stack.
+///   What a level costs depends on the grammar and on the optimisation:
+///   with GCC 13 on Cortex-M4 the expression grammar above takes 24 bytes
+///   per level at -O2, where the rules inline into one function calling
+///   itself, but 120 bytes at -Os, where a level goes through three
+///   functions; a 32 character line can then nest 3.8 KB deep. Measure a
+///   grammar of your own with -fstack-usage.
+template<typename Derived>
+struct recursive
+{
+  template<typename Iterator>
+  constexpr bool accept(Iterator &first, Iterator last) const
+  {
+    return Derived::definition().accept(first, last);
+  }
+};
+
 /*
 This rule can be used for Debug purposes.
 Due to its iostream and std::string dependencies, it is left commented
