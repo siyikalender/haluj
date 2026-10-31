@@ -67,6 +67,7 @@ haluj_compile_fail(state_machine_rvalue_reference_action
 # guards and names.
 set(HALUJ_HEADERS
   bounded/vector
+  concurrency
   cyclic_index
   digital_input_filter
   event_strategy

@@ -32,63 +32,13 @@ For more information, please refer to <http://unlicense.org>
 #ifndef HALUJ_RING_BUFFER_HPP
 #define HALUJ_RING_BUFFER_HPP
 
-#include <atomic>
 #include <cstddef>
 
+#include "concurrency.hpp"
 #include "cyclic_index.hpp"
 
 namespace haluj
 {
-
-// Concurrency policies of ring_buffer
-
-/// The buffer is used from one context only, for example only from the main
-/// loop. The positions are plain integers.
-struct single_context
-{
-  static constexpr bool is_atomic = false;
-};
-
-/// Single producer, single consumer: one context pushes and another pops,
-/// for example an interrupt that receives bytes and the main loop that
-/// processes them. The positions are atomics, each written by one side
-/// only, so no lock and no interrupt masking is needed.
-struct spsc
-{
-  static constexpr bool is_atomic = true;
-};
-
-namespace ring_buffer_detail
-{
-
-template<typename Index, bool Atomic>
-struct position
-{
-  Index load() const      { return value; }
-  void  store(Index p)    { value = p; }
-
-  Index value = 0;
-};
-
-// A store publishes what was written before it (release), and a load sees
-// everything written before the store it reads (acquire): the producer
-// writes an element before it moves the head, the consumer reads it before
-// it moves the tail.
-//
-// Only loads and stores are used, no read-modify-write, so the positions
-// need no lock even on cores without atomic read-modify-write instructions
-// such as Cortex-M0, where std::atomic is not "always lock free" but an
-// aligned word is still loaded and stored in one instruction.
-template<typename Index>
-struct position<Index, true>
-{
-  Index load() const      { return value.load(std::memory_order_acquire); }
-  void  store(Index p)    { value.store(p, std::memory_order_release); }
-
-  std::atomic<Index> value{0};
-};
-
-} // namespace ring_buffer_detail
 
 /// A fixed capacity ring buffer (FIFO) over a random access container, such
 /// as std::array<char, 64>, whose size is the capacity. Any capacity works.
@@ -248,7 +198,7 @@ struct ring_buffer
     return m_container[element(cyclic_decrement(m_head.load(), modulus()))];
   }
 
-  typedef ring_buffer_detail::position<index_type, concurrency::is_atomic> position_type;
+  typedef shared<index_type, concurrency> position_type;
 
   container_type      m_container;
   position_type       m_tail;
