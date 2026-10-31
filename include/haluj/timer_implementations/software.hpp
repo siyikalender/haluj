@@ -96,9 +96,18 @@ struct forward : base<DurationType>
   duration    elapsed_ = duration(0);
 };
 
+/// Counts the remaining time down to zero.
+///
+/// The duration type must be signed (int32_t, float, a std::chrono duration
+/// with a signed representation...): a step larger than the remaining time
+/// takes it below zero, which an unsigned type would wrap to a large value
+/// and never expire.
 template<typename DurationType>
 struct backward : base<DurationType>
 {
+  static_assert(DurationType(-1) < DurationType(0),
+                "backward timer needs a signed duration type");
+
   typedef base<DurationType>          base_t;
   typedef typename base_t::duration   duration;
 

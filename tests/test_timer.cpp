@@ -31,6 +31,7 @@ For more information, please refer to <http://unlicense.org>
 /// \date   2026
 
 #include <chrono>
+#include <cstdint>
 
 #include "haluj/timer.hpp"
 #include "haluj/timer_implementations/chrono.hpp"
@@ -104,6 +105,34 @@ static void test_backward()
   HALUJ_CHECK(first == 5);
 }
 
+// A step larger than the remaining time takes a signed counter below zero,
+// which still expires: 5, 3, 1, -1
+template<typename Duration>
+static int first_backward_expiry(Duration timeout, Duration step)
+{
+  haluj::timer<sw::bwd<Duration>, haluj::one_shot> t;
+  t.set(timeout);
+
+  for (int i = 1; i <= 10; ++i)
+  {
+    if (t(nullptr, step))
+      return i;
+  }
+  return -1;
+}
+
+static void test_backward_large_step()
+{
+  HALUJ_CHECK(first_backward_expiry<std::int8_t>(5, 2) == 3);
+  HALUJ_CHECK(first_backward_expiry<std::int32_t>(5, 2) == 3);
+  HALUJ_CHECK(first_backward_expiry<float>(5.0f, 2.0f) == 3);
+  HALUJ_CHECK(first_backward_expiry<std::chrono::milliseconds>(
+                std::chrono::milliseconds(5), std::chrono::milliseconds(2)) == 3);
+
+  // A step that lands exactly on zero
+  HALUJ_CHECK(first_backward_expiry<int>(6, 2) == 3);
+}
+
 static void test_chrono()
 {
   using clock = std::chrono::steady_clock;
@@ -125,6 +154,7 @@ int main()
   test_one_shot();
   test_user_behaviour();
   test_backward();
+  test_backward_large_step();
   test_chrono();
   return haluj_test::report("test_timer");
 }

@@ -78,20 +78,6 @@ static void format_int_truncation()
   HALUJ_CHECK(std::string(text, end) != "345");
 }
 
-// A backward timer with an unsigned duration must fire when a step jumps
-// over zero
-static void timer_backward_unsigned()
-{
-  haluj::timer<sw::bwd<unsigned>> t;
-  t.set(5);
-
-  int fired = 0;
-  for (int i = 0; i < 10; ++i)
-    fired += t(nullptr, 2u) ? 1 : 0;
-
-  HALUJ_CHECK(fired > 0);
-}
-
 // A periodic forward timer must keep the overshoot: period 3, step 2,
 // 24 time units -> 8 periods
 static void timer_forward_drift()
@@ -158,7 +144,6 @@ static const known_bug bugs[] =
 {
   {"vector_assign_full",            vector_assign_full},
   {"format_int_truncation",         format_int_truncation},
-  {"timer_backward_unsigned",       timer_backward_unsigned},
   {"timer_forward_drift",           timer_forward_drift},
   {"digital_filter_glitch",         digital_filter_glitch},
   {"to_first_comparator",           to_first_comparator},

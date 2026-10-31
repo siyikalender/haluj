@@ -41,6 +41,10 @@ haluj_compile_fail(on_temporary_strategy "deleted")
 haluj_compile_fail(cyclic_index_not_integral "needs an integral type")
 haluj_compile_fail(cyclic_index_empty_ring   "needs at least one position")
 
+# A backward timer with an unsigned duration would never expire on a step
+# larger than the remaining time
+haluj_compile_fail(timer_backward_unsigned "needs a signed duration type")
+
 # Known bugs: each case checks the correct behaviour and is expected to fail
 # until the bug is fixed (see known_bugs.cpp). When a case starts to pass,
 # ctest reports it as failing: move it to the ordinary tests.
@@ -50,7 +54,6 @@ target_link_libraries(haluj_known_bugs PRIVATE haluj::haluj haluj_warnings)
 set(HALUJ_KNOWN_BUGS
   vector_assign_full
   format_int_truncation
-  timer_backward_unsigned
   timer_forward_drift
   digital_filter_glitch
   to_first_comparator
