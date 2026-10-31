@@ -73,15 +73,14 @@ set(HALUJ_HEADERS
   state_machine
   timer
   timer_implementations/chrono
+  timer_implementations/proxy
   timer_implementations/software
   utility
 )
 
 # Headers that do not compile on their own yet. Remove an entry once the
 # header is fixed; its check then joins the build.
-#   timer_implementations/proxy   incomplete
 set(HALUJ_BROKEN_HEADERS
-  timer_implementations/proxy
 )
 
 # Each header in include/haluj must be in exactly one of the two lists, so a

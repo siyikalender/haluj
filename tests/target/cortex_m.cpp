@@ -46,6 +46,7 @@ For more information, please refer to <http://unlicense.org>
 #include "haluj/set_and_wait.hpp"
 #include "haluj/state_machine.hpp"
 #include "haluj/timer.hpp"
+#include "haluj/timer_implementations/proxy.hpp"
 #include "haluj/timer_implementations/software.hpp"
 
 namespace
@@ -63,7 +64,45 @@ std::uint32_t                                                     setpoint = 0;
 
 const std::pair<std::uint8_t, mode> modes[] = {{0, mode::idle}, {1, mode::run}};
 
+// A hardware timer made of static functions over a millisecond counter that
+// an interrupt advances, as on a SysTick
+struct systick_timer
+{
+  typedef std::uint32_t duration;
+
+  static volatile std::uint32_t ticks;
+  static std::uint32_t          timeout;
+  static std::uint32_t          last;
+  static bool                   running;
+
+  static void load(duration p_value) { timeout = p_value; }
+  static void start()                { running = true; }
+  static void stop()                 { running = false; }
+  static bool is_running()           { return running; }
+  static void reset()                { last = ticks; }
+  static void reload()               { last += timeout; }
+
+  // The counter keeps the time, so the delta is not needed
+  static bool proceed(duration)
+  {
+    return running && (std::uint32_t(ticks - last) >= timeout);
+  }
+};
+
+volatile std::uint32_t systick_timer::ticks   = 0;
+std::uint32_t          systick_timer::timeout = 0;
+std::uint32_t          systick_timer::last    = 0;
+bool                   systick_timer::running = false;
+
+haluj::timer<haluj::timer_implementations::proxy<systick_timer>> watchdog;
+
 } // namespace
+
+// Called from the SysTick interrupt
+extern "C" void systick_handler()
+{
+  systick_timer::ticks = systick_timer::ticks + 1u;
+}
 
 // Called with each received byte
 extern "C" void uart_rx(char c)
@@ -111,6 +150,11 @@ extern "C" std::uint32_t tick(std::uint32_t pins, std::uint8_t requested)
       haluj::bounded::push_back(line, c);
     }
   }
+
+  if (!watchdog.is_running())
+    watchdog.set(100u);
+  if (watchdog(nullptr, 0u))
+    handshake = haluj::set_and_wait();
 
   std::uint32_t led = 0;
   if (!blink.is_running())

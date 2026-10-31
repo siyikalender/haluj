@@ -32,6 +32,8 @@ For more information, please refer to <http://unlicense.org>
 
 #include <chrono>
 #include <cstdint>
+#include <cstring>
+#include <type_traits>
 
 #include "haluj/timer.hpp"
 
@@ -41,6 +43,7 @@ For more information, please refer to <http://unlicense.org>
 #define HALUJ_TIMER_PROXY_HPP
 #include "haluj/timer_implementations/chrono.hpp"
 #undef HALUJ_TIMER_PROXY_HPP
+#include "haluj/timer_implementations/proxy.hpp"
 #include "haluj/timer_implementations/software.hpp"
 
 #include "check.hpp"
@@ -307,8 +310,95 @@ static void test_chrono()
   HALUJ_CHECK(!o(nullptr, 0));
 }
 
+// A timer made of static functions, standing in for a hardware timer: it
+// counts the deltas it is given and records the calls it receives
+namespace
+{
+
+struct static_timer
+{
+  typedef unsigned duration;
+
+  static duration timeout;
+  static duration elapsed;
+  static bool     running;
+  static char     calls[64];
+
+  static void record(const char* name)
+  {
+    std::strncat(calls, name, sizeof(calls) - std::strlen(calls) - 1);
+  }
+
+  static void load(duration p_value) { record("L"); timeout = p_value; }
+  static void start()                { record("S"); running = true; }
+  static void stop()                 { record("T"); running = false; }
+  static bool is_running()           { return running; }
+  static void reset()                { record("R"); elapsed = 0; }
+  static void reload()               { record("D"); elapsed -= timeout; }
+
+  static bool proceed(duration p_delta)
+  {
+    if (!running)
+      return false;
+    elapsed += p_delta;
+    return elapsed >= timeout;
+  }
+
+  static void clear()
+  {
+    timeout = elapsed = 0;
+    running = false;
+    calls[0] = '\0';
+  }
+};
+
+static_timer::duration static_timer::timeout = 0;
+static_timer::duration static_timer::elapsed = 0;
+bool                   static_timer::running = false;
+char                   static_timer::calls[64] = {};
+
+using proxy_impl = haluj::timer_implementations::proxy<static_timer>;
+
+} // namespace
+
+static void test_proxy()
+{
+  static_assert(std::is_empty<proxy_impl>::value, "the proxy holds no state");
+
+  // Periodic: set() loads, resets and starts; each expiry reloads
+  static_timer::clear();
+  haluj::timer<proxy_impl> p;
+  HALUJ_CHECK(!p.is_running());
+
+  p.set(3u);
+  HALUJ_CHECK(std::strcmp(static_timer::calls, "LRS") == 0);
+  HALUJ_CHECK(p.is_running());
+
+  int fired = 0;
+  for (int i = 0; i < 12; ++i)
+    fired += p(nullptr, 2u) ? 1 : 0;
+  HALUJ_CHECK(fired == 8);                        // 24 units, period 3, no drift
+  HALUJ_CHECK(std::strcmp(static_timer::calls, "LRSDDDDDDDD") == 0);
+
+  p.stop();
+  HALUJ_CHECK(!static_timer::running);
+  HALUJ_CHECK(!p(nullptr, 10u));
+
+  // One shot: the expiry stops the static timer
+  static_timer::clear();
+  haluj::timer<proxy_impl, haluj::one_shot> o;
+  o.set(2u);
+  int shots = 0;
+  for (int i = 0; i < 5; ++i)
+    shots += o(nullptr, 1u) ? 1 : 0;
+  HALUJ_CHECK(shots == 1);
+  HALUJ_CHECK(!o.is_running());
+  HALUJ_CHECK(std::strcmp(static_timer::calls, "LRST") == 0);
+}
+
 int main()
 {
+  test_proxy();
   test_periodic();
   test_one_shot();
   test_periodic_set_in_callback();

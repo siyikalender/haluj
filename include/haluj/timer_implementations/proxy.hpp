@@ -1,5 +1,6 @@
-/// \file timer_proxy.hpp
-/// timer proxy for static timer implementations (e.g hardware timers)
+/// \file proxy.hpp
+/// Timer implementation that forwards to a timer made of static functions,
+/// for example a hardware timer
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -30,18 +31,42 @@ For more information, please refer to <http://unlicense.org>
 /// \author Selcuk Iyikalender
 /// \date   2022
 
-#ifndef HALUJ_TIMER_PROXY_HPP
-#define HALUJ_TIMER_PROXY_HPP
+#ifndef HALUJ_TIMER_IMPLEMENTATIONS_PROXY_HPP
+#define HALUJ_TIMER_IMPLEMENTATIONS_PROXY_HPP
 
 namespace haluj
 {
 
-template<typename Timer>
-timer_proxy
+namespace timer_implementations
 {
-  static constexpr bool auto_reset = Timer::auto_reset;
-  
-  void load(duration p_value) 
+
+/// Adapts a timer made of static member functions, typically a hardware
+/// timer, to the implementation interface that timer<> uses:
+///
+///   haluj::timer<haluj::timer_implementations::proxy<tim2>> t;
+///
+/// Timer must provide:
+///
+///   typedef ... duration;
+///   static void load(duration);       the timeout
+///   static void start();
+///   static void stop();
+///   static bool is_running();
+///   static void reset();              start over: a full timeout from now
+///   static void reload();             start the next period, keeping the
+///                                     time that ran past the timeout
+///   static bool proceed(duration);    advance by delta (a hardware timer
+///                                     may ignore it); true once the timeout
+///                                     is reached
+///
+/// The proxy holds no state, so every timer<proxy<Timer>> object drives the
+/// same Timer.
+template<typename Timer>
+struct proxy
+{
+  typedef typename Timer::duration duration;
+
+  void load(duration p_value)
   {
     Timer::load(p_value);
   }
@@ -50,40 +75,36 @@ timer_proxy
   {
     Timer::start();
   }
-  
+
   void stop()
   {
     Timer::stop();
   }
-  
+
   bool is_running() const
   {
-    Timer::is_running();
-  }
-
-  void iterate(duration p_delta)
-  {
-    Timer::iterate(p_delta);
-  }
-
-  bool predicate() const
-  {
-    return Timer::predicate();
+    return Timer::is_running();
   }
 
   void reset()
   {
     Timer::reset();
-  }  
-  
+  }
+
+  void reload()
+  {
+    Timer::reload();
+  }
+
   bool operator ()(duration p_delta)
   {
     return Timer::proceed(p_delta);
   }
-  
 };
+
+} // namespace timer_implementations
 
 } // namespace haluj
 
-// HALUJ_TIMER_PROXY_HPP
+// HALUJ_TIMER_IMPLEMENTATIONS_PROXY_HPP
 #endif
