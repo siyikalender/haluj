@@ -65,6 +65,7 @@ set(HALUJ_HEADERS
   digital_input_filter
   event_strategy
   format
+  fragment
   pair_lookup
   parser
   ring_buffer
@@ -78,10 +79,8 @@ set(HALUJ_HEADERS
 
 # Headers that do not compile on their own yet. Remove an entry once the
 # header is fixed; its check then joins the build.
-#   fragment                      missing #include <iterator>
 #   timer_implementations/proxy   incomplete
 set(HALUJ_BROKEN_HEADERS
-  fragment
   timer_implementations/proxy
 )
 

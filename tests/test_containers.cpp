@@ -32,7 +32,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include <array>
 #include <cstdint>
-#include <iterator> // fragment.hpp does not include it yet
+#include <iterator>
 #include <numeric>
 #include <type_traits>
 #include <vector>
