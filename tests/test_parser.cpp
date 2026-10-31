@@ -32,6 +32,7 @@ For more information, please refer to <http://unlicense.org>
 
 #include <cctype>
 #include <cstring>
+#include <string>
 
 #include "haluj/parser.hpp"
 
@@ -158,8 +159,58 @@ static void test_command_line()
   HALUJ_CHECK(value == -1);
 }
 
+// Rules are constants: built and run at compile time, they can sit in read
+// only memory
+namespace
+{
+
+// Characters a rule accepts at the start of text, or -1 if it fails
+template<typename Rule>
+constexpr int consumed(const Rule& rule, const char* text)
+{
+  const char* first = text;
+  const char* last  = text;
+  while (*last != '\0')
+    ++last;
+  return rule.accept(first, last) ? int(first - text) : -1;
+}
+
+constexpr auto number  = haluj::seq(haluj::opt(haluj::ch('-')), haluj::om(haluj::digit()));
+constexpr auto command = haluj::seq(haluj::ch('S'), haluj::ch('E'), haluj::ch('T'),
+                                    haluj::om(haluj::space()), number);
+constexpr auto word    = haluj::action(haluj::om(haluj::alpha()),
+                                       [](const char*, const char*) {});
+constexpr auto quoted  = haluj::seq(haluj::ch('"'),
+                                    haluj::except_2(haluj::ch('"'), haluj::ch('\\')));
+
+static_assert(consumed(number, "-123x") == 4,  "sign and digits");
+static_assert(consumed(number, "x")     == -1, "no digit");
+static_assert(consumed(command, "SET  42") == 7, "command");
+static_assert(consumed(command, "SEX 1")   == -1, "wrong command");
+static_assert(consumed(haluj::any(haluj::ch('a'), haluj::ch('b')), "b") == 1, "any");
+static_assert(consumed(haluj::zm(haluj::opt(haluj::ch('x'))), "abc") == 0, "no endless loop");
+static_assert(consumed(haluj::except(haluj::ch(';')), "ab;c") == 2, "except");
+static_assert(consumed(word, "abc1") == 3, "action");
+static_assert(consumed(haluj::hex_digit(), "F") == 1, "hex digit");
+static_assert(consumed(haluj::rest(), "rest") == 4, "rest");
+static_assert(consumed(quoted, "\"a\\\"b\" tail") == 6, "quoted with escape");
+
+} // namespace
+
+// The constant rules work at run time too, on any iterator
+static void test_constexpr_rules()
+{
+  HALUJ_CHECK(consumed(command, "SET 7") == 5);
+
+  const std::string text = "\"x\\\"y\"";   // "x\"y"
+  auto first = text.begin();
+  HALUJ_CHECK(quoted.accept(first, text.end()));
+  HALUJ_CHECK(first == text.end());
+}
+
 int main()
 {
+  test_constexpr_rules();
   test_primitives();
   test_character_classes();
   test_combinators();

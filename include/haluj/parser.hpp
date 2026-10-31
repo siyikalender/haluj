@@ -67,11 +67,11 @@ struct rule
 
 struct ch_p : rule
 {
-  ch_p(char c)
+  constexpr ch_p(char c)
   : c_(c) {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     bool result = (first != last && c_ == *first);
     if (result)
@@ -85,7 +85,7 @@ struct ch_p : rule
 };
 
 /// Creates a specific character parser rule
-inline ch_p ch(const char c)
+constexpr ch_p ch(const char c)
 {
   return ch_p(c);
 }
@@ -94,11 +94,11 @@ inline ch_p ch(const char c)
 /// parses a single alphabethic character defined in C locale
 struct alpha_p : rule
 {
-  alpha_p()
+  constexpr alpha_p()
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     bool result = (first != last && parser_detail::is_alpha(*first));
     if (result) first++;
@@ -108,7 +108,7 @@ struct alpha_p : rule
 };
 
 /// Creates an alphabetic parser rule
-inline alpha_p alpha()
+constexpr alpha_p alpha()
 {
   return alpha_p();
 }
@@ -117,11 +117,11 @@ inline alpha_p alpha()
 /// parses a single alphanumeric character defined in C locale
 struct alnum_p : rule
 {
-  alnum_p()
+  constexpr alnum_p()
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     bool result = (first != last && parser_detail::is_alnum(*first));
     if (result) first++;
@@ -131,7 +131,7 @@ struct alnum_p : rule
 };
 
 /// Creates an alphanumeric parser rule
-inline alnum_p alnum()
+constexpr alnum_p alnum()
 {
   return alnum_p();
 }
@@ -139,11 +139,11 @@ inline alnum_p alnum()
 /// Whitespace parser rule (including eol)
 struct space_p : rule
 {
-  space_p()
+  constexpr space_p()
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     bool result = (first != last && parser_detail::is_space(*first));
     if (result)
@@ -156,7 +156,7 @@ struct space_p : rule
 };
 
 /// Creates a whitespace parser rule
-inline space_p space()
+constexpr space_p space()
 {
   return space_p();
 }
@@ -165,11 +165,11 @@ inline space_p space()
 /// parses a single digit
 struct digit_p : rule
 {
-  digit_p()
+  constexpr digit_p()
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     bool result = (first != last && parser_detail::is_digit(*first));
     if (result)
@@ -182,7 +182,7 @@ struct digit_p : rule
 };
 
 /// Creates a single digit parser rule
-inline digit_p digit()
+constexpr digit_p digit()
 {
   return digit_p();
 }
@@ -191,11 +191,11 @@ inline digit_p digit()
 /// parses a single digit
 struct hex_digit_p : rule
 {
-  hex_digit_p()
+  constexpr hex_digit_p()
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     bool result = (first != last && parser_detail::is_xdigit(*first));
     if (result)
@@ -208,7 +208,7 @@ struct hex_digit_p : rule
 };
 
 /// Creates a single hexadecimal digit parser rule
-inline hex_digit_p hex_digit()
+constexpr hex_digit_p hex_digit()
 {
   return hex_digit_p();
 }
@@ -218,11 +218,11 @@ inline hex_digit_p hex_digit()
 
 struct oct_digit_p : rule
 {
-  oct_digit_p()
+  constexpr oct_digit_p()
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     bool result = (first != last && (*first) >= '0' && (*first) <='7');
     if (result)
@@ -235,7 +235,7 @@ struct oct_digit_p : rule
 };
 
 /// Creates a single octal parser rule
-inline oct_digit_p oct_digit()
+constexpr oct_digit_p oct_digit()
 {
   return oct_digit_p();
 }
@@ -245,11 +245,11 @@ inline oct_digit_p oct_digit()
 
 struct bin_digit_p : rule
 {
-  bin_digit_p()
+  constexpr bin_digit_p()
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     bool result = (first != last && (*first) >= '0' && (*first) <='1');
     if (result)
@@ -262,7 +262,7 @@ struct bin_digit_p : rule
 };
 
 /// Creates a single binary parser rule
-inline bin_digit_p bin_digit()
+constexpr bin_digit_p bin_digit()
 {
   return bin_digit_p();
 }
@@ -271,11 +271,11 @@ inline bin_digit_p bin_digit()
 /// parses a single upper case alpha character defined in C locale
 struct upper_p : rule
 {
-  upper_p()
+  constexpr upper_p()
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     bool result = (first != last && parser_detail::is_upper(*first));
     if (result) first++;
@@ -285,7 +285,7 @@ struct upper_p : rule
 };
 
 /// Creates an upper case parser rule
-inline upper_p upper()
+constexpr upper_p upper()
 {
   return upper_p();
 }
@@ -295,11 +295,11 @@ inline upper_p upper()
 /// typical this rule is useful for parsing line comments
 struct rest_p : rule
 {
-  rest_p()
+  constexpr rest_p()
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     while(first != last) first++;
     return true;
@@ -308,7 +308,7 @@ struct rest_p : rule
 };
 
 /// Creates a rest parser rule
-inline rest_p rest()
+constexpr rest_p rest()
 {
   return rest_p();
 }
@@ -318,12 +318,12 @@ inline rest_p rest()
 template<typename ExprType>
 struct opt_p : rule
 {
-  opt_p(const ExprType& expr)
+  constexpr opt_p(const ExprType& expr)
   : expr_(expr)
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     expr_.accept(first, last);
     return true;
@@ -334,7 +334,7 @@ struct opt_p : rule
 
 /// Creates and oprional expression parser rule
 template<typename ExprType>
-opt_p<ExprType> opt(const ExprType& expr)
+constexpr opt_p<ExprType> opt(const ExprType& expr)
 {
   return opt_p<ExprType>(expr);
 }
@@ -343,7 +343,7 @@ opt_p<ExprType> opt(const ExprType& expr)
 /// zm: a rule that succeeds without consuming anything (opt, zm, rest at the
 /// end of the input) would otherwise be repeated forever.
 template<typename ExprType, typename Iterator>
-inline void repeat_(const ExprType& expr, Iterator& first, Iterator last)
+constexpr void repeat_(const ExprType& expr, Iterator& first, Iterator last)
 {
   for (;;)
   {
@@ -360,12 +360,12 @@ inline void repeat_(const ExprType& expr, Iterator& first, Iterator last)
 template<typename ExprType>
 struct om_p : rule
 {
-  om_p(const ExprType& expr)
+  constexpr om_p(const ExprType& expr)
   : expr_(expr)
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     bool result = false;
     if (expr_.accept(first, last))
@@ -380,7 +380,7 @@ struct om_p : rule
 };
 
 template<typename ExprType>
-om_p<ExprType> om(const ExprType& p_expr)
+constexpr om_p<ExprType> om(const ExprType& p_expr)
 {
   return om_p<ExprType>(p_expr);
 }
@@ -388,12 +388,12 @@ om_p<ExprType> om(const ExprType& p_expr)
 template<typename ExprType>
 struct zm_p : rule
 {
-  zm_p(const ExprType& expr)
+  constexpr zm_p(const ExprType& expr)
   : expr_(expr)
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     bool result = true;
     repeat_(expr_, first, last);
@@ -404,7 +404,7 @@ struct zm_p : rule
 };
 
 template<typename ExprType>
-zm_p<ExprType> zm(const ExprType& expr)
+constexpr zm_p<ExprType> zm(const ExprType& expr)
 {
   return zm_p<ExprType>(expr);
 }
@@ -413,7 +413,7 @@ template<typename ... Types>
 struct seq_p : rule
 {
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &, Iterator) const
   {
     return true;
   }
@@ -424,12 +424,12 @@ struct seq_p<ExprType, Types...> : rule
 {
   typedef seq_p<Types...> next;
 
-  seq_p(const ExprType& p_expr_, Types... args)
+  constexpr seq_p(const ExprType& p_expr_, Types... args)
   : expr_(p_expr_), next_(args...)
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     Iterator initial = first;
     bool result = (expr_.accept(first, last) && next_.accept(first, last));
@@ -443,14 +443,14 @@ struct seq_p<ExprType, Types...> : rule
 };
 
 template<typename ExprType>
-seq_p<ExprType>
+constexpr seq_p<ExprType>
 seq(const ExprType& p_a)
 {
   return seq_p<ExprType>(p_a);
 }
 
 template<typename ExprType, typename ... Types>
-seq_p<ExprType, Types...>
+constexpr seq_p<ExprType, Types...>
 seq(const ExprType& p_a, Types... args)
 {
   return seq_p<ExprType, Types...>(p_a, args...);
@@ -461,7 +461,7 @@ template<typename ... Types>
 struct any_p : rule
 {
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &, Iterator) const
   {
     return false;
   }
@@ -472,12 +472,12 @@ struct any_p<ExprType, Types...> : rule
 {
   typedef any_p<Types...> next;
 
-  any_p(const ExprType& p_expr_, Types... args)
+  constexpr any_p(const ExprType& p_expr_, Types... args)
   : expr_(p_expr_), next_(args...)
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     // Iterator  initial = first;
     bool result = (expr_.accept(first, last) || next_.accept(first, last));
@@ -489,14 +489,14 @@ struct any_p<ExprType, Types...> : rule
 };
 
 template<typename ExprType>
-any_p<ExprType>
+constexpr any_p<ExprType>
 any(const ExprType& p_a)
 {
   return any_p<ExprType>(p_a);
 }
 
 template<typename ExprType, typename ... Types>
-any_p<ExprType, Types...>
+constexpr any_p<ExprType, Types...>
 any(const ExprType& p_a, Types... args)
 {
   return any_p<ExprType, Types...>(p_a, args...);
@@ -506,12 +506,12 @@ any(const ExprType& p_a, Types... args)
 template<typename ExprType>
 struct except_p : rule
 {
-  except_p(const ExprType& expr)
+  constexpr except_p(const ExprType& expr)
   : expr_(expr)
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     while(first != last) 
     {
@@ -532,7 +532,7 @@ struct except_p : rule
 };
 
 template<typename ExprType>
-except_p<ExprType>
+constexpr except_p<ExprType>
 except(const ExprType& p_expr)
 {
   return except_p<ExprType>(p_expr);
@@ -541,19 +541,19 @@ except(const ExprType& p_expr)
 template<typename ExprType, typename EscapeExprType>
 struct except_2_p : rule
 {
-  except_2_p(const ExprType&        p_expr, 
+  constexpr except_2_p(const ExprType&        p_expr,
              const EscapeExprType&  p_esc_expr)
   : expr_(p_expr),
     esc_expr_(p_esc_expr)
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     Iterator  initial = first;
     bool      success = false;
     while((esc_expr_.accept(first, last) && expr_.accept(first, last) ) || 
-          (!(success = expr_.accept(first, last)) && (first != last) && (first++ != 0) ) );
+          (!(success = expr_.accept(first, last)) && (first != last) && (++first, true) ) );
     if (!success)
       first = initial;
     return success;
@@ -564,7 +564,7 @@ struct except_2_p : rule
 };
 
 template<typename ExprType, typename EscapeExprType>
-except_2_p<ExprType, EscapeExprType>
+constexpr except_2_p<ExprType, EscapeExprType>
 except_2(const ExprType& p_expr, const EscapeExprType& p_esc_expr)
 {
   return except_2_p<ExprType, EscapeExprType>(p_expr, p_esc_expr);
@@ -574,12 +574,12 @@ except_2(const ExprType& p_expr, const EscapeExprType& p_esc_expr)
 template<typename ExprType>
 struct accept_adaptor_p : rule
 {
-  accept_adaptor_p(const ExprType &expr)
+  constexpr accept_adaptor_p(const ExprType &expr)
   : expr_(expr)
   {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     return expr_(first, last);
   }
@@ -588,7 +588,7 @@ struct accept_adaptor_p : rule
 };
 
 template<typename ExprType>
-accept_adaptor_p<ExprType>
+constexpr accept_adaptor_p<ExprType>
 accept_adaptor(const ExprType& p_a)
 {
   return accept_adaptor_p<ExprType>(p_a);
@@ -597,24 +597,20 @@ accept_adaptor(const ExprType& p_a)
 struct default_action
 {
   template<typename Iterator>
-  void operator()(Iterator first, Iterator last)
-  {}
-
-  template<typename Iterator>
-  void operator()(Iterator first, Iterator last) const
+  constexpr void operator()(Iterator, Iterator) const
   {}
 };
 
 template <typename ExprType, typename ActionType = default_action>
 struct action_p : rule
 {
-  action_p(const ExprType   &p_expr,
+  constexpr action_p(const ExprType   &p_expr,
            const ActionType &p_action)
   : expr_(p_expr),
     a_(p_action) {}
 
   template<typename Iterator>
-  bool accept(Iterator &first, Iterator last) const
+  constexpr bool accept(Iterator &first, Iterator last) const
   {
     Iterator  initial = first;
     bool result = expr_.accept(first, last);
@@ -630,7 +626,7 @@ struct action_p : rule
 };
 
 template<typename ExprType, typename ActionType = default_action>
-inline action_p<ExprType, ActionType>
+constexpr action_p<ExprType, ActionType>
 action(const ExprType   &p_expr,
        const ActionType &p_action = ActionType())
 {
