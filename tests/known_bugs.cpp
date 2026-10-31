@@ -49,9 +49,9 @@ For more information, please refer to <http://unlicense.org>
 #include <tuple>
 #include <utility>
 
-#include "haluj/bidirectional_map.hpp"
 #include "haluj/bounded/vector.hpp"
 #include "haluj/format.hpp"
+#include "haluj/pair_lookup.hpp"
 #include "haluj/state_machine.hpp"
 
 #include "check.hpp"

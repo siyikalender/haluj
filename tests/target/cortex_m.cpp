@@ -37,10 +37,10 @@ For more information, please refer to <http://unlicense.org>
 #include <optional>
 #include <utility>
 
-#include "haluj/bidirectional_map.hpp"
 #include "haluj/bounded/vector.hpp"
 #include "haluj/digital_input_filter.hpp"
 #include "haluj/format.hpp"
+#include "haluj/pair_lookup.hpp"
 #include "haluj/parser.hpp"
 #include "haluj/ring_buffer.hpp"
 #include "haluj/set_and_wait.hpp"

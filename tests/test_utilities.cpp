@@ -1,5 +1,5 @@
 /// \file test_utilities.cpp
-/// Tests of bidirectional_map, digital_input_filter, event_strategy,
+/// Tests of pair_lookup, digital_input_filter, event_strategy,
 /// set_and_wait and utility.
 /*
 This is free and unencumbered software released into the public domain.
@@ -37,15 +37,15 @@ For more information, please refer to <http://unlicense.org>
 #include <optional>
 #include <utility>
 
-#include "haluj/bidirectional_map.hpp"
 #include "haluj/digital_input_filter.hpp"
 #include "haluj/event_strategy.hpp"
+#include "haluj/pair_lookup.hpp"
 #include "haluj/set_and_wait.hpp"
 #include "haluj/utility.hpp"
 
 #include "check.hpp"
 
-static void test_bidirectional_map()
+static void test_pair_lookup()
 {
   static const std::pair<int, const char*> table[] =
   {
@@ -285,7 +285,7 @@ static void test_utility()
 
 int main()
 {
-  test_bidirectional_map();
+  test_pair_lookup();
   test_digital_input_filter();
   test_debounce_patterns();
   test_debounce_models();

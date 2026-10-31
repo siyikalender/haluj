@@ -70,12 +70,12 @@ endforeach()
 # twice. All headers together in one translation unit catch clashing include
 # guards and names.
 set(HALUJ_HEADERS
-  bidirectional_map
   bounded/vector
   cyclic_index
   digital_input_filter
   event_strategy
   format
+  pair_lookup
   parser
   ring_buffer
   set_and_wait

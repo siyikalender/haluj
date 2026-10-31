@@ -1,5 +1,6 @@
-/// \file bidirectional_map.hpp
-/// A map implementation where elements can be accessed from both pair arguments
+/// \file pair_lookup.hpp
+/// Lookups in both directions over sequences of std::pair, for example a
+/// constant table that maps codes to names and names back to codes
 /*
 This is free and unencumbered software released into the public domain.
 
@@ -28,8 +29,8 @@ For more information, please refer to <http://unlicense.org>
 */
 /// \author Selcuk Iyikalender
 /// \date   2018
-#ifndef HALUJ_BIDIRECTIONAL_MAP_HPP
-#define HALUJ_BIDIRECTIONAL_MAP_HPP
+#ifndef HALUJ_PAIR_LOOKUP_HPP
+#define HALUJ_PAIR_LOOKUP_HPP
 
 #include <utility>
 #include <iterator>
@@ -189,4 +190,4 @@ to_first(const S                  &p_second,
 
 } // namespace haluj
 
-#endif // HALUJ_BIDIRECTIONAL_MAP_HPP
+#endif // HALUJ_PAIR_LOOKUP_HPP
