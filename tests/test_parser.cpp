@@ -30,7 +30,9 @@ For more information, please refer to <http://unlicense.org>
 /// \author Claude Opus 5.5 <noreply@anthropic.com>
 /// \date   2026
 
+#include <array>
 #include <cctype>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <string>
@@ -350,6 +352,87 @@ static_assert(sizeof(haluj::nt(std::uint8_t(4), haluj::anychar())) == 1, "nt is 
 
 // The same rules at run time, on std::string iterators and on input nested
 // far deeper than a compile time evaluation would allow
+// Runs a rule over bytes and tells how many it consumed
+template<typename Rule, std::size_t N>
+static bool parse_bytes(const Rule& rule, const std::uint8_t (&data)[N], std::size_t& consumed)
+{
+  const std::uint8_t* first = data;
+  bool ok = rule.accept(first, data + N);
+  consumed = static_cast<std::size_t>(first - data);
+  return ok;
+}
+
+static void test_binary()
+{
+  using namespace haluj;
+  std::size_t n = 0;
+
+  // Fixed values, compared as unsigned bytes on every target
+  const std::uint8_t word[] = {0x81, 0x00, 0x00, 0x81};
+  HALUJ_CHECK(parse_bytes(u8(0x81), word, n) && n == 1);
+  HALUJ_CHECK(parse_bytes(ch(char(0x81)), word, n) && n == 1);   // signed char or not
+  HALUJ_CHECK(parse_bytes(be16(0x8100), word, n) && n == 2);
+  HALUJ_CHECK(!parse_bytes(le16(0x8100), word, n) && n == 0);
+  HALUJ_CHECK(parse_bytes(le16(0x0081), word, n) && n == 2);
+  HALUJ_CHECK(parse_bytes(be32(0x81000081), word, n) && n == 4);
+  HALUJ_CHECK(parse_bytes(le32(0x81000081), word, n) && n == 4);
+  HALUJ_CHECK(!parse_bytes(be32(0x81000082), word, n) && n == 0);   // gives back what it read
+  const std::uint8_t three[] = {0x81, 0x00, 0x00};
+  HALUJ_CHECK(!parse_bytes(be32(0x81000000), three, n) && n == 0);  // too short
+
+  // Fields taken out with the store actions
+  std::uint16_t               type = 0;
+  std::uint32_t               le   = 0;
+  std::array<std::uint8_t, 4> address{};
+
+  const auto header =
+    seq(u8(0x45),
+        action(nt(2, anychar()), store_be(type)),
+        action(nt(4, anychar()), store_bytes(address)),
+        nt(3, anychar()),                               // skipped
+        action(nt(4, anychar()), store_le(le)));
+
+  const std::uint8_t data[] = {0x45, 0x08, 0x06, 10, 0, 0, 1, 7, 7, 7, 0x78, 0x56, 0x34, 0x12};
+  HALUJ_CHECK(parse_bytes(header, data, n) && n == sizeof(data));
+  HALUJ_CHECK(type == 0x0806);
+  HALUJ_CHECK((address == std::array<std::uint8_t, 4>{10, 0, 0, 1}));
+  HALUJ_CHECK(le == 0x12345678);
+
+  // Every prefix is too short and consumes nothing
+  for (std::size_t length = 0; length < sizeof(data); ++length)
+  {
+    const std::uint8_t* first = data;
+    HALUJ_CHECK(!header.accept(first, data + length));
+    HALUJ_CHECK(first == data);
+  }
+
+  // Fields of a length known only at run time
+  std::size_t   options = 2;
+  std::uint8_t  last_option = 0;
+  const auto with_options =
+    seq(vt(options, anychar()), action(anychar(), [&](auto p, auto) { last_option = *p; }));
+  const std::uint8_t opts[] = {1, 2, 9};
+  HALUJ_CHECK(parse_bytes(with_options, opts, n) && n == 3 && last_option == 9);
+  options = 3;
+  HALUJ_CHECK(!parse_bytes(with_options, opts, n) && n == 0);
+
+  // std::byte input
+  const std::byte bytes[] = {std::byte{0x08}, std::byte{0x00}};
+  const std::byte* b = bytes;
+  HALUJ_CHECK(be16(0x0800).accept(b, bytes + 2) && b == bytes + 2);
+}
+
+// The binary rules work in constant expressions too
+static_assert([]
+{
+  using namespace haluj;
+  std::uint16_t type = 0;
+  const std::uint8_t data[] = {0x08, 0x00, 0xFF};
+  const std::uint8_t* first = data;
+  return seq(action(nt(2, anychar()), store_be(type)), u8(0xFF)).accept(first, data + 3) &&
+         type == 0x0800;
+}());
+
 static void test_recursive_rules()
 {
   const std::string sum = "10*(2+3)-(4/(1+1))";
@@ -390,6 +473,7 @@ int main()
   test_combinators();
   test_except();
   test_counted();
+  test_binary();
   test_repeat_empty_match();
   test_command_line();
   return haluj_test::report("test_parser");

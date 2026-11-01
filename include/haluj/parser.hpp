@@ -27,12 +27,20 @@ OTHER DEALINGS IN THE SOFTWARE.
 For more information, please refer to <http://unlicense.org>
 */
 /// \author Selcuk Iyikalender
+/// \author Claude Opus 5.5 <noreply@anthropic.com>
 /// \date   2018
 
 #ifndef HALUJ_PARSER_HPP
 #define HALUJ_PARSER_HPP
 
+#include <algorithm>
+#include <bit>
 #include <concepts>
+#include <cstddef>
+#include <cstdint>
+#include <iterator>
+#include <type_traits>
+#include <utility>
 
 namespace haluj
 {
@@ -58,6 +66,14 @@ constexpr bool is_xdigit(char c)
 
 /// space, \t, \n, \v, \f and \r
 constexpr bool is_space(char c)  { return c == ' ' || (c >= '\t' && c <= '\r'); }
+
+/// An element as an unsigned byte: char, signed char, unsigned char,
+/// std::uint8_t or std::byte
+template<typename Element>
+constexpr std::uint8_t to_byte(const Element& e)
+{
+  return static_cast<std::uint8_t>(e);
+}
 
 } // namespace parser_detail
 
@@ -91,12 +107,23 @@ struct ch_p
   template<typename Iterator>
   constexpr bool accept(Iterator &first, Iterator last) const
   {
-    bool result = (first != last && c_ == *first);
+    bool result = (first != last && equal(*first));
     if (result)
     {
       first++;
     }
     return result;
+  }
+
+  // One byte elements compare as unsigned bytes: with a signed char, char
+  // 0x81 is -127 and would never equal a std::uint8_t 0x81 of binary data
+  template<typename Element>
+  constexpr bool equal(const Element& e) const
+  {
+    if constexpr (sizeof(Element) == 1)
+      return parser_detail::to_byte(e) == parser_detail::to_byte(c_);
+    else
+      return e == c_;
   }
 
   char c_;
@@ -353,6 +380,117 @@ constexpr anychar_p anychar()
   return anychar_p();
 }
 
+// ---- Binary data ------------------------------------------------------------
+//
+// Rules for binary formats such as protocol headers. The input is a range of
+// bytes (std::uint8_t, unsigned char, char, std::byte), each compared as an
+// unsigned byte. Fields of a given length are nt(n, anychar()); the actions
+// below take their values out:
+//
+//   std::uint16_t      port;
+//   std::array<std::uint8_t, 4> address;
+//
+//   seq(be16(0x0800),                                     // a word of a fixed value
+//       u8(4),                                            // a byte of a fixed value
+//       action(nt(2, anychar()), store_be(port)),         // any word, kept
+//       action(nt(4, anychar()), store_bytes(address)),   // any 4 bytes, kept
+//       nt(6, anychar()))                                 // 6 bytes skipped
+
+/// An unsigned number of a fixed value in the given byte order
+template<std::unsigned_integral ValueType, std::endian Order>
+struct word_p
+{
+  constexpr word_p(ValueType value)
+  : value_(value) {}
+
+  template<typename Iterator>
+  constexpr bool accept(Iterator &first, Iterator last) const
+  {
+    Iterator at = first;
+
+    for (std::size_t i = 0; i < sizeof(ValueType); ++i, ++at)
+    {
+      const std::size_t byte  = (Order == std::endian::big) ? sizeof(ValueType) - 1 - i : i;
+      const auto        value = static_cast<std::uint8_t>(value_ >> (8 * byte));
+
+      if (at == last || parser_detail::to_byte(*at) != value)
+        return false;
+    }
+
+    first = at;
+    return true;
+  }
+
+  ValueType value_;
+};
+
+/// A byte of the given value
+constexpr word_p<std::uint8_t, std::endian::big> u8(std::uint8_t value)
+{
+  return {value};
+}
+
+/// A 16 / 32 bit number of the given value, big endian (network order)
+constexpr word_p<std::uint16_t, std::endian::big> be16(std::uint16_t value)
+{
+  return {value};
+}
+
+constexpr word_p<std::uint32_t, std::endian::big> be32(std::uint32_t value)
+{
+  return {value};
+}
+
+/// A 16 / 32 bit number of the given value, little endian
+constexpr word_p<std::uint16_t, std::endian::little> le16(std::uint16_t value)
+{
+  return {value};
+}
+
+constexpr word_p<std::uint32_t, std::endian::little> le32(std::uint32_t value)
+{
+  return {value};
+}
+
+/// An action storing the matched bytes in out as a big endian number
+template<std::unsigned_integral ValueType>
+constexpr auto store_be(ValueType& out)
+{
+  return [&out](auto first, auto last)
+  {
+    ValueType value = 0;
+    for (; first != last; ++first)
+      value = static_cast<ValueType>((value << 8) | parser_detail::to_byte(*first));
+    out = value;
+  };
+}
+
+/// An action storing the matched bytes in out as a little endian number
+template<std::unsigned_integral ValueType>
+constexpr auto store_le(ValueType& out)
+{
+  return [&out](auto first, auto last)
+  {
+    ValueType   value = 0;
+    std::size_t shift = 0;
+    for (; first != last; ++first, shift += 8)
+      value = static_cast<ValueType>(value | (ValueType(parser_detail::to_byte(*first)) << shift));
+    out = value;
+  };
+}
+
+/// An action copying the matched bytes to out, a container at least as long
+/// as the field (a std::array for a fixed length field)
+template<typename Container>
+constexpr auto store_bytes(Container& out)
+{
+  return [&out](auto first, auto last)
+  {
+    std::transform(first, last, std::begin(out),
+                   [](const auto& e) { return static_cast<std::remove_cvref_t<decltype(*std::begin(out))>>(parser_detail::to_byte(e)); });
+  };
+}
+
 /// optional expression parser rule
 /// Always true regardless the return value of accept method of the expr
 template<typename ExprType>
@@ -387,6 +525,18 @@ template<typename ExprType, typename IntegerType, typename Iterator>
 constexpr bool repeat_n_(const ExprType& expr, const IntegerType n,
                          Iterator& first, Iterator last)
 {
+  // n elements of anything: with a random access iterator one bounds check
+  // for the whole field, not one per element (a binary field of n bytes)
+  if constexpr (std::same_as<ExprType, anychar_p> && std::random_access_iterator<Iterator>)
+  {
+    if (!std::cmp_greater(n, 0))
+      return true;
+    if (std::cmp_less(last - first, n))
+      return false;
+    first += static_cast<std::iter_difference_t<Iterator>>(n);
+    return true;
+  }
+
   const Iterator initial = first;
 
   for (IntegerType i = 0; i < n; ++i)
