@@ -32,50 +32,49 @@ For more information, please refer to <http://unlicense.org>
 
 // Examples of the parser: a comma separated line, a date and a time of day.
 //
+// The functions take a pair of iterators, so the text may be in any
+// container: a std::string, a bounded::vector, a std::deque, which is not
+// even contiguous. Each also has a std::string_view version for text at
+// hand.
+//
 // The rules are built inside the functions because their actions write to
 // local variables. The values go to locals first and to the caller's object
 // only once the whole text is read and checked, so a failed parse leaves
 // the caller's object as it was.
 
-#include <charconv>
 #include <cstdio>
 #include <ctime>
+#include <deque>
+#include <iterator>
 #include <string>
 #include <string_view>
 
+#include "haluj/bounded/vector.hpp"
 #include "haluj/parser.hpp"
 
 namespace example
 {
 
-// The text of s as a pair of pointers. A string_view's own iterators are
-// not pointers on every standard library, and the actions below take
-// pointers.
-struct text
+// An action that turns the digits it gets into value. The rules give it at
+// most four digits, so the number always fits. It works on any iterator
+// and at compile time, which std::from_chars, taking only const char*, does
+// not; it is also much smaller on a microcontroller.
+constexpr auto store(int& value)
 {
-  explicit text(std::string_view s)
-  : first(s.data()),
-    last(s.data() + s.size())
-  {}
-
-  const char* first;
-  const char* last;
-};
-
-// An action that writes the digits it gets into value. The rules give it
-// one or two digits at most, so the number always fits.
-inline auto store(int& value)
-{
-  return [&value](const char* first, const char* last)
+  return [&value](auto first, auto last)
   {
-    std::from_chars(first, last, value);
+    value = 0;
+    for (; first != last; ++first)
+      value = value * 10 + (*first - '0');
   };
 }
 
-/// Calls handler(first, last) for each field of a comma separated line.
-/// The fields may be empty: "a,,b" has three fields, the second empty.
-template<typename FieldHandler>
-bool parse_comma_separated_values(std::string_view line, FieldHandler handler)
+/// Calls handler(first, last) for each field of a comma separated line,
+/// with iterators of the line. The fields may be empty: "a,,b" has three
+/// fields, the second empty.
+template<std::forward_iterator Iterator, typename FieldHandler>
+constexpr bool parse_comma_separated_values(Iterator first, Iterator last,
+                                            FieldHandler handler)
 {
   using namespace haluj;
 
@@ -83,25 +82,32 @@ bool parse_comma_separated_values(std::string_view line, FieldHandler handler)
   auto field  = action(until(ch(',')), handler);
   auto fields = seq(field, zm(seq(ch(','), field)));
 
-  text t(line);
-  return fields.accept(t.first, t.last) && t.first == t.last;
+  return fields.accept(first, last) && first == last;
 }
 
-inline bool is_leap_year(int year)
+/// The same over a string; handler gets const char* iterators
+template<typename FieldHandler>
+bool parse_comma_separated_values(std::string_view line, FieldHandler handler)
+{
+  return parse_comma_separated_values(line.data(), line.data() + line.size(), handler);
+}
+
+constexpr bool is_leap_year(int year)
 {
   return (year % 4 == 0 && year % 100 != 0) || year % 400 == 0;
 }
 
-inline int days_in_month(int year, int month)
+constexpr int days_in_month(int year, int month)
 {
   constexpr int days[] = {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
   return (month == 2 && is_leap_year(year)) ? 29 : days[month - 1];
 }
 
 /// Reads a date such as 2026-11-01 (or 2026-1-5) into the date fields of
-/// t. The whole text must be the date, and the date must exist; otherwise
-/// false is returned and t is not changed.
-inline bool parse_date(std::string_view s, std::tm& t, char separator = '-')
+/// t. The whole of [first, last) must be the date, and the date must exist;
+/// otherwise false is returned and t is not changed.
+template<std::forward_iterator Iterator>
+constexpr bool parse_date(Iterator first, Iterator last, std::tm& t, char separator = '-')
 {
   using namespace haluj;
 
@@ -118,8 +124,7 @@ inline bool parse_date(std::string_view s, std::tm& t, char separator = '-')
                   ch(separator),
                   action(one_or_two, store(day)));
 
-  text input(s);
-  if (!date.accept(input.first, input.last) || input.first != input.last)
+  if (!date.accept(first, last) || first != last)
     return false;
 
   if (month < 1 || month > 12 || day < 1 || day > days_in_month(year, month))
@@ -131,10 +136,19 @@ inline bool parse_date(std::string_view s, std::tm& t, char separator = '-')
   return true;
 }
 
+/// The same over a string. A string literal goes here, not to a range: as
+/// an array it would end with its '\0', which is not part of the date.
+inline bool parse_date(std::string_view s, std::tm& t, char separator = '-')
+{
+  return parse_date(s.data(), s.data() + s.size(), t, separator);
+}
+
 /// Reads a time of day such as 08:30:00 (or 8:30:0) into the time fields
-/// of t. 60 is a valid second, for a leap second. The whole text must be
-/// the time; otherwise false is returned and t is not changed.
-inline bool parse_time(std::string_view s, std::tm& t)
+/// of t. 60 is a valid second, for a leap second. The whole of [first,
+/// last) must be the time; otherwise false is returned and t is not
+/// changed.
+template<std::forward_iterator Iterator>
+constexpr bool parse_time(Iterator first, Iterator last, std::tm& t)
 {
   using namespace haluj;
 
@@ -150,8 +164,7 @@ inline bool parse_time(std::string_view s, std::tm& t)
                   ch(':'),
                   action(one_or_two, store(second)));
 
-  text input(s);
-  if (!time.accept(input.first, input.last) || input.first != input.last)
+  if (!time.accept(first, last) || first != last)
     return false;
 
   if (hour > 23 || minute > 59 || second > 60)
@@ -161,6 +174,12 @@ inline bool parse_time(std::string_view s, std::tm& t)
   t.tm_min  = minute;
   t.tm_sec  = second;
   return true;
+}
+
+/// The same over a string
+inline bool parse_time(std::string_view s, std::tm& t)
+{
+  return parse_time(s.data(), s.data() + s.size(), t);
 }
 
 } // namespace example
@@ -225,6 +244,43 @@ void dates()
          t.tm_mday == before.tm_mday, "a failed parse changes nothing");
 }
 
+// The same functions on text in other containers
+void containers()
+{
+  std::tm t{};
+
+  const std::deque<char> in_pieces = {'2', '0', '2', '6', '-', '1', '1', '-', '0', '1'};
+  expect(example::parse_date(in_pieces.begin(), in_pieces.end(), t), "a date in a deque");
+  expect(t.tm_mon == 10 && t.tm_mday == 1, "the date of the deque");
+
+  haluj::bounded::vector<char, 16> line;
+  for (char c : std::string_view("23:05:59"))
+    line.push_back(c);
+  expect(example::parse_time(line.begin(), line.end(), t), "a time in a bounded::vector");
+  expect(t.tm_hour == 23 && t.tm_min == 5 && t.tm_sec == 59, "the time of the vector");
+
+  int  count = 0;
+  auto count_fields = [&](auto, auto) { ++count; };
+  expect(example::parse_comma_separated_values(in_pieces.begin(), in_pieces.end(), count_fields),
+         "a line in a deque");
+  expect(count == 1, "one field, there is no comma");
+}
+
+// And at compile time: a date checked by the compiler
+static_assert([]
+{
+  std::tm t{};
+  const char date[] = "2028-02-29";
+  return example::parse_date(date, date + 10, t) && t.tm_mon == 1 && t.tm_mday == 29;
+}(), "a leap day at compile time");
+
+static_assert([]
+{
+  std::tm t{};
+  const char date[] = "2027-02-29";
+  return !example::parse_date(date, date + 10, t);
+}(), "no leap day in 2027");
+
 void times()
 {
   std::tm t{};
@@ -247,6 +303,7 @@ int main()
   comma_separated_values();
   dates();
   times();
+  containers();
 
   std::printf("%s\n", failures == 0 ? "examples: all as expected" : "examples: FAILED");
   return failures == 0 ? 0 : 1;
