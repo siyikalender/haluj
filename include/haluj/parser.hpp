@@ -331,6 +331,28 @@ constexpr rest_p rest()
   return rest_p();
 }
 
+/// Any single element: a character of text or a byte of binary data. With
+/// nt() and vt() it reads a field of a fixed or a given length.
+struct anychar_p
+{
+  template<typename Iterator>
+  constexpr bool accept(Iterator &first, Iterator last) const
+  {
+    bool result = (first != last);
+    if (result)
+    {
+      first++;
+    }
+    return result;
+  }
+};
+
+/// Creates a rule that accepts any single element
+constexpr anychar_p anychar()
+{
+  return anychar_p();
+}
+
 /// optional expression parser rule
 /// Always true regardless the return value of accept method of the expr
 template<typename ExprType>
@@ -360,6 +382,25 @@ constexpr opt_p<ExprType> opt(const ExprType& expr)
 /// Accepts expr as long as it succeeds and consumes input. Used by om and
 /// zm: a rule that succeeds without consuming anything (opt, zm, rest at the
 /// end of the input) would otherwise be repeated forever.
+// Matches expr exactly n times, or restores first and fails
+template<typename ExprType, typename IntegerType, typename Iterator>
+constexpr bool repeat_n_(const ExprType& expr, const IntegerType n,
+                         Iterator& first, Iterator last)
+{
+  const Iterator initial = first;
+
+  for (IntegerType i = 0; i < n; ++i)
+  {
+    if (!expr.accept(first, last))
+    {
+      first = initial;
+      return false;
+    }
+  }
+
+  return true;
+}
+
 template<parser_rule ExprType, typename Iterator>
 constexpr void repeat_(const ExprType& expr, Iterator& first, Iterator last)
 {
@@ -426,6 +467,77 @@ constexpr zm_p<ExprType> zm(const ExprType& expr)
 {
   return zm_p<ExprType>(expr);
 }
+
+/// The rule exactly N times, N fixed when the rule is built: a field of a
+/// fixed length in a binary format, for example. Fails, and consumes
+/// nothing, when the rule does not match N times; a count of 0 or less
+/// always matches.
+///
+///   nt(4, anychar())          a 4 byte field
+///   nt(2, hex_digit())        two hexadecimal digits
+template<typename ExprType, std::integral IntegerType>
+struct nt_p
+{
+  constexpr nt_p(const IntegerType N, const ExprType& expr)
+  : N_(N),
+    expr_(expr)
+  {}
+
+  template<typename Iterator>
+  constexpr bool accept(Iterator &first, Iterator last) const
+  {
+    return repeat_n_(expr_, N_, first, last);
+  }
+
+  IntegerType                         N_;
+  [[no_unique_address]] ExprType      expr_;
+};
+
+/// Creates a rule that matches expr exactly N times
+template<parser_rule ExprType, std::integral IntegerType>
+constexpr nt_p<ExprType, IntegerType> nt(const IntegerType N, const ExprType& expr)
+{
+  return nt_p<ExprType, IntegerType>(N, expr);
+}
+
+/// The rule exactly N times, N read from a variable each time the rule
+/// runs: a field whose length an earlier field gave, for example. The rule
+/// keeps a reference to the variable, so the variable must outlive the
+/// rule; a temporary is refused at compile time.
+///
+///   std::uint8_t length = 0;
+///   auto packet = seq(action(anychar(), [&](auto p, auto) { length = std::uint8_t(*p); }),
+///                     vt(length, anychar()));
+///
+/// Fails, and consumes nothing, when the rule does not match N times.
+template<typename ExprType, std::integral IntegerType>
+struct vt_p
+{
+  constexpr vt_p(const IntegerType& N, const ExprType& expr)
+  : N_(N),
+    expr_(expr)
+  {}
+
+  template<typename Iterator>
+  constexpr bool accept(Iterator &first, Iterator last) const
+  {
+    return repeat_n_(expr_, N_, first, last);
+  }
+
+  const IntegerType&                  N_;
+  [[no_unique_address]] ExprType      expr_;
+};
+
+/// Creates a rule that matches expr as many times as N holds when it runs
+template<parser_rule ExprType, std::integral IntegerType>
+constexpr vt_p<ExprType, IntegerType> vt(const IntegerType& N, const ExprType& expr)
+{
+  return vt_p<ExprType, IntegerType>(N, expr);
+}
+
+/// A temporary count would be destroyed before the rule runs
+template<parser_rule ExprType, std::integral IntegerType>
+void vt(const IntegerType&& N, const ExprType& expr) = delete;
 
 template<typename ... Types>
 struct seq_p

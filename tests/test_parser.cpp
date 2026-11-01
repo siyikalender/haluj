@@ -31,6 +31,7 @@ For more information, please refer to <http://unlicense.org>
 /// \date   2026
 
 #include <cctype>
+#include <cstdint>
 #include <cstring>
 #include <string>
 
@@ -285,6 +286,59 @@ static_assert(consumed(parens{}, ")") == 0,               "empty match");
 
 } // namespace
 
+// nt and vt: a rule a fixed or a given number of times, for binary formats
+static void test_counted()
+{
+  using namespace haluj;
+  std::size_t n = 0;
+
+  HALUJ_CHECK(parse(nt(3, digit()), "1234", n) && n == 3);
+  HALUJ_CHECK(!parse(nt(3, digit()), "12x", n) && n == 0);   // gives back what it read
+  HALUJ_CHECK(parse(nt(0, digit()), "x", n) && n == 0);
+  HALUJ_CHECK(parse(nt(-2, digit()), "x", n) && n == 0);
+  HALUJ_CHECK(parse(seq(ch('#'), nt(2, hex_digit())), "#1F", n) && n == 3);
+  HALUJ_CHECK(!parse(seq(ch('#'), nt(2, hex_digit())), "#1", n) && n == 0);
+
+  // A length prefixed packet of bytes: the first byte is the length
+  std::uint8_t length = 0;
+  std::size_t  payload = 0;
+  auto packet = seq(action(anychar(), [&](auto p, auto) { length = std::uint8_t(*p); }),
+                    action(vt(length, anychar()),
+                           [&](auto first, auto last) { payload = std::size_t(last - first); }));
+
+  const std::uint8_t data[] = {3, 0xAA, 0x00, 0xFF, 0x55};
+  const std::uint8_t* first = data;
+  HALUJ_CHECK(packet.accept(first, data + sizeof(data)));
+  HALUJ_CHECK(first == data + 4 && length == 3 && payload == 3);
+
+  const std::uint8_t short_data[] = {5, 1, 2};
+  first = short_data;
+  HALUJ_CHECK(!packet.accept(first, short_data + sizeof(short_data)));
+  HALUJ_CHECK(first == short_data);
+
+  // The count is read when the rule runs, not when it is built
+  int count = 1;
+  const auto letters = vt(count, alpha());
+  HALUJ_CHECK(parse(letters, "abc", n) && n == 1);
+  count = 3;
+  HALUJ_CHECK(parse(letters, "abc", n) && n == 3);
+}
+
+// At compile time: a fixed field in a constant rule, and a length prefix
+static_assert(consumed(haluj::nt(4, haluj::anychar()), "abcdef") == 4, "nt");
+static_assert(consumed(haluj::nt(4, haluj::anychar()), "abc") == -1, "nt short");
+static_assert([]
+{
+  using namespace haluj;
+  int  length = 0;
+  auto field  = seq(action(digit(), [&](const char* p, const char*) { length = *p - '0'; }),
+                    vt(length, anychar()));
+  return consumed(field, "3abcd") == 4;
+}(), "vt");
+
+// An empty rule repeated takes the room of its count only
+static_assert(sizeof(haluj::nt(std::uint8_t(4), haluj::anychar())) == 1, "nt is its count");
+
 // The same rules at run time, on std::string iterators and on input nested
 // far deeper than a compile time evaluation would allow
 static void test_recursive_rules()
@@ -326,6 +380,7 @@ int main()
   test_character_classes();
   test_combinators();
   test_except();
+  test_counted();
   test_repeat_empty_match();
   test_command_line();
   return haluj_test::report("test_parser");

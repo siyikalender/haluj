@@ -51,6 +51,9 @@ endfunction()
 haluj_compile_fail(on_t_without_strategy "no matching")
 haluj_compile_fail(on_temporary_strategy "deleted")
 
+# vt keeps its count by reference: a temporary one must not compile
+haluj_compile_fail(vt_temporary_count "deleted")
+
 # cyclic_index rejects index types and ring sizes it cannot work with
 haluj_compile_fail(cyclic_index_not_integral
   "satisfaction of [^a-z]+(std::)?integral|does not satisfy [^a-z]+integral")
