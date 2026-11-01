@@ -35,6 +35,7 @@ For more information, please refer to <http://unlicense.org>
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <deque>
 #include <string>
 
 #include "haluj/parser.hpp"
@@ -422,6 +423,56 @@ static void test_binary()
   HALUJ_CHECK(be16(0x0800).accept(b, bytes + 2) && b == bytes + 2);
 }
 
+static void test_fixed_width()
+{
+  using namespace haluj;
+  std::size_t n = 0;
+
+  // Fixed width rules make a fixed width sequence
+  constexpr auto header = seq(be16(0x0800), u8(4), field<3>(), ch('x'));
+  static_assert(decltype(header)::fixed && decltype(header)::width == 7);
+  static_assert(!decltype(seq(u8(1), om(digit())))::fixed);
+  static_assert(!decltype(seq(u8(1), nt(2, anychar())))::fixed);   // count known only at run time
+
+  const std::uint8_t good[] = {0x08, 0x00, 4, 1, 2, 3, 'x', 0xEE};
+  HALUJ_CHECK(parse_bytes(header, good, n) && n == 7);
+
+  // Too short or a wrong value: fails and consumes nothing
+  const std::uint8_t short_[] = {0x08, 0x00, 4, 1, 2, 3};
+  HALUJ_CHECK(!parse_bytes(header, short_, n) && n == 0);
+  const std::uint8_t wrong[] = {0x08, 0x00, 4, 1, 2, 3, 'y'};
+  HALUJ_CHECK(!parse_bytes(header, wrong, n) && n == 0);
+
+  // Actions get each field's range
+  std::uint16_t               type = 0;
+  std::array<std::uint8_t, 3> middle{};
+  const auto fields = seq(action(field<2>(), store_be(type)),
+                          u8(4),
+                          action(field<3>(), store_bytes(middle)));
+  static_assert(decltype(fields)::fixed && decltype(fields)::width == 6);
+  HALUJ_CHECK(parse_bytes(fields, good, n) && n == 6);
+  HALUJ_CHECK(type == 0x0800 && (middle == std::array<std::uint8_t, 3>{1, 2, 3}));
+
+  // A fixed part inside a sequence that is not fixed
+  std::size_t  rest = 2;
+  const auto mixed = seq(seq(be16(0x0800), u8(4)), vt(rest, anychar()));
+  HALUJ_CHECK(parse_bytes(mixed, good, n) && n == 5);
+  rest = 9;
+  HALUJ_CHECK(!parse_bytes(mixed, good, n) && n == 0);
+
+  // Iterators that are not random access take the rule by rule path
+  const std::deque<std::uint8_t> d(std::begin(good), std::end(good));
+  auto first = d.begin();
+  HALUJ_CHECK(header.accept(first, d.end()) && first == d.begin() + 7);
+  const std::deque<std::uint8_t> ds(std::begin(short_), std::end(short_));
+  first = ds.begin();
+  HALUJ_CHECK(!header.accept(first, ds.end()) && first == ds.begin());
+
+  // Text: fixed width rules work on characters as well
+  HALUJ_CHECK(parse(seq(ch('#'), field<2>()), "#1F", n) && n == 3);
+  HALUJ_CHECK(!parse(seq(ch('#'), field<2>()), "#1", n) && n == 0);
+}
+
 // The binary rules work in constant expressions too
 static_assert([]
 {
@@ -474,6 +525,7 @@ int main()
   test_except();
   test_counted();
   test_binary();
+  test_fixed_width();
   test_repeat_empty_match();
   test_command_line();
   return haluj_test::report("test_parser");

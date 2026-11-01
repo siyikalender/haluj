@@ -75,6 +75,33 @@ constexpr std::uint8_t to_byte(const Element& e)
   return static_cast<std::uint8_t>(e);
 }
 
+// Fixed width rules: a rule that always takes the same number of elements
+// declares it with
+//
+//   static constexpr bool        fixed = true;
+//   static constexpr std::size_t width = ...;
+//   constexpr bool match(Iterator at) const;   // the width elements at at
+//
+// match() reads without bounds checks: a sequence of fixed width rules
+// checks the length of the input once for all of them (see seq_p).
+template<typename Rule>
+consteval bool is_fixed()
+{
+  if constexpr (requires { Rule::fixed; })
+    return Rule::fixed;
+  else
+    return false;
+}
+
+template<typename Rule>
+consteval std::size_t width_of()
+{
+  if constexpr (is_fixed<Rule>())
+    return Rule::width;
+  else
+    return 0;
+}
+
 } // namespace parser_detail
 
 /// An empty tag that rules of one's own may derive from. The rules of the
@@ -113,6 +140,15 @@ struct ch_p
       first++;
     }
     return result;
+  }
+
+  static constexpr bool        fixed = true;
+  static constexpr std::size_t width = 1;
+
+  template<typename Iterator>
+  constexpr bool match(Iterator at) const
+  {
+    return equal(*at);
   }
 
   // One byte elements compare as unsigned bytes: with a signed char, char
@@ -372,6 +408,15 @@ struct anychar_p
     }
     return result;
   }
+
+  static constexpr bool        fixed = true;
+  static constexpr std::size_t width = 1;
+
+  template<typename Iterator>
+  constexpr bool match(Iterator) const
+  {
+    return true;
+  }
 };
 
 /// Creates a rule that accepts any single element
@@ -421,8 +466,52 @@ struct word_p
     return true;
   }
 
+  static constexpr bool        fixed = true;
+  static constexpr std::size_t width = sizeof(ValueType);
+
+  template<typename Iterator>
+  constexpr bool match(Iterator at) const
+  {
+    for (std::size_t i = 0; i < sizeof(ValueType); ++i, ++at)
+    {
+      const std::size_t byte = (Order == std::endian::big) ? sizeof(ValueType) - 1 - i : i;
+      if (parser_detail::to_byte(*at) != static_cast<std::uint8_t>(value_ >> (8 * byte)))
+        return false;
+    }
+    return true;
+  }
+
   ValueType value_;
 };
+
+/// N elements of anything: a field of N bytes whose length is known when
+/// the program is built. Like nt(N, anychar()), but of fixed width, so a
+/// sequence of such fields is checked for length once (see seq_p).
+template<std::size_t N>
+struct field_p
+{
+  template<typename Iterator>
+  constexpr bool accept(Iterator &first, Iterator last) const
+  {
+    return repeat_n_(anychar_p(), N, first, last);
+  }
+
+  static constexpr bool        fixed = true;
+  static constexpr std::size_t width = N;
+
+  template<typename Iterator>
+  constexpr bool match(Iterator) const
+  {
+    return true;
+  }
+};
+
+/// Creates a rule that takes N elements of anything
+template<std::size_t N>
+constexpr field_p<N> field()
+{
+  return field_p<N>();
+}
 
 /// A byte of the given value
 constexpr word_p<std::uint8_t, std::endian::big> u8(std::uint8_t value)
@@ -708,14 +797,40 @@ struct seq_p<ExprType, Types...>
   : expr_(p_expr_), next_(args...)
   {}
 
+  /// Every rule of the sequence has a fixed width: the input is checked
+  /// for length once, then the rules match without bounds checks
+  static constexpr bool        fixed = parser_detail::is_fixed<ExprType>() &&
+                                       parser_detail::is_fixed<next>();
+  static constexpr std::size_t width = fixed ? parser_detail::width_of<ExprType>() +
+                                               parser_detail::width_of<next>()
+                                             : 0;
+
   template<typename Iterator>
   constexpr bool accept(Iterator &first, Iterator last) const
   {
-    Iterator initial = first;
-    bool result = (expr_.accept(first, last) && next_.accept(first, last));
-    if (!result)
-      first = initial;
-    return result;
+    if constexpr (fixed && std::random_access_iterator<Iterator>)
+    {
+      if (std::cmp_less(last - first, width) || !match(first))
+        return false;
+      first += static_cast<std::iter_difference_t<Iterator>>(width);
+      return true;
+    }
+    else
+    {
+      Iterator initial = first;
+      bool result = (expr_.accept(first, last) && next_.accept(first, last));
+      if (!result)
+        first = initial;
+      return result;
+    }
+  }
+
+  template<typename Iterator>
+  constexpr bool match(Iterator at) const
+  {
+    return expr_.match(at) &&
+           next_.match(at + static_cast<std::iter_difference_t<Iterator>>(
+                              parser_detail::width_of<ExprType>()));
   }
 
   [[no_unique_address]] ExprType  expr_;
@@ -732,6 +847,9 @@ struct seq_p<ExprType>
   : expr_(p_expr_)
   {}
 
+  static constexpr bool        fixed = parser_detail::is_fixed<ExprType>();
+  static constexpr std::size_t width = parser_detail::width_of<ExprType>();
+
   template<typename Iterator>
   constexpr bool accept(Iterator &first, Iterator last) const
   {
@@ -740,6 +858,12 @@ struct seq_p<ExprType>
     if (!result)
       first = initial;
     return result;
+  }
+
+  template<typename Iterator>
+  constexpr bool match(Iterator at) const
+  {
+    return expr_.match(at);
   }
 
   [[no_unique_address]] ExprType  expr_;
@@ -1002,6 +1126,18 @@ struct action_p
       a_(initial, first);
     }
     return result;
+  }
+
+  static constexpr bool        fixed = parser_detail::is_fixed<ExprType>();
+  static constexpr std::size_t width = parser_detail::width_of<ExprType>();
+
+  template<typename Iterator>
+  constexpr bool match(Iterator at) const
+  {
+    if (!expr_.match(at))
+      return false;
+    a_(at, at + static_cast<std::iter_difference_t<Iterator>>(width));
+    return true;
   }
 
   [[no_unique_address]] ExprType          expr_;
