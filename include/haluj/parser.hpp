@@ -766,6 +766,44 @@ except(const TerminatorType& p_terminator)
                                                           parser_detail::never_p());
 }
 
+/// Everything up to the terminator or to the end of the input, without the
+/// terminator: a field of a comma separated line, for example, where the
+/// last field has no comma after it. It always matches, possibly nothing.
+/// except() is the rule for text that must be terminated.
+///
+///   seq(action(until(ch(',')), field), zm(seq(ch(','), action(until(ch(',')), field))))
+template<typename TerminatorType>
+struct until_p
+{
+  constexpr until_p(const TerminatorType& p_terminator)
+  : terminator_(p_terminator)
+  {}
+
+  template<typename Iterator>
+  constexpr bool accept(Iterator &first, Iterator last) const
+  {
+    while (first != last)
+    {
+      Iterator at = first;
+      if (terminator_.accept(at, last))
+      {
+        break;
+      }
+      ++first;
+    }
+    return true;
+  }
+
+  [[no_unique_address]] TerminatorType  terminator_;
+};
+
+/// Creates a rule that reads up to the terminator or to the end
+template<parser_rule TerminatorType>
+constexpr until_p<TerminatorType> until(const TerminatorType& p_terminator)
+{
+  return until_p<TerminatorType>(p_terminator);
+}
+
 template<typename ExprType>
 struct accept_adaptor_p
 {

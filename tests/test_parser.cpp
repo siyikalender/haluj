@@ -154,7 +154,15 @@ static void test_except()
   // An escape that matches empty input does not loop forever
   HALUJ_CHECK(parse(except(ch(';'), opt(ch('\\'))), "ab;", n) && n == 3);
   HALUJ_CHECK(!parse(except(ch(';'), zm(space())), "ab", n) && n == 0);
+
+  // until: up to the terminator or the end, without the terminator
+  HALUJ_CHECK(parse(until(ch(',')), "ab,cd", n) && n == 2);
+  HALUJ_CHECK(parse(until(ch(',')), "abcd", n) && n == 4);
+  HALUJ_CHECK(parse(until(ch(',')), ",cd", n) && n == 0);
+  HALUJ_CHECK(parse(until(ch(',')), "", n) && n == 0);
+  HALUJ_CHECK(parse(until(seq(ch('\r'), ch('\n'))), "a\rb\r\n", n) && n == 3);
 }
+
 
 // Repeating a rule that can succeed without consuming input stops instead of
 // looping forever
@@ -228,6 +236,7 @@ static_assert(consumed(command, "SEX 1")   == -1, "wrong command");
 static_assert(consumed(haluj::any(haluj::ch('a'), haluj::ch('b')), "b") == 1, "any");
 static_assert(consumed(haluj::zm(haluj::opt(haluj::ch('x'))), "abc") == 0, "no endless loop");
 static_assert(consumed(haluj::except(haluj::ch(';')), "ab;c") == 3, "except");
+static_assert(consumed(haluj::until(haluj::ch(',')), "ab,c") == 2, "until");
 static_assert(consumed(word, "abc1") == 3, "action");
 static_assert(consumed(haluj::hex_digit(), "F") == 1, "hex digit");
 static_assert(consumed(haluj::rest(), "rest") == 4, "rest");

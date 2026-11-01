@@ -38,6 +38,15 @@ FetchContent_MakeAvailable(haluj)
 target_link_libraries(firmware PRIVATE haluj::haluj)
 ```
 
+## Examples
+
+`examples/` holds programs that show the library at work; they are built and
+run with the tests.
+
+- `parse_text.cpp`: the parser on a comma separated line, a date and a time
+  of day, with the values checked and stored only when the whole text is
+  valid
+
 ## Tests
 
 ```sh

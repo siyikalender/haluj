@@ -21,6 +21,7 @@ endif()
 
 option(HALUJ_BUILD_TESTS          "Build the haluj tests"                ${HALUJ_IS_TOP_LEVEL})
 option(HALUJ_WARNINGS_AS_ERRORS   "Treat warnings in tests as errors"    OFF)
+option(HALUJ_BUILD_EXAMPLES       "Build the haluj examples"             ${HALUJ_IS_TOP_LEVEL})
 
 # Header only library: haluj::haluj
 add_library(haluj INTERFACE)
@@ -53,4 +54,9 @@ if(HALUJ_BUILD_TESTS)
 
   enable_testing()
   add_subdirectory(tests)
+endif()
+
+# The examples are built and run as tests too, so they keep working
+if(HALUJ_BUILD_EXAMPLES AND HALUJ_BUILD_TESTS)
+  add_subdirectory(examples)
 endif()
