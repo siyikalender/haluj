@@ -114,8 +114,45 @@ static void test_combinators()
   HALUJ_CHECK(!parse(seq(ch('a'), ch('b')), "ac", n) && n == 0);
   HALUJ_CHECK(parse(seq(ch('a'), ch('b')), "abc", n) && n == 2);
 
-  // except consumes up to, but not including, the terminator
-  HALUJ_CHECK(parse(except(ch(';')), "abc;def", n) && n == 3);
+  // except consumes up to and including the terminator, and fails without
+  // consuming anything when there is none
+  HALUJ_CHECK(parse(except(ch(';')), "abc;def", n) && n == 4);
+  HALUJ_CHECK(!parse(except(ch(';')), "abc", n) && n == 0);
+}
+
+// except: the text up to and including a terminator, with an optional escape
+static void test_except()
+{
+  using namespace haluj;
+  std::size_t n = 0;
+
+  // C style: \" and \\ are pairs, any other \x is two ordinary characters
+  constexpr auto c_text = except(ch('"'), ch('\\'));
+  HALUJ_CHECK(parse(c_text, "ab\"x", n) && n == 3);
+  HALUJ_CHECK(parse(c_text, "a\\\"b\"x", n) && n == 5);      // a\"b"
+  HALUJ_CHECK(parse(c_text, "a\\\\\"x", n) && n == 4);       // a\\"  escaped backslash
+  HALUJ_CHECK(parse(c_text, "a\\nb\"x", n) && n == 5);       // a\nb"
+  HALUJ_CHECK(parse(c_text, "\"", n) && n == 1);             // empty text
+  HALUJ_CHECK(!parse(c_text, "a\\\"b", n) && n == 0);        // only an escaped quote
+  HALUJ_CHECK(!parse(c_text, "ab\\", n) && n == 0);          // escape at the end
+  HALUJ_CHECK(!parse(c_text, "", n) && n == 0);
+
+  // SQL style: the escape is the terminator itself, doubled
+  constexpr auto sql_text = except(ch('\''), ch('\''));
+  HALUJ_CHECK(parse(sql_text, "it''s'x", n) && n == 6);
+  HALUJ_CHECK(parse(sql_text, "a'x", n) && n == 2);
+  HALUJ_CHECK(parse(sql_text, "'", n) && n == 1);
+  HALUJ_CHECK(parse(sql_text, "'''x", n) && n == 3);         // '''' : one quote
+  HALUJ_CHECK(!parse(sql_text, "''", n) && n == 0);
+
+  // A terminator of several characters
+  constexpr auto comment = except(seq(ch('*'), ch('/')));
+  HALUJ_CHECK(parse(comment, "a * b */x", n) && n == 8);
+  HALUJ_CHECK(!parse(comment, "a * b *", n) && n == 0);
+
+  // An escape that matches empty input does not loop forever
+  HALUJ_CHECK(parse(except(ch(';'), opt(ch('\\'))), "ab;", n) && n == 3);
+  HALUJ_CHECK(!parse(except(ch(';'), zm(space())), "ab", n) && n == 0);
 }
 
 // Repeating a rule that can succeed without consuming input stops instead of
@@ -181,7 +218,7 @@ constexpr auto command = haluj::seq(haluj::ch('S'), haluj::ch('E'), haluj::ch('T
 constexpr auto word    = haluj::action(haluj::om(haluj::alpha()),
                                        [](const char*, const char*) {});
 constexpr auto quoted  = haluj::seq(haluj::ch('"'),
-                                    haluj::except_2(haluj::ch('"'), haluj::ch('\\')));
+                                    haluj::except(haluj::ch('"'), haluj::ch('\\')));
 
 static_assert(consumed(number, "-123x") == 4,  "sign and digits");
 static_assert(consumed(number, "x")     == -1, "no digit");
@@ -189,7 +226,7 @@ static_assert(consumed(command, "SET  42") == 7, "command");
 static_assert(consumed(command, "SEX 1")   == -1, "wrong command");
 static_assert(consumed(haluj::any(haluj::ch('a'), haluj::ch('b')), "b") == 1, "any");
 static_assert(consumed(haluj::zm(haluj::opt(haluj::ch('x'))), "abc") == 0, "no endless loop");
-static_assert(consumed(haluj::except(haluj::ch(';')), "ab;c") == 2, "except");
+static_assert(consumed(haluj::except(haluj::ch(';')), "ab;c") == 3, "except");
 static_assert(consumed(word, "abc1") == 3, "action");
 static_assert(consumed(haluj::hex_digit(), "F") == 1, "hex digit");
 static_assert(consumed(haluj::rest(), "rest") == 4, "rest");
@@ -288,6 +325,7 @@ int main()
   test_primitives();
   test_character_classes();
   test_combinators();
+  test_except();
   test_repeat_empty_match();
   test_command_line();
   return haluj_test::report("test_parser");

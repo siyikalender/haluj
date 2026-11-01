@@ -560,74 +560,99 @@ any(const ExprType& p_a, Types... args)
   return any_p<ExprType, Types...>(p_a, args...);
 }
 
-//
-template<typename ExprType>
+namespace parser_detail
+{
+
+// A rule that never matches: the escape of an except without one
+struct never_p
+{
+  template<typename Iterator>
+  constexpr bool accept(Iterator &, Iterator) const
+  {
+    return false;
+  }
+};
+
+} // namespace parser_detail
+
+/// Text up to and including a terminator, such as the rest of a quoted
+/// string after its opening quote. It fails, and consumes nothing, when the
+/// input ends before the terminator.
+///
+/// An escape followed by the terminator or by another escape is a pair that
+/// stands for that character, so it does not end the text: with escape '\',
+/// \" is a quote inside the text and \\ a backslash. An escape followed by
+/// anything else is an ordinary character. This covers both usual styles:
+///
+///   except(ch('"'), ch('\\'))     "a \"quoted\" word"   C style
+///   except(ch('\''), ch('\''))    'it''s'               SQL style, the
+///                                                       quote doubled
+///
+/// The terminator may be any rule, for example seq(ch('*'), ch('/')) for the
+/// end of a comment.
+template<typename TerminatorType, typename EscapeType>
 struct except_p
 {
-  constexpr except_p(const ExprType& expr)
-  : expr_(expr)
+  constexpr except_p(const TerminatorType& p_terminator,
+                     const EscapeType&     p_escape)
+  : terminator_(p_terminator),
+    escape_(p_escape)
   {}
 
   template<typename Iterator>
   constexpr bool accept(Iterator &first, Iterator last) const
   {
-    while(first != last) 
+    const Iterator initial = first;
+
+    for (;;)
     {
-      Iterator tmp = first;
-      if (expr_.accept(tmp, last)) 
+      // An escape pair: skip both. An escape that matches empty input is no
+      // escape: it would take the terminator after it, or loop forever.
+      const Iterator at = first;
+      if (escape_.accept(first, last) && first != at)
       {
-        break;
+        if (terminator_.accept(first, last) || escape_.accept(first, last))
+        {
+          continue;
+        }
       }
-      else
+      first = at;
+
+      if (terminator_.accept(first, last))
       {
-        ++first;
+        return true;
       }
+
+      if (first == last)
+      {
+        first = initial;
+        return false;
+      }
+
+      ++first;
     }
-    return true; // except is not a strict parsing rule, so it always returns true;
   }
 
-  [[no_unique_address]] ExprType    expr_;
+  [[no_unique_address]] TerminatorType  terminator_;
+  [[no_unique_address]] EscapeType      escape_;
 };
 
-template<parser_rule ExprType>
-constexpr except_p<ExprType>
-except(const ExprType& p_expr)
+/// Text up to and including the terminator, with an escape (see except_p)
+template<parser_rule TerminatorType, parser_rule EscapeType>
+constexpr except_p<TerminatorType, EscapeType>
+except(const TerminatorType& p_terminator, const EscapeType& p_escape)
 {
-  return except_p<ExprType>(p_expr);
+  return except_p<TerminatorType, EscapeType>(p_terminator, p_escape);
 }
 
-template<typename ExprType, typename EscapeExprType>
-struct except_2_p
+/// Text up to and including the terminator, without an escape
+template<parser_rule TerminatorType>
+constexpr except_p<TerminatorType, parser_detail::never_p>
+except(const TerminatorType& p_terminator)
 {
-  constexpr except_2_p(const ExprType&        p_expr,
-             const EscapeExprType&  p_esc_expr)
-  : expr_(p_expr),
-    esc_expr_(p_esc_expr)
-  {}
-
-  template<typename Iterator>
-  constexpr bool accept(Iterator &first, Iterator last) const
-  {
-    Iterator  initial = first;
-    bool      success = false;
-    while((esc_expr_.accept(first, last) && expr_.accept(first, last) ) || 
-          (!(success = expr_.accept(first, last)) && (first != last) && (++first, true) ) );
-    if (!success)
-      first = initial;
-    return success;
-  }
-
-  [[no_unique_address]] ExprType          expr_;
-  [[no_unique_address]] EscapeExprType    esc_expr_;
-};
-
-template<parser_rule ExprType, parser_rule EscapeExprType>
-constexpr except_2_p<ExprType, EscapeExprType>
-except_2(const ExprType& p_expr, const EscapeExprType& p_esc_expr)
-{
-  return except_2_p<ExprType, EscapeExprType>(p_expr, p_esc_expr);
+  return except_p<TerminatorType, parser_detail::never_p>(p_terminator,
+                                                          parser_detail::never_p());
 }
-
 
 template<typename ExprType>
 struct accept_adaptor_p
